@@ -1,6 +1,7 @@
-from Rules import Rule
+from libs.Rules import Rule
 import numpy as np
-from Geometry import Geometry
+from libs.Geometry import Geometry
+from libs.Cells import State
 
 
 
@@ -24,10 +25,10 @@ class CellularAutomaton():
     
         
         
-    def apply(self,state):
+    def apply(self,state:State):
 
         
-        new_state = np.zeros_like(state)
+        new_state = np.zeros_like(state._data)
         neighbors_matrix = np.zeros((state.num_cells,np.prod(self.neighborhood_mask.shape))) # use a function to fill the matrix later but now we dont know how we will do it so placeholder
         #TODO: fill neighbors_matrix with actual values with some function
         for cell_idx_1d, neighbors in neighbors_matrix:
