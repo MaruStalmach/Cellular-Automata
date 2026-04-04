@@ -1,7 +1,7 @@
 from libs.Rules import Rule
 import numpy as np
 from libs.Geometry import Geometry
-from libs.Cells import State
+from libs.Cells import State, ZERO_CELL
 
 
 
@@ -10,37 +10,69 @@ from libs.Cells import State
 
 #TODO implement
 class CellularAutomaton():
+    """
+CA Simulation engine
+    """
     
-    def __init__(self,rules: list[Rule], neighborhood_mask):
-        """Heart of the simulation, allows applications of rules to a state and tracks step number
+    def __init__(self,geometry: Geometry, rules: list[Rule]):
+        """Heart of the CA simulation, allows advancing the simulation by applying rules to the current state. Tracks number of steps since start.
 
         Args:
-            rules (list[Rule]): _description_
-            neighborhood_mask (_type_): _description_
+            rules (list[Rule]): list of rules to apply to states
         """
         self.rules = rules
-        self.neighborhood_mask = neighborhood_mask
+        self.geometry = geometry
+
+        # get keys reuired by rules used in the simulation
+        keys = []
+        for rule in rules:
+            keys.extend(rule.required_keys)
+
+
+        self.state = State(geometry,True,keys)
         self.step_no = 0
         
-    
-        
-        
-    def apply(self,state:State):
-
-        
-        new_state = np.zeros_like(state._data)
-        neighbors_matrix = np.zeros((state.num_cells,np.prod(self.neighborhood_mask.shape))) # use a function to fill the matrix later but now we dont know how we will do it so placeholder
-        #TODO: fill neighbors_matrix with actual values with some function
-        for cell_idx_1d, neighbors in neighbors_matrix:
-            x,y,z = self._dim1_to_dim3_coords(cell_idx_1d,state.shape)
-            #TODO: split coords among threads
-            for rule in self.rules:
-                new_state[x,y,z] += rule.apply(neighbors)
-             
+    def step(self):
+        """
+    advance the simulation one step.
+        """
+        self._apply(self.state)
         self.step_no+=1
-        return new_state
+        
+        
+    def _apply(self,state:State):
+
+        # initialize new state as zero cells
+        new_state = np.full_like(state._data, ZERO_CELL)
+
+
+        # get neighbors from geometry
+        neighbors_matrix = state.geometry.generate_neighbourhood_matrix().toarray()
+
+
+        # iterate over all the cells in the state matrix
+        #TODO: split among threads
+        for cell_idx_1d, neighbors_idx in enumerate(neighbors_matrix):
+
+            # get 3D coords of the cell from its 1d idx
+            x,y,z = self._dim1_to_dim3_coords(cell_idx_1d,state.shape)
+            this_cell = state._data[x,y,z]
+
+            # get list of cell neighbors
+            neighbors = []
+            for idx,is_neighbor in enumerate(neighbors_idx):
+                if is_neighbor==1:
+                    x_n, y_n, z_n = self._dim1_to_dim3_coords(idx,state.shape)
+                    neighbors.append(state._data[x_n,y_n,z_n])
+        
+            #apply all rules
+            for rule in self.rules:
+                new_state[x,y,z] += rule.apply(neighbors,this_cell)
+             
+        state._data = new_state
     
     def _dim1_to_dim3_coords(self,dim1_coord,state_shape):
+        """converts 1D coordinate to 3D coordinate, given the shape of the state matrix"""
         return (dim1_coord%state_shape[0],
                 dim1_coord//state_shape[0] %state_shape[1],
                 dim1_coord//(state_shape[0]*state_shape[1]))

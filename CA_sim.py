@@ -3,7 +3,7 @@ from libs.Geometry import *
 from libs.Cells import *
 from libs.Sim import *
 
-
+from time import time
 
 
 
@@ -18,20 +18,19 @@ from libs.Sim import *
 
 if __name__=='__main__':
     #TODO parse args
-    
-    
-    
-    
-    rules = []
-    test_rule = TestRule()
-    rules.append(test_rule)
-    
-    geometry = Geometry((1,2,3), 'xyz', 'x')
-    state = State(geometry=geometry)
-    ca = CellularAutomaton(rules=rules, neighborhood_mask=[])
-    
-    while True:
-        new_state = ca.apply(state)
-        #TODO some processing here, maybe save states
-        state = new_state
-        #TODO breaking condition?
+
+    size = (10,10,10)
+    axes = 'xyz'
+    p = ''
+    geometry = Geometry(size,axes,p)
+
+    rules = [GameOfLife3D(geometry)]
+
+    ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
+
+    start = time()
+    for steps in range(1000):
+        print(f'step {ca_sim.step_no}/1000')
+        ca_sim.step()
+    end = time()
+    print(f'{end-start}s elapsed')   
