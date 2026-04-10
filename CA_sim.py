@@ -21,7 +21,7 @@ if __name__=='__main__':
 
     size = (10,10,10)
     axes = 'xyz'
-    p = ''
+    p = 'xy'
     geometry = Geometry(size,axes,p)
 
     rules = [GameOfLife3D(geometry)]
