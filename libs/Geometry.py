@@ -8,7 +8,7 @@ class Geometry():
         self, 
         size: tuple[int,...], 
         axes: str, 
-        periodicity: str
+        periodicity: str = ''
     ):
         
         self.periodicity = periodicity.lower()
