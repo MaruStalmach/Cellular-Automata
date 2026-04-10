@@ -47,28 +47,23 @@ CA Simulation engine
 
 
         # get neighbors from geometry
-        neighbors_matrix = state.geometry.generate_neighbourhood_matrix().toarray()
+        neighbors_matrix = state.geometry.generate_neighbourhood_matrix().tocsr()
+        flattened = state._data.flatten()
 
 
         # iterate over all the cells in the state matrix
         #TODO: split among threads
-        for cell_idx_1d, neighbors_idx in enumerate(neighbors_matrix):
-
-            # get 3D coords of the cell from its 1d idx
-            x,y,z = self._dim1_to_dim3_coords(cell_idx_1d,state.shape)
-            this_cell = state._data[x,y,z]
-
-            # get list of cell neighbors
-            neighbors = []
-            for idx,is_neighbor in enumerate(neighbors_idx):
-                if is_neighbor==1:
-                    x_n, y_n, z_n = self._dim1_to_dim3_coords(idx,state.shape)
-                    neighbors.append(state._data[x_n,y_n,z_n])
-        
-            #apply all rules
+        for cell in range(len(flattened)): 
+            neighbour_idx = neighbors_matrix.getrow(cell).indices
+            neighbors = flattened[neighbour_idx]
+            this_cell = flattened[cell]
+            final_cell_state = ZERO_CELL
             for rule in self.rules:
-                new_state[x,y,z] += rule.apply(neighbors,this_cell)
-             
+                this_cell = rule.apply(neighbors, this_cell)
+                final_cell_state +=  this_cell
+            x,y,z = self._dim1_to_dim3_coords(cell,state.shape)
+            new_state[x, y, z] = final_cell_state
+        
         state._data = new_state
     
     def _dim1_to_dim3_coords(self,dim1_coord,state_shape):
