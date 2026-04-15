@@ -74,6 +74,17 @@ class Cell():
         
         return other
     
+    def __mul__(self, other):
+        """adds multiplication for Cell * int. This is used during neighbor selection via mask
+
+        """
+        assert(isinstance(other,int))
+        
+        if other==0:
+            return ZERO_CELL
+        if other==1:
+            return self
+    
     def __getitem__(self, key):
         if self.is_zero_cell:
             return 0
@@ -120,12 +131,45 @@ collection of cells, arranged in a 2D or 3D matrix
             self._data = np.full(geometry.size,ZERO_CELL)
         else:
             self._data = np.full(geometry.size, Cell(cell_keys,random_func=np.random.randint, random_args = {'low':2}))
+            
+        # add padding
+        self._data = np.pad(self._data,((1,1),(1,1),(1,1)),constant_values=ZERO_CELL)
+        
     @property
     def data(self):
-        return self._data
+        #remove padding
+        return self._data[1:-1,1:-1,1:-1]
+    
+    @data.setter
+    def data(self,val : np.ndarray):
+        # val must be an appropriate ndarray
+        self._data[1:-1,1:-1,1:-1] = val
+        # update padding
+        x_p=False
+        y_p=False
+        z_p=False
+        if 'x' in self.geometry.periodicity:
+            x_p=True
+            self._data[0,:,:] = self._data[-2,:,:]
+            self._data[-1,:,:] = self._data[1,:,:]
+        if 'y' in self.geometry.periodicity:
+            y_p=True
+            self._data[:,0,:] = self._data[:,-2,:]
+            self._data[:,-1,:] = self._data[:,1,:]
+        if 'z' in self.geometry.periodicity:
+            z_p=True
+            self._data[:,:,0] = self._data[:,:,-2]
+            self._data[:,:,-1] = self._data[:,:,1]
+            
+        if x_p and y_p:
+            self._data[0,0,:] = self._data[-2,-2,:]
+            self._data[-1,-1,:] = self._data[1,1,:]
+            self._data[0,-1,:] = self._data[-2,1,:]
+            self._data[-1,0,:] = self._data[1,-2,:]
     
     @property
     def shape(self):
-        return self._data.shape
+        #shape of unpadded data
+        return self.data.shape
         
 
