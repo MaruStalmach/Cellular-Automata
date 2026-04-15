@@ -22,14 +22,32 @@ CA Simulation engine
         """
         self.rules = rules
         self.geometry = geometry
+        self.mask = np.array([
+            [
+                [0,0,0],
+                [0,1,0],
+                [0,0,0]
+            ],
+            [
+                [0,1,0],
+                [1,1,1],
+                [0,1,0]
+            ],
+            [
+                [0,0,0],
+                [0,1,0],
+                [0,0,0]
+            ],
+        ])
 
         # get keys reuired by rules used in the simulation
         keys = []
         for rule in rules:
             keys.extend(rule.required_keys)
 
-
+        
         self.state = State(geometry,True,keys)
+        # self._state_padded = np.pad(self.state._data,((1,1),(1,1),(1,1)),constant_values=ZERO_CELL)
         self.step_no = 0
         
     def step(self):
@@ -43,19 +61,18 @@ CA Simulation engine
     def _apply(self,state:State):
 
         # initialize new state as zero cells
-        new_state = np.full_like(state._data, ZERO_CELL)
+        new_state = np.full_like(state.data, ZERO_CELL)
 
 
         # get neighbors from geometry
-        neighbors_matrix = state.geometry.generate_neighbourhood_matrix().tocsr()
-        flattened = state._data.flatten()
+        # neighbors_matrix = state.geometry.generate_neighbourhood_matrix().tocsr()
+        flattened = state.data.flatten()
 
 
         # iterate over all the cells in the state matrix
         #TODO: split among threads
         for cell in range(len(flattened)): 
-            neighbour_idx = neighbors_matrix.getrow(cell).indices
-            neighbors = flattened[neighbour_idx]
+            neighbors = self._select_neighbors(self._dim1_to_dim3_coords(cell,self.state.shape))
             this_cell = flattened[cell]
             final_cell_state = ZERO_CELL
             for rule in self.rules:
@@ -64,10 +81,19 @@ CA Simulation engine
             x,y,z = self._dim1_to_dim3_coords(cell,state.shape)
             new_state[x, y, z] = final_cell_state
         
-        state._data = new_state
+        # thru setter implementation this will set the new values correctly and update the padding
+        state.data = new_state
     
     def _dim1_to_dim3_coords(self,dim1_coord,state_shape):
         """converts 1D coordinate to 3D coordinate, given the shape of the state matrix"""
         return (dim1_coord%state_shape[0],
                 dim1_coord//state_shape[0] %state_shape[1],
                 dim1_coord//(state_shape[0]*state_shape[1]))
+        
+    def _select_neighbors(self,location):
+    
+        lx,ly,lz = location
+        
+        selection = self.state._data[lx:lx+3,ly:ly+3,lz:lz+3] * self.mask
+        
+        return selection.flatten()
