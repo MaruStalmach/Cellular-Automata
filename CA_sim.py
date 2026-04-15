@@ -22,7 +22,7 @@ import threading
 if __name__=='__main__':
     #TODO parse args
 
-    size = (10, 10, 10)
+    size = (5, 5, 5)
     axes = 'xyz'
     p = ''
     geometry = Geometry(size, axes, p)
@@ -46,13 +46,14 @@ if __name__=='__main__':
         
         # Convert CA state to numpy array for rendering
         # Assuming the CA state is stored in ca_sim.grid or similar
-        # This will need to be adjusted based on your actual data structure
+        # This will need to be adjusted based on your actual data structures
         try:
-            cell_array = np.array([cell['alive'] for cell in ca_sim.state.data])
+            cell_array = np.array([cell['alive'] for cell in ca_sim.state.data.flatten()])
             cell_array = cell_array.reshape(size)
             return cell_array
         except:
             # Fallback if structure is different
+            print('update_callback fallback triggered')
             return None
     
     # Run renderer with CA updates

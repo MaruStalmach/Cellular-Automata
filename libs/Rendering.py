@@ -57,10 +57,10 @@ class Camera:
             movement -= right * self.speed
         
         # Vertical movement
-        if self.keys['E']:
-            movement += self.up * self.speed
         if self.keys['Q']:
-            movement -= self.up * self.speed
+            movement += up * self.speed
+        if self.keys['E']:
+            movement -= up * self.speed
         
         self.position += movement
         # self.target += movement
@@ -96,6 +96,8 @@ class CARenderer:
         glClearColor(0.1, 0.1, 0.1, 1.0)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glCullFace(GL_BACK)
         
         # Lighting
@@ -117,12 +119,17 @@ class CARenderer:
         
         # Setup keyboard callback
         glfw.set_key_callback(self.window, self._key_callback)
+
+        self.p_press = False
     
     def _key_callback(self, window, key, scancode, action, mods):
         """Handle keyboard input"""
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
             self.running = False
             return
+        
+        if key == glfw.KEY_P and action == glfw.PRESS:
+            self.p_press = True
         
         # Map GLFW keys to camera keys
         key_map = {
@@ -238,6 +245,11 @@ class CARenderer:
                   target[0], target[1], target[2],
                   up[0], up[1], up[2])
         
+
+        # Draw origin marker (small red cube)
+        glColor3f(1.0, 0.0, 0.0)
+        self.draw_cube(0, 0, 0, 0.2)
+        
         # Draw CA cells
         if self.ca_state is not None:
             glColor4f(0.3, 0.8, 0.3, 0.5)  # Green for alive cells
@@ -250,9 +262,7 @@ class CARenderer:
                 z = (k - self.ca_state.shape[2] / 2) * self.cell_size
                 self.draw_cube(x, y, z, self.cell_size * 0.95)
         
-        # Draw origin marker (small red cube)
-        glColor3f(1.0, 0.0, 0.0)
-        self.draw_cube(0, 0, 0, 0.2)
+        
         
         glfw.swap_buffers(self.window)
     
@@ -266,7 +276,10 @@ class CARenderer:
         while self.running and not glfw.window_should_close(self.window):
             # Update CA state if callback provided
             if update_callback:
-                new_state = update_callback()
+                new_state = None
+                if self.p_press:
+                    new_state = update_callback()
+                    self.p_press = False
                 if new_state is not None:
                     self.set_ca_state(new_state)
             
@@ -282,9 +295,7 @@ if __name__ == "__main__":
     
     # Example: Create a simple 3D pattern
     # Shape: (depth, height, width)
-    example_state = np.zeros((10, 10, 10), dtype=bool)
-    example_state[5, 5, 5] = True  # Center cell
-    example_state[4:7, 4:7, 4:7] = True  # Small cube region
+    example_state = np.random.choice(a=[0,1],p=[0.8,0.2],size = (10,10,10))#np.random.randint(low=2,size=(10,10,10))
     renderer.set_ca_state(example_state)
     
     # Run without update (static display)
