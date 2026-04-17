@@ -279,6 +279,7 @@ class CARenderer:
                 new_state = None
                 if self.p_press:
                     new_state = update_callback()
+                    print(new_state)
                     self.p_press = False
                 if new_state is not None:
                     self.set_ca_state(new_state)

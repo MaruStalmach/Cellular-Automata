@@ -124,13 +124,18 @@ collection of cells, arranged in a 2D or 3D matrix
     random - whether or not to fill cells with random values
     cell_keys - keys to use for cell clreation
         """
-        
+        # breakpoint()
         self.geometry = geometry
         
         if not random:
             self._data = np.full(geometry.size,ZERO_CELL)
         else:
-            self._data = np.full(geometry.size, Cell(cell_keys,random_func=np.random.randint, random_args = {'low':2}))
+            self._data = np.full(geometry.size,ZERO_CELL)
+            self._data = self._data.flatten()
+            for i,_ in enumerate(self._data):
+                self._data[i] = Cell(keys=cell_keys,random=True,random_func=np.random.randint,random_args={'low':2})
+
+            self._data = self._data.reshape(geometry.size)
             
         # add padding
         self._data = np.pad(self._data,((1,1),(1,1),(1,1)),constant_values=ZERO_CELL)

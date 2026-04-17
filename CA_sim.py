@@ -22,9 +22,9 @@ import threading
 if __name__=='__main__':
     #TODO parse args
 
-    size = (5, 5, 5)
+    size = (20, 20, 20)
     axes = 'xyz'
-    p = 'xy'
+    p = ''
     geometry = Geometry(size,axes,p)
 
     rules = [GameOfLife3D(geometry)]
@@ -40,8 +40,6 @@ if __name__=='__main__':
     def update_callback():
         """Called each frame to get the latest CA state"""
         if sim_state['running'] and sim_state['step_count'] < sim_state['max_steps']:
-            ca_sim.step()
-            sim_state['step_count'] += 1
             print(f"Step {sim_state['step_count']}/{sim_state['max_steps']}")
         
         # Convert CA state to numpy array for rendering
@@ -50,11 +48,13 @@ if __name__=='__main__':
         try:
             cell_array = np.array([cell['alive'] for cell in ca_sim.state.data.flatten()])
             cell_array = cell_array.reshape(size)
-            return cell_array
         except:
-            # Fallback if structure is different
             print('update_callback fallback triggered')
-            return None
+            cell_array = None
+
+        ca_sim.step()
+        sim_state['step_count'] += 1
+        return cell_array
     
     # Run renderer with CA updates
     try:
