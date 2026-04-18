@@ -22,6 +22,10 @@ class Cell():
     random_args - optional dict of arguments for random_func 
         """
         #TODO: allow configurable initialization
+
+        self.random = random
+        self.random_func = random_func
+        self.random_args = random_args
         
         if not keys:
             self.is_zero_cell = True
@@ -102,6 +106,17 @@ class Cell():
             raise(TypeError)
         
         self._data[key] = value
+
+    def __repr__(self):
+        out = f'Cells.Cell(keys={self.keys}, random={self.random}, func={self.random_func}, args = {self.random_args})'
+        return out
+
+    def __str__(self):
+        if self.is_zero_cell:
+            out = 'Zero Cell'
+        else:
+            out = f'Cell with data: {self.data}'
+        
 
 
         
