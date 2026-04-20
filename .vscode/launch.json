@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Sim start",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/CA_sim.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
