@@ -72,6 +72,7 @@ CA Simulation engine
         # iterate over all the cells in the state matrix
         #TODO: split among threads
         for cell in range(len(flattened)): 
+            # breakpoint()
             neighbors = self._select_neighbors(self._dim1_to_dim3_coords(cell,self.state.shape))
             this_cell = flattened[cell]
             final_cell_state = ZERO_CELL
@@ -79,21 +80,23 @@ CA Simulation engine
                 this_cell = rule.apply(neighbors, this_cell)
                 final_cell_state +=  this_cell
             x,y,z = self._dim1_to_dim3_coords(cell,state.shape)
-            new_state[x, y, z] = final_cell_state
+            new_state[x,y,z] = final_cell_state
         
         # thru setter implementation this will set the new values correctly and update the padding
         state.data = new_state
     
     def _dim1_to_dim3_coords(self,dim1_coord,state_shape):
         """converts 1D coordinate to 3D coordinate, given the shape of the state matrix"""
-        return (dim1_coord%state_shape[0],
-                dim1_coord//state_shape[0] %state_shape[1],
-                dim1_coord//(state_shape[0]*state_shape[1]))
+        return (dim1_coord//(state_shape[2]*state_shape[1]),
+                dim1_coord//state_shape[2] %state_shape[1],
+                dim1_coord%state_shape[2])
         
     def _select_neighbors(self,location):
     
         lx,ly,lz = location
         
+        # breakpoint()
         selection = self.state._data[lx:lx+3,ly:ly+3,lz:lz+3] * self.mask
+        
         
         return selection.flatten()

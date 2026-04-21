@@ -257,9 +257,9 @@ class CARenderer:
             indices = np.where(self.ca_state)
             for i, j, k in zip(indices[0], indices[1], indices[2]):
                 # Center around origin
-                x = (i - self.ca_state.shape[0] / 2) * self.cell_size
+                x = (k - self.ca_state.shape[0] / 2) * self.cell_size
                 y = (j - self.ca_state.shape[1] / 2) * self.cell_size
-                z = (k - self.ca_state.shape[2] / 2) * self.cell_size
+                z = (i - self.ca_state.shape[2] / 2) * self.cell_size
                 self.draw_cube(x, y, z, self.cell_size * 0.95)
         
         

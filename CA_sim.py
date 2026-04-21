@@ -22,7 +22,7 @@ import threading
 if __name__=='__main__':
     #TODO parse args
 
-    size = (20, 20, 20)
+    size = (20,20,20)
     axes = 'xyz'
     p = ''
     geometry = Geometry(size,axes,p)
@@ -33,12 +33,25 @@ if __name__=='__main__':
 
     # Initialize renderer
     renderer = CARenderer(width=1200, height=800)
+
+    try:
+        cell_array = np.array([cell['alive'] for cell in ca_sim.state.data.flatten()])
+        cell_array = cell_array.reshape(size)
+    except:
+        print('update_callback fallback triggered')
+        cell_array = None
+
+    renderer.set_ca_state(cell_array)
+    print(cell_array)
+    renderer.render()
     
     # Store simulation state
     sim_state = {'running': True, 'step_count': 0, 'max_steps': 100}
     
     def update_callback():
         """Called each frame to get the latest CA state"""
+        ca_sim.step()
+        sim_state['step_count'] += 1
         if sim_state['running'] and sim_state['step_count'] < sim_state['max_steps']:
             print(f"Step {sim_state['step_count']}/{sim_state['max_steps']}")
         
@@ -52,8 +65,6 @@ if __name__=='__main__':
             print('update_callback fallback triggered')
             cell_array = None
 
-        ca_sim.step()
-        sim_state['step_count'] += 1
         return cell_array
     
     # Run renderer with CA updates

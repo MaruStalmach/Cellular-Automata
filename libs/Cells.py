@@ -109,6 +109,8 @@ class Cell():
 
     def __repr__(self):
         out = f'Cells.Cell(keys={self.keys}, random={self.random}, func={self.random_func}, args = {self.random_args})'
+        if not self.is_zero_cell:
+            out += f'\ndata={self.data}'
         return out
 
     def __str__(self):
@@ -154,6 +156,7 @@ collection of cells, arranged in a 2D or 3D matrix
             
         # add padding
         self._data = np.pad(self._data,((1,1),(1,1),(1,1)),constant_values=ZERO_CELL)
+        self._update_padding()
         
     @property
     def data(self):
@@ -164,32 +167,43 @@ collection of cells, arranged in a 2D or 3D matrix
     def data(self,val : np.ndarray):
         # val must be an appropriate ndarray
         self._data[1:-1,1:-1,1:-1] = val
+
+        self._update_padding()
+        
+    
+    @property
+    def shape(self):
+        #shape of unpadded data
+        return self.data.shape
+    
+    def _update_padding(self):
         # update padding
         x_p=False
         y_p=False
         z_p=False
-        if 'x' in self.geometry.periodicity:
-            x_p=True
+        if 'z' in self.geometry.periodicity:
+            z_p=True
             self._data[0,:,:] = self._data[-2,:,:]
             self._data[-1,:,:] = self._data[1,:,:]
         if 'y' in self.geometry.periodicity:
             y_p=True
             self._data[:,0,:] = self._data[:,-2,:]
             self._data[:,-1,:] = self._data[:,1,:]
-        if 'z' in self.geometry.periodicity:
-            z_p=True
+        if 'x' in self.geometry.periodicity:
+            x_p=True
             self._data[:,:,0] = self._data[:,:,-2]
             self._data[:,:,-1] = self._data[:,:,1]
             
-        if x_p and y_p:
+        if z_p and y_p:
             self._data[0,0,:] = self._data[-2,-2,:]
             self._data[-1,-1,:] = self._data[1,1,:]
             self._data[0,-1,:] = self._data[-2,1,:]
             self._data[-1,0,:] = self._data[1,-2,:]
-    
-    @property
-    def shape(self):
-        #shape of unpadded data
-        return self.data.shape
+
+        if x_p and y_p:
+            self._data[:,0,0] = self._data[:,-2,-2]
+            self._data[:,-1,-1] = self._data[:,1,1]
+            self._data[:,-1,0] = self._data[:,1,-2]
+            self._data[:,0,-1] = self._data[:,-2,1]
         
 
