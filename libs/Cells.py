@@ -100,6 +100,13 @@ class Cell():
             raise(TypeError)
         
         self._data[key] = value
+        
+    @staticmethod
+    def from_dict(self, dict : dict):
+        cell = Cell(keys=list(dict.keys()),random=False)
+        for key,val in dict.items():
+            cell['key'] = val
+        return cell
 
 
         
