@@ -40,8 +40,8 @@ class GameOfLife3D(Rule):
     def __init__(self, geometry):
         super().__init__(geometry)
         self.required_keys.extend(['alive'])
-        self.eb = 4
-        self.eh = 5
+        self.eb = 5
+        self.eh = 6
         self.fb = 5
         self.fh = 5
 
