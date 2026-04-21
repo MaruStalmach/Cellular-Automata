@@ -40,7 +40,8 @@ if __name__=='__main__':
     def update_callback():
         """Called each frame to get the latest CA state"""
         if sim_state['running'] and sim_state['step_count'] < sim_state['max_steps']:
-            ca_sim.step()
+            if sim_state['step_count']>0:
+                ca_sim.step()
             sim_state['step_count'] += 1
             print(f"Step {sim_state['step_count']}/{sim_state['max_steps']}")
         
