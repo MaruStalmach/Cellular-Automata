@@ -41,9 +41,9 @@ class GameOfLife3D(Rule):
         super().__init__(geometry)
         self.required_keys.extend(['alive'])
         self.eb = 5
-        self.eh = 6
-        self.fb = 5
-        self.fh = 5
+        self.eh = 7
+        self.fb = 6
+        self.fh = 6
 
     def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
         alive_neighbors = [n_cell['alive'] for n_cell in neighbors] #zero cell handled in Cell.__setitem__

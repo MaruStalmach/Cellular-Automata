@@ -24,7 +24,7 @@ if __name__=='__main__':
 
     size = (10, 10, 10)
     axes = 'xyz'
-    p = 'yz'
+    p = 'xyz'
     geometry = Geometry(size,axes,p)
 
     rules = [GameOfLife3D(geometry)]
@@ -32,11 +32,41 @@ if __name__=='__main__':
     ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
 
     # Initialize renderer
-    renderer = CARenderer(width=1200, height=800)
+    renderer = CARenderer(width=1200, height=800, make_gif=True)
     
     # Store simulation state
     sim_state = {'running': True, 'step_count': 0, 'max_steps': 500}
     
+    
+    init_state = np.zeros(size)
+    init_state[2:4,1:4,1:4] = np.array([[
+            [0,1,0],
+            [0,0,1],
+            [1,1,1]
+        ],
+        [
+            [0,1,0],
+            [0,0,1],
+            [1,1,1]
+        ]])
+    
+    def gol_state_from_array(array : np.ndarray):
+        assert(array.shape==size)
+        state = np.empty(size, dtype=object)
+        d_a = {'alive':1}
+        d_d = {'alive':0}
+        state = state.flatten()
+        for i,val in enumerate(array.flatten()):
+            if val == 1:
+                state[i] = Cell.from_dict(d_a)
+            else:
+                state[i] = Cell.from_dict(d_d)
+        state = state.reshape(size)
+        return state
+    
+    init_state = gol_state_from_array(init_state)
+    # breakpoint()
+    ca_sim.state.data = init_state
                 
     
     def update_callback():

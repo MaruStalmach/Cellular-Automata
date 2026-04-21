@@ -3,6 +3,7 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import math
+import imageio
 
 
 class Camera:
@@ -73,9 +74,12 @@ class Camera:
 class CARenderer:
     """Renders 3D cellular automaton"""
     
-    def __init__(self, width=1000, height=600):
+    def __init__(self, width=1000, height=600, make_gif=False):
         self.width = width
         self.height = height
+        
+        self.make_gif=make_gif
+        self.frames=[]
         
         if not glfw.init():
             raise Exception("GLFW initialization failed")
@@ -121,6 +125,7 @@ class CARenderer:
         glfw.set_key_callback(self.window, self._key_callback)
 
         self.p_press = False
+        self.o_press = False
     
     def _key_callback(self, window, key, scancode, action, mods):
         """Handle keyboard input"""
@@ -130,6 +135,10 @@ class CARenderer:
         
         if key == glfw.KEY_P and action == glfw.PRESS:
             self.p_press = True
+        
+        if self.make_gif:    
+            if key == glfw.KEY_O and action == glfw.PRESS:
+                imageio.mimwrite('out.gif',self.frames)
         
         # Map GLFW keys to camera keys
         key_map = {
@@ -278,6 +287,13 @@ class CARenderer:
             if update_callback:
                 new_state = None
                 if self.p_press:
+                    if self.make_gif:
+                        glPixelStorei(GL_PACK_ALIGNMENT, 1)
+                        data = glReadPixels(0,0,self.width,self.height,GL_RGB,GL_UNSIGNED_BYTE)
+                        img = np.frombuffer(data,dtype=np.uint8)
+                        img = img.reshape(self.height,self.width,3)
+                        img = np.flipud(img)
+                        self.frames.append(img)
                     new_state = update_callback()
                     self.p_press = False
                 if new_state is not None:
