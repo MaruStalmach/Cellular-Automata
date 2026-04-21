@@ -195,6 +195,18 @@ class State():
             self._data[-1,-1,:] = self._data[1,1,:]
             self._data[0,-1,:] = self._data[-2,1,:]
             self._data[-1,0,:] = self._data[1,-2,:]
+            
+        if z_p and y_p:
+            self._data[:,0,0] = self._data[:,-2,-2]
+            self._data[:,-1,-1] = self._data[:,1,1]
+            self._data[:,-1,0] = self._data[:,1,-2]
+            self._data[:,0,-1] = self._data[:,-2,1]
+            
+        if x_p and z_p:
+            self._data[0,:,0] = self._data[-2,:,-2]
+            self._data[-1,:,-1] = self._data[1,:,1]
+            self._data[0,:,-1] = self._data[-2,:,1]
+            self._data[-1,:,0] = self._data[1,:,-2]
     
     @property
     def shape(self):
