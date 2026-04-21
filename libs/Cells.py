@@ -102,10 +102,10 @@ class Cell():
         self._data[key] = value
         
     @staticmethod
-    def from_dict(self, dict : dict):
+    def from_dict(dict : dict):
         cell = Cell(keys=list(dict.keys()),random=False)
         for key,val in dict.items():
-            cell['key'] = val
+            cell[key] = val
         return cell
 
 
