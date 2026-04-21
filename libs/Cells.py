@@ -4,8 +4,6 @@ from copy import copy
 
 
 
-
-
 #TODO implement
 class Cell():
     """represents a singular cell
@@ -47,8 +45,8 @@ class Cell():
     def data(self, new_data: dict):
         if self._data.keys() != new_data.keys():
             raise(TypeError)
-        self = Cell(self.keys,random=False)
-        self._data = new_data
+        
+        self._data = new_data.copy()
         
     def __copy__(self):
         a = Cell(self.keys,random=False)
@@ -107,12 +105,12 @@ class Cell():
         
         
 ZERO_CELL = Cell(keys=[])
+
+
         
 #TODO implement       
 class State():
-    """
-collection of cells, arranged in a 2D or 3D matrix
-    """
+    """Collection of cells, arranged in a 2D or 3D matrix"""
     
     def __init__(self, geometry: Geometry, random=True, cell_keys = []):
         """
@@ -126,16 +124,19 @@ collection of cells, arranged in a 2D or 3D matrix
         """
         
         self.geometry = geometry
+        cell_num = np.prod(geometry.size)
         
-        if not random:
-            self._data = np.full(geometry.size,ZERO_CELL)
-        else:
-            self._data = np.full(geometry.size,ZERO_CELL)
-            self._data = self._data.flatten()
-            for i,_ in enumerate(self._data):
-                self._data[i] = Cell(keys=cell_keys,random=True,random_func=np.random.randint,random_args={'low':2})
+        self._data = np.empty(cell_num, dtype=object)
 
-            self._data = self._data.reshape(geometry.size)
+        if not random:
+            for i in range(cell_num):
+                self._data[i] = Cell(keys=cell_keys,random=False) 
+        else:
+            for i in range(cell_num):
+                self._data[i] = Cell(keys=cell_keys, random=True, random_func=np.random.randint, random_args={'low': 2})
+        
+        
+        self._data = self._data.reshape(geometry.size)
             
         # add padding
         self._data = np.pad(self._data,((1,1),(1,1),(1,1)),constant_values=ZERO_CELL)

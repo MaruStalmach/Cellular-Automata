@@ -3,6 +3,8 @@ from scipy.sparse import csr_matrix
 from itertools import product
 
 class Geometry():
+    '''A class to represent the geometry of a CA grid. 
+    Contains limits and periodicity information'''
     
     def __init__(
         self, 

@@ -10,8 +10,8 @@ class Rule():
         self.state_geometry = geometry
         self.required_keys = []
     
-    def apply(self,state: State):
-        pass
+    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
+        return cell
     
     def neighbors_matrix(self):
         return self.state_geometry.generate_neighbourhood_matrix()
@@ -25,11 +25,11 @@ class Rule():
 #TODO implement
 class TestRule(Rule):
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, geometry: Geometry):
+        super().__init__(geometry)
         
-    def apply(self, state: State):
-        pass
+    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
+        return cell
     
 #TODO make more rules
 
@@ -41,15 +41,15 @@ class GameOfLife3D(Rule):
         super().__init__(geometry)
         self.required_keys.extend(['alive'])
 
-    def apply(self, neighbors: np.ndarray[Cell], cell: Cell):
+    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
         alive_neighbors = [n_cell['alive'] for n_cell in neighbors] #zero cell handled in Cell.__setitem__
         alive_sum = np.sum(alive_neighbors)
 
         if cell['alive']==1:
-            if alive_sum<5 or alive_sum>7:
+            if alive_sum<4 or alive_sum>5:
                 cell['alive'] = 0
         else:
-            if alive_sum == 5:
+            if alive_sum == 4 or alive_sum == 5:
                 cell['alive'] = 1
 
         return cell
