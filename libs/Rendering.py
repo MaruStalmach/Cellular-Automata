@@ -138,7 +138,7 @@ class CARenderer:
         
         if self.make_gif:    
             if key == glfw.KEY_O and action == glfw.PRESS:
-                imageio.mimwrite('out.gif',self.frames)
+                imageio.mimwrite('gifs/out.gif',self.frames[1:],loop=0,duration=0.2)
         
         # Map GLFW keys to camera keys
         key_map = {
