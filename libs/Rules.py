@@ -40,16 +40,23 @@ class GameOfLife3D(Rule):
     def __init__(self, geometry):
         super().__init__(geometry)
         self.required_keys.extend(['alive'])
+        self.eb = 4
+        self.eh = 5
+        self.fb = 5
+        self.fh = 5
 
     def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
         alive_neighbors = [n_cell['alive'] for n_cell in neighbors] #zero cell handled in Cell.__setitem__
         alive_sum = np.sum(alive_neighbors)
 
         if cell['alive']==1:
-            if alive_sum<4 or alive_sum>5:
+            if alive_sum<self.eb or alive_sum>self.eh:
                 cell['alive'] = 0
         else:
-            if alive_sum == 4 or alive_sum == 5:
+            if alive_sum>=self.fb and alive_sum<=self.fh:
                 cell['alive'] = 1
 
         return cell
+    
+    
+    
