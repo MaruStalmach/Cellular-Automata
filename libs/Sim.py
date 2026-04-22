@@ -101,5 +101,5 @@ CA Simulation engine
         
     def _select_neighbors(self,cell_idx_1d:int, flattened_state: np.ndarray):
         """select neighbors of a cell given its location in the state matrix"""
-        neighbors_idx = self._neighbours_idx[cell_idx_1d]
-        return [flattened_state[idx] for idx in neighbors_idx]
+        neighbours_idx = self._neighbours_idx[cell_idx_1d]
+        return [flattened_state[idx] for idx in neighbours_idx]
