@@ -184,7 +184,14 @@ class State():
     @property
     def data(self):
         #remove padding
-        return self._data[1:-1,1:-1,1:-1]
+        # return self._data[1:-1,1:-1,1:-1]
+        unpad = []
+        for _ in range(self.geometry.ndim):
+            unpad.append(slice(1,-1))
+        
+        unpad = tuple(unpad)
+
+        return self._data[unpad]
     
     @data.setter
     def data(self,val : np.ndarray):
