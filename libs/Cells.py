@@ -162,51 +162,40 @@ class State():
         self._data = self._data.reshape(geometry.size)
             
         # add padding
-        self._data = np.pad(self._data,((1,1),(1,1),(1,1)),constant_values=ZERO_CELL)
+        # self._data = np.pad(self._data,((1,1),(1,1),(1,1)),constant_values=ZERO_CELL)
+        self._data = self._pad_data(self._data)
         
+    def _pad_data(self, unpadded_data:np.ndarray) -> np.ndarray:
+        padded = unpadded_data
+
+        for axis, axis_name in enumerate(self.geometry.axes):
+            pwidth = [(0,0)] * self.geometry.ndim
+            pwidth[axis] = (1,1)
+
+            if axis_name in self.geometry.periodicity:
+                padded = np.pad(padded, pad_width=pwidth, mode='wrap')
+            else:
+                padded = np.pad(padded, pad_width=pwidth, mode='constant', constant_values=ZERO_CELL)
+
+
+        return padded
+    
+
     @property
     def data(self):
         #remove padding
-        return self._data[1:-1,1:-1,1:-1]
+        # return self._data[1:-1,1:-1,1:-1]
+        unpad = []
+        for _ in range(self.geometry.ndim):
+            unpad.append(slice(1,-1))
+        
+        unpad = tuple(unpad)
+
+        return self._data[unpad]
     
     @data.setter
     def data(self,val : np.ndarray):
-        # val must be an appropriate ndarray
-        self._data[1:-1,1:-1,1:-1] = val
-        # update padding
-        x_p=False
-        y_p=False
-        z_p=False
-        if 'x' in self.geometry.periodicity:
-            x_p=True
-            self._data[0,:,:] = self._data[-2,:,:]
-            self._data[-1,:,:] = self._data[1,:,:]
-        if 'y' in self.geometry.periodicity:
-            y_p=True
-            self._data[:,0,:] = self._data[:,-2,:]
-            self._data[:,-1,:] = self._data[:,1,:]
-        if 'z' in self.geometry.periodicity:
-            z_p=True
-            self._data[:,:,0] = self._data[:,:,-2]
-            self._data[:,:,-1] = self._data[:,:,1]
-            
-        if x_p and y_p:
-            self._data[0,0,:] = self._data[-2,-2,:]
-            self._data[-1,-1,:] = self._data[1,1,:]
-            self._data[0,-1,:] = self._data[-2,1,:]
-            self._data[-1,0,:] = self._data[1,-2,:]
-            
-        if z_p and y_p:
-            self._data[:,0,0] = self._data[:,-2,-2]
-            self._data[:,-1,-1] = self._data[:,1,1]
-            self._data[:,-1,0] = self._data[:,1,-2]
-            self._data[:,0,-1] = self._data[:,-2,1]
-            
-        if x_p and z_p:
-            self._data[0,:,0] = self._data[-2,:,-2]
-            self._data[-1,:,-1] = self._data[1,:,1]
-            self._data[0,:,-1] = self._data[-2,:,1]
-            self._data[-1,:,0] = self._data[1,:,-2]
+        self._data = self._pad_data(val)
     
     @property
     def shape(self):
