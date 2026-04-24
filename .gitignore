@@ -210,3 +210,4 @@ __marimo__/
 # other
 
 test.py
+.DS_Store
