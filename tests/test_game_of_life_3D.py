@@ -87,3 +87,22 @@ def test_5677_survival_at_upper_bound():
     result = gol.apply(neighbors=make_neighbour(7), cell=cell)
 
     assert result['alive'] == 1
+
+def test_5677_death_below_lower_bound():
+    geometry = Geometry((2,2,2), axes='xy', periodicity='y')
+    gol = GameOfLife3D(geometry=geometry)
+
+    cell = make_cell(1)
+    result = gol.apply(neighbors=make_neighbour(4), cell=cell)
+
+    assert result['alive'] == 0
+
+def test_5677_death_above_upper_bound():
+    geometry = Geometry((2,2,2), axes='xy', periodicity='y')
+    gol = GameOfLife3D(geometry=geometry)
+
+    cell = make_cell(1)
+    result = gol.apply(neighbors=make_neighbour(8), cell=cell)
+
+    assert result['alive'] == 0
+
