@@ -109,7 +109,7 @@ def test_5677_death_above_upper_bound():
     assert result['alive'] == 0
 
 
-def test_5677_no_birth_above_fertility():
+def test_5677_no_birth_below_fertility():
     '''dead cells with fb-1 neighbours stay dead'''
     geometry = Geometry((2,2,2), axes='xy', periodicity='y')
     gol = GameOfLife3D(geometry=geometry)
@@ -119,3 +119,32 @@ def test_5677_no_birth_above_fertility():
 
     assert result['alive'] == 0
 
+def test_5677_no_birth_above_fertility():
+    '''dead cell with fh+1 neighbbours stays dead'''
+    geometry = Geometry((2,2,2), axes='xy', periodicity='y')
+    gol = GameOfLife3D(geometry=geometry)
+
+    cell = make_cell(0)
+    result = gol.apply(neighbors=make_neighbour(7), cell=cell)
+
+    assert result['alive'] == 0
+
+def test_5677_no_birth_zero_neighbours():
+    '''dead cell with no neighbours stays dead'''
+    geometry = Geometry((2,2,2), axes='xy', periodicity='y')
+    gol = GameOfLife3D(geometry=geometry)
+
+    cell = make_cell(0)
+    result = gol.apply(neighbors=make_neighbour(0), cell=cell)
+
+    assert result['alive'] == 0
+
+def test_5677_alive_cell_with_zero_neighbour_dies():
+    '''dead cell with no neighbours stays dead'''
+    geometry = Geometry((2,2,2), axes='xy', periodicity='y')
+    gol = GameOfLife3D(geometry=geometry)
+
+    cell = make_cell(1)
+    result = gol.apply(neighbors=make_neighbour(0), cell=cell)
+
+    assert result['alive'] == 0
