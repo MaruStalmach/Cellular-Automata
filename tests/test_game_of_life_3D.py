@@ -89,6 +89,7 @@ def test_5677_survival_at_upper_bound():
     assert result['alive'] == 1
 
 def test_5677_death_below_lower_bound():
+    '''alive cells with eb-1 neieghbours die'''
     geometry = Geometry((2,2,2), axes='xy', periodicity='y')
     gol = GameOfLife3D(geometry=geometry)
 
@@ -98,11 +99,23 @@ def test_5677_death_below_lower_bound():
     assert result['alive'] == 0
 
 def test_5677_death_above_upper_bound():
+    '''alive cells with eh+1 neighbours die'''
     geometry = Geometry((2,2,2), axes='xy', periodicity='y')
     gol = GameOfLife3D(geometry=geometry)
 
     cell = make_cell(1)
     result = gol.apply(neighbors=make_neighbour(8), cell=cell)
+
+    assert result['alive'] == 0
+
+
+def test_5677_no_birth_above_fertility():
+    '''dead cells with fb-1 neighbours stay dead'''
+    geometry = Geometry((2,2,2), axes='xy', periodicity='y')
+    gol = GameOfLife3D(geometry=geometry)
+
+    cell = make_cell(0)
+    result = gol.apply(neighbors=make_neighbour(5), cell=cell)
 
     assert result['alive'] == 0
 
