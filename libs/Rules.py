@@ -37,13 +37,13 @@ class GameOfLife3D(Rule):
     """
     test rule that implements game of life in 3D"""
     
-    def __init__(self, geometry):
+    def __init__(self, geometry, eb=5, eh=7, fb=6, fh=6):
         super().__init__(geometry)
         self.required_keys.extend(['alive'])
-        self.eb = 5
-        self.eh = 7
-        self.fb = 6
-        self.fh = 6
+        self.eb = eb
+        self.eh = eh
+        self.fb = fb
+        self.fh = fh
 
     def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
         alive_neighbors = [n_cell['alive'] for n_cell in neighbors] #zero cell handled in Cell.__setitem__
