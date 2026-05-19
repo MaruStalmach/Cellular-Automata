@@ -84,7 +84,7 @@ class Cell():
         
         if other==0:
             return ZERO_CELL
-        if other==1:
+        else:
             return self
     
     def __getitem__(self, key):
