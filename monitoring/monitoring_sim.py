@@ -2,6 +2,9 @@ import psutil, shlex, subprocess
 import logging
 import time
 import os
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,6 +28,7 @@ MEM_UNITS = [
 def monitor_application(pid, interval=5, duration = 10):
     """Monitor a Python process and log its resource usage."""
     process = psutil.Process(pid)
+    bytes=[]
     start = time.time()
     while (time.time() - start) < duration:
         try:
@@ -34,6 +38,7 @@ def monitor_application(pid, interval=5, duration = 10):
             
             unit=0
             mem = memory_info.rss
+            bytes.append(mem)
             while mem > 1024:
                 mem = mem/1024
                 unit+=1
@@ -50,20 +55,25 @@ def monitor_application(pid, interval=5, duration = 10):
             break
     print('KILLING PROCESS WITH PID =', pid)
     process.kill()
+    return max(bytes)
 
 # Example usage: monitor_application(your_app_pid)
 
 if __name__=='__main__':
     
     sizes = [
-        (1,1,1),
         (10,10,10),
-        (100,100,15),
+        (100,10,10),
+        (100,100,10),
         (100,100,100),
-        (1000,1000,100)
+        (1000,100,100),
+        (1000,1000,100),
+        (1000,1000,1000)
     ]
     
-    for size in [sizes[0]]:
+    mem_usage = []
+    
+    for size in sizes:
     
         command = f'python -m sim_no_render -x {size[0]} -y {size[1]} -z {size[2]}'
         args = shlex.split(command)
@@ -72,4 +82,9 @@ if __name__=='__main__':
         subproc = subprocess.Popen(args)
         print('process pid =', subproc.pid)
         
-        monitor_application(subproc.pid, interval=3,duration=30)
+        mu = monitor_application(subproc.pid, interval=3,duration=30)
+        mem_usage.append(mu)
+        
+    #plot
+    plt.plot([np.prod(size) for size in sizes],mem_usage)
+    plt.show()
