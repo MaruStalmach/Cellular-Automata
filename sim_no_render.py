@@ -20,6 +20,7 @@ def main():
     parser.add_argument('-x','--xsize')
     parser.add_argument('-y','--ysize')
     parser.add_argument('-z','--zsize')
+    parser.add_argument('-s','--max_steps',default=None)
     
     args = parser.parse_args()
 
@@ -32,11 +33,15 @@ def main():
 
     ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
 
-    start = time()
+    if args.max_steps:
+        max_steps = int(args.max_steps)
+    else:
+        max_steps=0
     while True:
-        end = time()
         # print(f'step {ca_sim.step_no}, time since start = {end-start}s, avg time per step = {(end-start)/(ca_sim.step_no+1e-3)}s')
         ca_sim.step()
+        if max_steps > 0 and ca_sim.step_no>max_steps:
+            break
 
 
 
