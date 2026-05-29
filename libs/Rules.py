@@ -31,8 +31,10 @@ class TestRule(Rule):
         
     def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
         return cell
-    
-#TODO make more rules
+
+
+
+
 
 class GameOfLife3D(Rule):
     """
@@ -70,11 +72,12 @@ class BiofilmDetachment(Rule):
         super().__init__(geometry=geometry)
         self.detachment_probability = detachment_rate * scaling #the bacteria closer to wall is less likely to detach
 
+        #TODO: required keys
 
-    def would_detach(self, cell: Cell, coord_z: float | None = None) -> bool:
-        if coord_z is None:
-            coord_z = cell['coord_z'] if 'coord_z' in cell.keys else 0
-
+    def would_detach(self, cell: Cell) -> bool:
+        if cell.coords is not None:
+            coord_z = cell.coords[-1]
+ 
         distance_sq = coord_z ** 2
         probability = min(self.detachment_probability * distance_sq, 1.0)
         
@@ -96,15 +99,14 @@ class GutDrift(Rule):
     def __init__(self, geometry, drift_speed: float, detachment_rule: BiofilmDetachment | None = None):
         super().__init__(geometry=geometry)
 
-        assert self.geometry.ndim == 3 # only pushes along z-axis if there are 3 axis present
-        assert 'z' in self.geometry.periodicity # only pushes along z-axis if z axis is present
-        
-        # self.required_keys.extend(['population', 'biofilm_population', 'coord_z', 'distance_to_wall']) #TODO: determine if we need population AND biofilm population
+        #TODO: required keys
 
+        assert self.geometry.ndim == 3 # only pushes along z-axis if there are 3 axis present
+        
         self.drift_speed = drift_speed
         self.detachment_rule = detachment_rule
     
-    def _is_valid_for_drift(self, cell:Cell) -> bool:
+    def _is_valid_for_drift(self, cell:Cell) -> bool | None:
         if self.detachment_rule is not None:
             if self.detachment_rule.would_detach(cell):
                 return True
@@ -112,6 +114,6 @@ class GutDrift(Rule):
 
     def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
         #change cell coords here
-        
+    
         return cell
         

@@ -9,7 +9,7 @@ class Cell():
     """represents a singular cell
     """
     
-    def __init__(self, keys, random : bool = True, random_func : callable = None, random_args : dict = None):
+    def __init__(self, keys, random : bool = True, random_func : callable = None, random_args : dict = None, coords = None):
         """
     creates a cell\n
 
@@ -24,6 +24,7 @@ class Cell():
         self.random = random
         self.random_args = random_args
         self.random_func = random_func
+        self.coords = tuple(coords) if coords is not None else None
         
         if not keys:
             self.is_zero_cell = True
@@ -55,6 +56,7 @@ class Cell():
     def __copy__(self):
         a = Cell(self.keys,random=False)
         a.data = self.data
+        a.coords = self.coords
         return a
     
     def __add__(self, other):
