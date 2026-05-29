@@ -7,14 +7,14 @@ import numpy as np
 class Rule():
     
     def __init__(self, geometry: Geometry):
-        self.state_geometry = geometry
+        self.geometry = geometry
         self.required_keys = []
     
     def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
         return cell
     
     def neighbors_matrix(self):
-        return self.state_geometry.generate_neighbourhood_matrix()
+        return self.geometry.generate_neighbourhood_matrix()
     
     
     
@@ -59,4 +59,24 @@ class GameOfLife3D(Rule):
         return cell
     
     
-    
+
+class GutDrift(Rule):
+    '''defines the drift along z-axis in 3D simulations of the human gut'''
+    def __init__(self, geometry, drift_speed: float, detachment_interval: int, base_detachment_rate: float = 0.05, scaling: float = 0.05):
+        super().__init__(geometry=geometry)
+
+        assert self.geometry.ndim == 3 # only pushes along z-axis if there are 3 axis present
+        assert 'z' in self.geometry.periodicity # only pushes along z-axis if z axis is present
+        
+        # self.required_keys.extend(['population', 'biofilm_population', 'coord_z', 'distance_to_wall']) #TODO: determine if we need population AND biofilm population
+
+        self.drift_speed = drift_speed
+        self.detachment_interval = detachment_interval
+
+        self.base_detachment_rate = base_detachment_rate
+        self.scaling = scaling
+        self.curr_step = 0
+
+    def apply(self, neighbours: list[Cell], cell: Cell) -> Cell:
+        pass
+        
