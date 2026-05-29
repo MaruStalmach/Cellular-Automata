@@ -1,6 +1,7 @@
 from libs.Cells import State, Cell
 from libs.Geometry import Geometry
 import numpy as np
+from random import random
 
 
 #TODO implement
@@ -58,11 +59,41 @@ class GameOfLife3D(Rule):
 
         return cell
     
-    
+
+
+
+class BiofilmDetachment(Rule):
+    '''checks how close the cell is to the gut wall and decides whether it should be detached during cell drift
+    the closer the cell is to the center of the gut, the more likely it is to detach
+    '''
+    def __init__(self, geometry, detachment_rate, scaling):
+        super().__init__(geometry=geometry)
+        self.detachment_probability = detachment_rate * scaling #the bacteria closer to wall is less likely to detach
+
+
+    def would_detach(self, cell: Cell, coord_z: float | None = None) -> bool:
+        if coord_z is None:
+            coord_z = cell['coord_z'] if 'coord_z' in cell.keys else 0
+
+        distance_sq = coord_z ** 2
+        probability = min(self.detachment_probability * distance_sq, 1.0)
+        
+        return random() < probability
+
+
+    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
+
+        if self.would_detach(cell):
+            #cell changes state and detaches
+            pass
+
+        return cell
+
+
 
 class GutDrift(Rule):
     '''defines the drift along z-axis in 3D simulations of the human gut'''
-    def __init__(self, geometry, drift_speed: float, detachment_interval: int, base_detachment_rate: float = 0.05, scaling: float = 0.05):
+    def __init__(self, geometry, drift_speed: float, detachment_rule: BiofilmDetachment | None = None):
         super().__init__(geometry=geometry)
 
         assert self.geometry.ndim == 3 # only pushes along z-axis if there are 3 axis present
@@ -71,12 +102,16 @@ class GutDrift(Rule):
         # self.required_keys.extend(['population', 'biofilm_population', 'coord_z', 'distance_to_wall']) #TODO: determine if we need population AND biofilm population
 
         self.drift_speed = drift_speed
-        self.detachment_interval = detachment_interval
+        self.detachment_rule = detachment_rule
+    
+    def _is_valid_for_drift(self, cell:Cell) -> bool:
+        if self.detachment_rule is not None:
+            if self.detachment_rule.would_detach(cell):
+                return True
 
-        self.base_detachment_rate = base_detachment_rate
-        self.scaling = scaling
-        self.curr_step = 0
 
-    def apply(self, neighbours: list[Cell], cell: Cell) -> Cell:
-        pass
+    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
+        #change cell coords here
+        
+        return cell
         
