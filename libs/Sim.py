@@ -82,7 +82,8 @@ CA Simulation engine
             neighbours = self._select_neighbors(cell, flattened)
 
             original_cell = flattened[cell]
-            this_cell = Cell(keys=original_cell.keys,random=False)
+            coords = np.unravel_index(cell, state.shape)
+            this_cell = Cell(keys=original_cell.keys,random=False, coords=coords)
             for key in original_cell.keys:
                 this_cell[key] = original_cell[key]
 

@@ -77,6 +77,8 @@ class BiofilmDetachment(Rule):
     def would_detach(self, cell: Cell) -> bool:
         if cell.coords is not None:
             coord_z = cell.coords[-1]
+        else:
+            coord_z = 0
  
         distance_sq = coord_z ** 2
         probability = min(self.detachment_probability * distance_sq, 1.0)
@@ -96,7 +98,7 @@ class BiofilmDetachment(Rule):
 
 class GutDrift(Rule):
     '''defines the drift along z-axis in 3D simulations of the human gut'''
-    def __init__(self, geometry, drift_speed: float, detachment_rule: BiofilmDetachment | None = None):
+    def __init__(self, geometry, drift_speed: int, detachment_rule: BiofilmDetachment | None = None):
         super().__init__(geometry=geometry)
 
         #TODO: required keys
@@ -111,9 +113,14 @@ class GutDrift(Rule):
             if self.detachment_rule.would_detach(cell):
                 return True
 
+        return False
+
 
     def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
         #change cell coords here
-    
+        if cell.coords is not None:
+            coord_z = cell.coords[-1] - self.drift_speed
+            cell.coords = (*cell.coords[:-1], coord_z)
+
         return cell
         
