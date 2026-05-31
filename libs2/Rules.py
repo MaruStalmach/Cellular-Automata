@@ -5,7 +5,7 @@ from random import random
 import numpy as np
 
 from libs.Geometry import Geometry
-from libs2.Cells import State
+from libs2.State import State
 
 
 class Rule:
@@ -15,13 +15,25 @@ class Rule:
 
     def apply(self, neighbors, cell, coords=None):
         return cell
+    
+    def apply_state(self, state: State) -> State:
+        '''if state is applayed to a whole array, not per cell'''
+        raise NotImplementedError()
 
 
 
 
 
 class GameOfLife3D(Rule):
-    """vectorized 3D Game of Life rule for the array backend"""
+    """vectorized 3DGoL based on arrays
+    
+    args:
+    eb
+    eh
+    fb
+    fh
+    
+    """
 
     def __init__(self, geometry, eb=5, eh=7, fb=6, fh=6):
         super().__init__(geometry)
@@ -58,20 +70,20 @@ class GameOfLife3D(Rule):
         return shifted
 
     def apply_state(self, state: State) -> State:
-        alive_idx = state.key_to_index["alive"]
-        alive_grid = state.data[..., alive_idx].astype(np.int8, copy=False)
+        # Use per-key accessors so reads/writes affect the underlying arrays
+        alive_grid = state['alive'].astype(np.int8, copy=False)
         alive_counts = np.zeros_like(alive_grid, dtype=np.int16)
 
         for offset in self.geometry._offsets:
             alive_counts += self._shift_for_offset(alive_grid, tuple(int(value) for value in offset))
 
-        current_alive = state.data[..., alive_idx] == 1
+        current_alive = state['alive'] == 1
         survives = current_alive & (alive_counts >= self.eb) & (alive_counts <= self.eh)
         born = (~current_alive) & (alive_counts >= self.fb) & (alive_counts <= self.fh)
 
-        updated_alive = np.zeros_like(state.data[..., alive_idx])
+        updated_alive = np.zeros_like(state['alive'])
         updated_alive[survives | born] = 1
-        state.data[..., alive_idx] = updated_alive
+        state['alive'] = updated_alive
         return state
 
 

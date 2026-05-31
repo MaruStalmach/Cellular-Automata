@@ -3,12 +3,17 @@ from __future__ import annotations
 import numpy as np
 
 from libs.Geometry import Geometry
-from libs2.Cells import State
+from libs2.State import State
 from libs2.Rules import Rule
 
 
 class CellularAutomaton:
-    """Array-backed simulation engine."""
+    """Simulation engine
+    
+    args:
+    - geometry - Geometry object
+    - rules - list of Rule objects used within the siimulation
+    """
 
     def __init__(self, geometry: Geometry, rules: list[Rule]):
         self.rules = rules
@@ -16,6 +21,7 @@ class CellularAutomaton:
         self.neighbours = None
         self._neighbours_idx = None
 
+        #collect necessary keys for rules
         keys: list[str] = []
         for rule in rules:
             for key in rule.required_keys:
@@ -25,7 +31,10 @@ class CellularAutomaton:
         self.state = State(geometry, True, keys)
         self.step_no = 0
 
+
+
     def step(self):
+        '''increments the timestep of the simulation and applies all '''
         for rule in self.rules:
             if hasattr(rule, "apply_state"):
                 self.state = rule.apply_state(self.state)
@@ -34,7 +43,11 @@ class CellularAutomaton:
 
         self.step_no += 1
 
+
+
     def _apply_cellwise(self, rule: Rule):
+
+        #builds neighbourhood index list
         if self._neighbours_idx is None:
             self.neighbours = self.geometry.generate_neighbourhood_matrix()
             self._neighbours_idx = [
@@ -44,9 +57,11 @@ class CellularAutomaton:
 
         source = self.state.data.copy()
         target = np.empty_like(source)
+        #flatten to 2D
         flat_source = source.reshape(-1, source.shape[-1])
         flat_target = target.reshape(-1, target.shape[-1])
 
+        #per-cell apply
         for cell_idx, neighbours_idx in enumerate(self._neighbours_idx):
             neighbours = flat_source[neighbours_idx]
             cell = flat_source[cell_idx].copy()
