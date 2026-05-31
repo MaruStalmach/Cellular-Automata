@@ -145,7 +145,9 @@ class State:
 
     def __setitem__(self, key: str, value: np.ndarray) -> None:
         '''set val for a key'''
-        self._data[key] = np.asarray(value, dtype=self.dtype)
+        # Respect per-key dtype if provided, otherwise fall back to global dtype
+        kd = self.key_dtypes.get(key, self.dtype)
+        self._data[key] = np.asarray(value, dtype=kd).copy()
 
 
     def key_grid(self, key: str, as_bool: bool = False) -> np.ndarray:
