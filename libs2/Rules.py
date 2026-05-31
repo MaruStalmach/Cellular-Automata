@@ -88,25 +88,33 @@ class GameOfLife3D(Rule):
 
 
 class BiofilmDetachment(Rule):
-    def __init__(self, geometry, detachment_rate, scaling):
+    def __init__(self, geometry, detachment_rate:float, scaling:float, target_key:str = 'biofilm'):
         super().__init__(geometry=geometry)
         self.detachment_probability = detachment_rate * scaling
 
-    def would_detach(self, coords) -> bool:
-        if coords is not None:
-            coord_z = coords[-1]
-        else:
-            coord_z = 0
+        self.target_key = target_key
+        self.required_keys.append(target_key)
 
-        distance_sq = coord_z**2
-        probability = min(self.detachment_probability * distance_sq, 1.0)
+    def apply_state(self, state: State) -> State:
+        grid = state[self.target_key].copy() ##
+        chances = np.random.random(grid.shape)
+        total_layers = grid.shape[-1]
 
-        return random() < probability
+        assert self.geometry.ndim == 3 #only works for 3D
+        assert grid.dtype == bool #True/False layer defining the existence of biofilm
+        
+        for z in range(total_layers):
+            dist_from_wall = z / max(1, total_layers - 1)
+            
+            chance_detachment = self.detachment_probability * (dist_from_wall ** 2)
+            chance_detachment = min(chance_detachment, 1.0)
 
-    def apply(self, neighbors, cell, coords=None):
-        if self.would_detach(coords):
-            return np.zeros_like(cell)
-        return cell
+            detached = chances[..., z] < chance_detachment
+            grid[..., z][detached] = False
+
+        state[self.target_key] = grid
+
+        return state
 
 
 class GutDrift(Rule):
