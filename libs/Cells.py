@@ -60,20 +60,24 @@ class Cell():
         return a
     
     def __add__(self, other):
-        """for cell+cell, returns reference to other (which may or may not be a good idea)
+        """for cell+cell, returns a new cell 
         if self or other is a zero cell then returns reference to the nonzero cell
 
         Args:
             other (_type_): _description_
         """
         assert isinstance(other, Cell)
+
         if other.is_zero_cell:
-            return self
+            return self.__copy__()
         if self.is_zero_cell:
-            return other
+            return other.__copy__()
         
-        for key,value in self._data.items():
-            other._data[key] += value
+        new_cell = self.__copy__()
+        for key,value in other._data.items():
+            new_cell._data[key] += value
+
+        return new_cell
             
         
         return other
