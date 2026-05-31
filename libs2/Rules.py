@@ -88,6 +88,7 @@ class GameOfLife3D(Rule):
 
 
 class BiofilmDetachment(Rule):
+    ''''''
     def __init__(self, geometry, detachment_rate:float, scaling:float, target_key:str = 'biofilm'):
         super().__init__(geometry=geometry)
         self.detachment_probability = detachment_rate * scaling
@@ -96,7 +97,7 @@ class BiofilmDetachment(Rule):
         self.required_keys.append(target_key)
 
     def apply_state(self, state: State) -> State:
-        grid = state[self.target_key].copy() ##
+        grid = state[self.target_key].copy() 
         chances = np.random.random(grid.shape)
         total_layers = grid.shape[-1]
 
@@ -118,11 +119,32 @@ class BiofilmDetachment(Rule):
 
 
 class GutDrift(Rule):
-    def __init__(self, geometry, drift_speed: int, detachment_rule: BiofilmDetachment | None = None):
+    '''periodically moves floating bacteria down the z-axis and flushes some of the biofilm down the z-axis
+    the closer the biofilm is to the wall of the gut, the harder it is for it to get detached'''
+    def __init__(self, geometry, drift_speed: int, target_key:str = 'floating_bacteria'):
         super().__init__(geometry=geometry)
         self.drift_speed = drift_speed
-        self.detachment_rule = detachment_rule
-        assert self.geometry.ndim == 3
+    
+        self.target_key = self.target_key
+        self.required_keys.append(target_key)
 
-    def apply(self, neighbors, cell, coords=None):
-        return cell
+        assert self.geometry.ndim == 3 #only works for 3D
+
+    def apply_state(self, state: State) -> State:
+        grid = state[self.target_key].copy()
+
+        pwidth = [(0,0)] * self.geometry.ndim
+
+        z_axis = 2
+
+        if z_axis in self.geometry.periodic_dims:    
+            shifted = np.roll(grid, shift=self.drift_speed, axis=z_axis) #rolls element along axis z
+        else: #if bacteria are being flushed out (nonperiodic)
+            pwidth[z_axis] = (self.drift_speed, 0)
+            padded = np.pad(grid, pwidth, mode='constant', constant_values=False)
+            shifted = padded[..., :-self.drift_speed]
+
+
+        state[self.target_key] = shifted
+        return state
+ 

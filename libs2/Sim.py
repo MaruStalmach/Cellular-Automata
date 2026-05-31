@@ -28,7 +28,7 @@ class CellularAutomaton:
                 if key not in keys:
                     keys.append(key)
 
-        self.state = State(geometry, True, keys)
+        self.state = State(geometry, random=True, cell_keys=keys)
         self.step_no = 0
 
 
