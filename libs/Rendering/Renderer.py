@@ -6,6 +6,8 @@ import math
 import ctypes
 import glm
 
+from libs.Rendering.Camera import Camera
+from libs.Rendering.Shader import Shader
 
 
 vertexShaderSource = """
@@ -123,7 +125,7 @@ class Camera:
 class CARenderer:
     """Renders 3D cellular automaton"""
     
-    def __init__(self, width=1000, height=600, make_gif=False, grid_size=(100,20,10)):
+    def __init__(self, init_state : np.ndarray, width=1000, height=600):
 
         self.width=width
         self.height=height
@@ -132,7 +134,7 @@ class CARenderer:
         self.frames=[]
 
         self.camera = Camera(position=(20, 20, 20))
-        self.ca_state = np.random.random(size=grid_size).astype(dtype=np.float32)  # Will hold 3D numpy array
+        self.ca_state = init_state.astype(dtype=np.float32)  # Will hold 3D numpy array
         self.cell_size = 1.0
         self.running = True
 
@@ -149,35 +151,20 @@ class CARenderer:
         glfw.set_key_callback(self.window,self._key_callback)
 
         # compile shaders
-        vertexShader = glCreateShader(GL_VERTEX_SHADER)
-        glShaderSource(vertexShader, vertexShaderSource)
-        glCompileShader(vertexShader)
-        if glGetShaderiv(vertexShader, GL_COMPILE_STATUS) == GL_FALSE:
-            print("Vertex Shader Error:")
-            print(glGetShaderInfoLog(vertexShader).decode())
-
-        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
-        glShaderSource(fragmentShader, fragmentShaderSource)
-        glCompileShader(fragmentShader)
-        if glGetShaderiv(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE:
-            print("Fragment Shader Error:")
-            print(glGetShaderInfoLog(fragmentShader).decode())
-
-        self.shaderProgram = glCreateProgram()
-        glAttachShader(self.shaderProgram,vertexShader)
-        glAttachShader(self.shaderProgram,fragmentShader)
-        glLinkProgram(self.shaderProgram)
-
-        glDeleteShader(vertexShader)
-        glDeleteShader(fragmentShader)
+        self.shader = Shader()
+        self.shader.add_vertex("libs/Rendering/vertex.vert")
+        self.shader.add_fragment("libs/Rendering/fragment.frag")
+        self.shader.link_program()
+        self.shader.use_program()
 
         glClearColor(0.0,0.0,0.0,1.0)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glViewport(0, 0, width, height)
-        glUseProgram(self.shaderProgram)
+        glUseProgram(self.shader.program)
 
+        #cube vertices
         vertices = np.array([
 
         #bottom
@@ -245,25 +232,25 @@ class CARenderer:
         p = glm.perspective(glm.radians(60.0), self.width/self.height, 0.1, 100.0)
         
         
-        window_width = glGetUniformLocation(self.shaderProgram,"window_width")
+        window_width = glGetUniformLocation(self.shader.program,"window_width")
         glUniform1f(window_width, self.width)
         
-        window_height = glGetUniformLocation(self.shaderProgram,"window_height")
+        window_height = glGetUniformLocation(self.shader.program,"window_height")
         glUniform1f(window_height, self.height)
         
-        m_loc = glGetUniformLocation(self.shaderProgram, "model")
+        m_loc = glGetUniformLocation(self.shader.program, "model")
         glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm.value_ptr(m))
         
-        v_loc = glGetUniformLocation(self.shaderProgram, "view")
+        v_loc = glGetUniformLocation(self.shader.program, "view")
         glUniformMatrix4fv(v_loc, 1, GL_FALSE, glm.value_ptr(self.v))
         
-        p_loc = glGetUniformLocation(self.shaderProgram, "projection")
+        p_loc = glGetUniformLocation(self.shader.program, "projection")
         glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
         
-        grid_size = glGetUniformLocation(self.shaderProgram, "grid_size")
+        grid_size = glGetUniformLocation(self.shader.program, "grid_size")
         glUniform3f(grid_size, self.ca_state.shape[0], self.ca_state.shape[1], self.ca_state.shape[2])
 
-        color_data = glGetUniformLocation(self.shaderProgram, "color_data")
+        color_data = glGetUniformLocation(self.shader.program, "color_data")
         glUniform1fv(color_data,self.ca_state.size, self.ca_state.flatten().ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
 
         
@@ -319,10 +306,10 @@ class CARenderer:
 
         self.camera.update()
         self.v = self.camera.get_view_matrix()
-        v_loc = glGetUniformLocation(self.shaderProgram, "view")
+        v_loc = glGetUniformLocation(self.shader.program, "view")
         glUniformMatrix4fv(v_loc, 1, GL_FALSE, glm.value_ptr(self.v))
 
-        color_data = glGetUniformLocation(self.shaderProgram, "color_data")
+        color_data = glGetUniformLocation(self.shader.program, "color_data")
         glUniform1fv(color_data,self.ca_state.size, self.ca_state.flatten().ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
 
 

@@ -2,7 +2,7 @@ from libs.Rules import *
 from libs.Geometry import *
 from libs.Cells import *
 from libs.Sim import *
-from libs.Rendering import CARenderer
+from libs.Rendering.Renderer import CARenderer
 
 from time import time
 import numpy as np
