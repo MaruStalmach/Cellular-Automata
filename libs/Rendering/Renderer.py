@@ -10,117 +10,6 @@ from libs.Rendering.Camera import Camera
 from libs.Rendering.Shader import Shader
 
 
-vertexShaderSource = """
-#version 430 core
-
-layout (location=0) in vec3 aPos;
-
-flat out int InstanceID;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-uniform vec3 grid_size;
-
-void main(){
-    InstanceID = gl_InstanceID;
-    int x = gl_InstanceID % int(grid_size[0]);
-    int y = gl_InstanceID/int(grid_size[0]);
-    y = y % int(grid_size[1]);
-    int z = gl_InstanceID/(int(grid_size[0])*int(grid_size[1]));
-    int num_cubes = int(grid_size[0]*grid_size[1]*grid_size[2]);
-
-    vec3 bPos = aPos;
-    bPos.x = bPos.x+1.0*float(x);
-    bPos.y = bPos.y+1.0*float(y);
-    bPos.z = bPos.z+1.0*float(z);
-
-    gl_Position=projection*view*model*vec4(bPos,1.0);
-}
-"""
-
-fragmentShaderSource = """
-#version 430 core
-
-out vec4 FragColor;
-
-flat in int InstanceID; 
-
-uniform float window_width;
-uniform float window_height;
-uniform float[20000] color_data;
-
-void main(){
-   FragColor=vec4(color_data[InstanceID], gl_FragCoord.y/window_height, gl_FragCoord.z/100.0, 0.8); 
-}
-"""
-import imageio
-
-
-class Camera:
-    """3D camera with WASD and QE controls"""
-    
-    def __init__(self, position=(10, 10, 10)):
-        self.position = np.array(position, dtype=np.float32)
-        self.target = np.array([0, 0, 0], dtype=np.float32)
-        self.up = np.array([0, 1, 0], dtype=np.float32)
-        
-        self.velocity = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.speed = 0.2
-        
-        # Key states
-        self.keys = {
-            'W': False, 'A': False, 'S': False, 'D': False,
-            'Q': False, 'E': False
-        }
-    
-    def set_key_state(self, key, state):
-        """Update key press state"""
-        key_upper = key.upper()
-        if key_upper in self.keys:
-            self.keys[key_upper] = state
-    
-    def update(self):
-        """Update camera position based on key states"""
-        direction = self.target - self.position
-        direction_length = np.linalg.norm(direction)
-        if direction_length > 0:
-            direction = direction / direction_length
-        
-        # Get right vector (perpendicular to direction and up)
-        right = np.cross(direction, self.up)
-        right_length = np.linalg.norm(right)
-        if right_length > 0:
-            right = right / right_length
-        
-        # Recalculate up to be perpendicular to both
-        up = np.cross(right, direction)
-        
-        movement = np.array([0.0, 0.0, 0.0])
-        
-        # Horizontal movement
-        if self.keys['W']:
-            movement += direction * self.speed
-        if self.keys['S']:
-            movement -= direction * self.speed
-        if self.keys['D']:
-            movement += right * self.speed
-        if self.keys['A']:
-            movement -= right * self.speed
-        
-        # Vertical movement
-        if self.keys['Q']:
-            movement += up * self.speed
-        if self.keys['E']:
-            movement -= up * self.speed
-        
-        self.position += movement
-        # self.target += movement
-    
-    def get_view_matrix(self):
-        
-        return glm.lookAt(self.position, self.target, self.up)
-
 
 class CARenderer:
     """Renders 3D cellular automaton"""
@@ -129,9 +18,6 @@ class CARenderer:
 
         self.width=width
         self.height=height
-        
-        self.make_gif=make_gif
-        self.frames=[]
 
         self.camera = Camera(position=(20, 20, 20))
         self.ca_state = init_state.astype(dtype=np.float32)  # Will hold 3D numpy array
@@ -259,7 +145,6 @@ class CARenderer:
         
 
         self.p_press = False
-        self.o_press = False
     
     def _key_callback(self, window, key, scancode, action, mods):
         """Handle keyboard input"""
@@ -269,10 +154,6 @@ class CARenderer:
         
         if key == glfw.KEY_P and action == glfw.PRESS:
             self.p_press = True
-        
-        if self.make_gif:    
-            if key == glfw.KEY_O and action == glfw.PRESS:
-                imageio.mimwrite('gifs/out.gif',self.frames[1:],loop=0,duration=0.2)
         
         # Map GLFW keys to camera keys
         key_map = {
@@ -328,13 +209,6 @@ class CARenderer:
             if update_callback:
                 new_state = None
                 if self.p_press:
-                    if self.make_gif:
-                        glPixelStorei(GL_PACK_ALIGNMENT, 1)
-                        data = glReadPixels(0,0,self.width,self.height,GL_RGB,GL_UNSIGNED_BYTE)
-                        img = np.frombuffer(data,dtype=np.uint8)
-                        img = img.reshape(self.height,self.width,3)
-                        img = np.flipud(img)
-                        self.frames.append(img)
                     new_state = update_callback()
                     self.p_press = False
                 if new_state is not None:
