@@ -6,129 +6,21 @@ import math
 import ctypes
 import glm
 
+from libs.Rendering.Camera import Camera
+from libs.Rendering.Shader import Shader
 
-
-vertexShaderSource = """
-#version 430 core
-
-layout (location=0) in vec3 aPos;
-
-flat out int InstanceID;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-uniform vec3 grid_size;
-
-void main(){
-    InstanceID = gl_InstanceID;
-    int x = gl_InstanceID % int(grid_size[0]);
-    int y = gl_InstanceID/int(grid_size[0]);
-    y = y % int(grid_size[1]);
-    int z = gl_InstanceID/(int(grid_size[0])*int(grid_size[1]));
-    int num_cubes = int(grid_size[0]*grid_size[1]*grid_size[2]);
-
-    vec3 bPos = aPos;
-    bPos.x = bPos.x+1.0*float(x);
-    bPos.y = bPos.y+1.0*float(y);
-    bPos.z = bPos.z+1.0*float(z);
-
-    gl_Position=projection*view*model*vec4(bPos,1.0);
-}
-"""
-
-fragmentShaderSource = """
-#version 430 core
-
-out vec4 FragColor;
-
-flat in int InstanceID; 
-
-uniform float window_width;
-uniform float window_height;
-uniform float[20000] color_data;
-
-void main(){
-   FragColor=vec4(color_data[InstanceID], gl_FragCoord.y/window_height, gl_FragCoord.z/100.0, 0.8); 
-}
-"""
-
-
-class Camera:
-    """3D camera with WASD and QE controls"""
-    
-    def __init__(self, position=(10, 10, 10)):
-        self.position = np.array(position, dtype=np.float32)
-        self.target = np.array([0, 0, 0], dtype=np.float32)
-        self.up = np.array([0, 1, 0], dtype=np.float32)
-        
-        self.velocity = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.speed = 0.2
-        
-        # Key states
-        self.keys = {
-            'W': False, 'A': False, 'S': False, 'D': False,
-            'Q': False, 'E': False
-        }
-    
-    def set_key_state(self, key, state):
-        """Update key press state"""
-        key_upper = key.upper()
-        if key_upper in self.keys:
-            self.keys[key_upper] = state
-    
-    def update(self):
-        """Update camera position based on key states"""
-        direction = self.target - self.position
-        direction_length = np.linalg.norm(direction)
-        if direction_length > 0:
-            direction = direction / direction_length
-        
-        # Get right vector (perpendicular to direction and up)
-        right = np.cross(direction, self.up)
-        right_length = np.linalg.norm(right)
-        if right_length > 0:
-            right = right / right_length
-        
-        # Recalculate up to be perpendicular to both
-        up = np.cross(right, direction)
-        
-        movement = np.array([0.0, 0.0, 0.0])
-        
-        # Horizontal movement
-        if self.keys['W']:
-            movement += direction * self.speed
-        if self.keys['S']:
-            movement -= direction * self.speed
-        if self.keys['D']:
-            movement += right * self.speed
-        if self.keys['A']:
-            movement -= right * self.speed
-        
-        # Vertical movement
-        if self.keys['Q']:
-            movement += up * self.speed
-        if self.keys['E']:
-            movement -= up * self.speed
-        
-        self.position += movement
-        # self.target += movement
-    
-    def get_view_matrix(self):
-        
-        return glm.lookAt(self.position, self.target, self.up)
 
 
 class CARenderer:
     """Renders 3D cellular automaton"""
     
-    def __init__(self, width=1000, height=600, grid_size=(100,20,10)):
+    def __init__(self, init_state : np.ndarray, width=1000, height=600):
 
         self.width=width
         self.height=height
 
         self.camera = Camera(position=(20, 20, 20))
-        self.ca_state = np.random.random(size=grid_size).astype(dtype=np.float32)  # Will hold 3D numpy array
+        self.ca_state = init_state.astype(dtype=np.float32)  # Will hold 3D numpy array
         self.cell_size = 1.0
         self.running = True
 
@@ -145,35 +37,20 @@ class CARenderer:
         glfw.set_key_callback(self.window,self._key_callback)
 
         # compile shaders
-        vertexShader = glCreateShader(GL_VERTEX_SHADER)
-        glShaderSource(vertexShader, vertexShaderSource)
-        glCompileShader(vertexShader)
-        if glGetShaderiv(vertexShader, GL_COMPILE_STATUS) == GL_FALSE:
-            print("Vertex Shader Error:")
-            print(glGetShaderInfoLog(vertexShader).decode())
-
-        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
-        glShaderSource(fragmentShader, fragmentShaderSource)
-        glCompileShader(fragmentShader)
-        if glGetShaderiv(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE:
-            print("Fragment Shader Error:")
-            print(glGetShaderInfoLog(fragmentShader).decode())
-
-        self.shaderProgram = glCreateProgram()
-        glAttachShader(self.shaderProgram,vertexShader)
-        glAttachShader(self.shaderProgram,fragmentShader)
-        glLinkProgram(self.shaderProgram)
-
-        glDeleteShader(vertexShader)
-        glDeleteShader(fragmentShader)
+        self.shader = Shader()
+        self.shader.add_vertex("libs/Rendering/vertex.vert")
+        self.shader.add_fragment("libs/Rendering/fragment.frag")
+        self.shader.link_program()
+        self.shader.use_program()
 
         glClearColor(0.0,0.0,0.0,1.0)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glViewport(0, 0, width, height)
-        glUseProgram(self.shaderProgram)
+        glUseProgram(self.shader.program)
 
+        #cube vertices
         vertices = np.array([
 
         #bottom
@@ -241,25 +118,25 @@ class CARenderer:
         p = glm.perspective(glm.radians(60.0), self.width/self.height, 0.1, 100.0)
         
         
-        window_width = glGetUniformLocation(self.shaderProgram,"window_width")
+        window_width = glGetUniformLocation(self.shader.program,"window_width")
         glUniform1f(window_width, self.width)
         
-        window_height = glGetUniformLocation(self.shaderProgram,"window_height")
+        window_height = glGetUniformLocation(self.shader.program,"window_height")
         glUniform1f(window_height, self.height)
         
-        m_loc = glGetUniformLocation(self.shaderProgram, "model")
+        m_loc = glGetUniformLocation(self.shader.program, "model")
         glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm.value_ptr(m))
         
-        v_loc = glGetUniformLocation(self.shaderProgram, "view")
+        v_loc = glGetUniformLocation(self.shader.program, "view")
         glUniformMatrix4fv(v_loc, 1, GL_FALSE, glm.value_ptr(self.v))
         
-        p_loc = glGetUniformLocation(self.shaderProgram, "projection")
+        p_loc = glGetUniformLocation(self.shader.program, "projection")
         glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
         
-        grid_size = glGetUniformLocation(self.shaderProgram, "grid_size")
+        grid_size = glGetUniformLocation(self.shader.program, "grid_size")
         glUniform3f(grid_size, self.ca_state.shape[0], self.ca_state.shape[1], self.ca_state.shape[2])
 
-        color_data = glGetUniformLocation(self.shaderProgram, "color_data")
+        color_data = glGetUniformLocation(self.shader.program, "color_data")
         glUniform1fv(color_data,self.ca_state.size, self.ca_state.flatten().ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
 
         
@@ -310,10 +187,10 @@ class CARenderer:
 
         self.camera.update()
         self.v = self.camera.get_view_matrix()
-        v_loc = glGetUniformLocation(self.shaderProgram, "view")
+        v_loc = glGetUniformLocation(self.shader.program, "view")
         glUniformMatrix4fv(v_loc, 1, GL_FALSE, glm.value_ptr(self.v))
 
-        color_data = glGetUniformLocation(self.shaderProgram, "color_data")
+        color_data = glGetUniformLocation(self.shader.program, "color_data")
         glUniform1fv(color_data,self.ca_state.size, self.ca_state.flatten().ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
 
 
