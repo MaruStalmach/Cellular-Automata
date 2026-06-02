@@ -3,6 +3,55 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import math
+import ctypes
+import glm
+
+
+
+vertexShaderSource = """
+#version 430 core
+
+layout (location=0) in vec3 aPos;
+
+flat out int InstanceID;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform vec3 grid_size;
+
+void main(){
+    InstanceID = gl_InstanceID;
+    int x = gl_InstanceID % int(grid_size[0]);
+    int y = gl_InstanceID/int(grid_size[0]);
+    y = y % int(grid_size[1]);
+    int z = gl_InstanceID/(int(grid_size[0])*int(grid_size[1]));
+    int num_cubes = int(grid_size[0]*grid_size[1]*grid_size[2]);
+
+    vec3 bPos = aPos;
+    bPos.x = bPos.x+1.0*float(x);
+    bPos.y = bPos.y+1.0*float(y);
+    bPos.z = bPos.z+1.0*float(z);
+
+    gl_Position=projection*view*model*vec4(bPos,1.0);
+}
+"""
+
+fragmentShaderSource = """
+#version 430 core
+
+out vec4 FragColor;
+
+flat in int InstanceID; 
+
+uniform float window_width;
+uniform float window_height;
+uniform float[20000] color_data;
+
+void main(){
+   FragColor=vec4(color_data[InstanceID], gl_FragCoord.y/window_height, gl_FragCoord.z/100.0, 0.8); 
+}
+"""
 
 
 class Camera:
@@ -66,59 +115,157 @@ class Camera:
         # self.target += movement
     
     def get_view_matrix(self):
-        """Returns view matrix components for gluLookAt"""
-        return self.position, self.target, self.up
+        
+        return glm.lookAt(self.position, self.target, self.up)
 
 
 class CARenderer:
     """Renders 3D cellular automaton"""
     
-    def __init__(self, width=1000, height=600):
-        self.width = width
-        self.height = height
-        
+    def __init__(self, width=1000, height=600, grid_size=(100,20,10)):
+
+        self.width=width
+        self.height=height
+
+        self.camera = Camera(position=(20, 20, 20))
+        self.ca_state = np.random.random(size=grid_size).astype(dtype=np.float32)  # Will hold 3D numpy array
+        self.cell_size = 1.0
+        self.running = True
+
         if not glfw.init():
-            raise Exception("GLFW initialization failed")
-        
-        self.window = glfw.create_window(width, height, "3D Cellular Automaton", None, None)
+                raise Exception("GLFW initialization failed")
+
+        self.window = glfw.create_window(width, height, "nrt", None, None)
         if not self.window:
             glfw.terminate()
-            raise Exception("Window creation failed")
-        
+            
         glfw.set_window_pos(self.window, 400, 200)
         glfw.make_context_current(self.window)
         glfw.set_input_mode(self.window, glfw.STICKY_KEYS, True)
-        
-        # Enable VSync
-        glfw.swap_interval(1)
-        
-        # OpenGL setup
-        glClearColor(0.1, 0.1, 0.1, 1.0)
+        glfw.set_key_callback(self.window,self._key_callback)
+
+        # compile shaders
+        vertexShader = glCreateShader(GL_VERTEX_SHADER)
+        glShaderSource(vertexShader, vertexShaderSource)
+        glCompileShader(vertexShader)
+        if glGetShaderiv(vertexShader, GL_COMPILE_STATUS) == GL_FALSE:
+            print("Vertex Shader Error:")
+            print(glGetShaderInfoLog(vertexShader).decode())
+
+        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
+        glShaderSource(fragmentShader, fragmentShaderSource)
+        glCompileShader(fragmentShader)
+        if glGetShaderiv(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE:
+            print("Fragment Shader Error:")
+            print(glGetShaderInfoLog(fragmentShader).decode())
+
+        self.shaderProgram = glCreateProgram()
+        glAttachShader(self.shaderProgram,vertexShader)
+        glAttachShader(self.shaderProgram,fragmentShader)
+        glLinkProgram(self.shaderProgram)
+
+        glDeleteShader(vertexShader)
+        glDeleteShader(fragmentShader)
+
+        glClearColor(0.0,0.0,0.0,1.0)
         glEnable(GL_DEPTH_TEST)
-        glEnable(GL_CULL_FACE)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glCullFace(GL_BACK)
+        glViewport(0, 0, width, height)
+        glUseProgram(self.shaderProgram)
+
+        vertices = np.array([
+
+        #bottom
+        -0.5,-0.5,-0.5,
+        0.5,-0.5,-0.5,
+        0.5,-0.5,0.5,
         
-        # Lighting
-        glEnable(GL_LIGHTING)
-        glEnable(GL_LIGHT0)
-        glEnable(GL_COLOR_MATERIAL)
-        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+        -0.5,-0.5,-0.5,
+        0.5,-0.5,0.5,
+        -0.5,-0.5,0.5,
+        #front
+        -0.5,-0.5,0.5,
+        0.5,-0.5,0.5,
+        -0.5,0.5,0.5,
         
-        # Light setup
-        light_pos = [5, 10, 5, 0]
-        glLight(GL_LIGHT0, GL_POSITION, light_pos)
-        glLight(GL_LIGHT0, GL_AMBIENT, [0.3, 0.3, 0.3, 1.0])
-        glLight(GL_LIGHT0, GL_DIFFUSE, [1.0, 1.0, 1.0, 1.0])
+        -0.5,0.5,0.5,
+        0.5,0.5,0.5,
+        0.5,-0.5,0.5,
+        #top
+        -0.5,0.5,0.5,
+        0.5,0.5,0.5,
+        -0.5,0.5,-0.5,
         
-        self.camera = Camera(position=(20, 20, 20))
-        self.ca_state = None  # Will hold 3D numpy array
-        self.cell_size = 1.0
-        self.running = True
+        0.5,0.5,0.5,
+        -0.5,0.5,-0.5,
+        0.5,0.5,-0.5,
+        #back
+        -0.5,-0.5,-0.5,
+        0.5,-0.5,-0.5,
+        -0.5,0.5,-0.5,
         
-        # Setup keyboard callback
-        glfw.set_key_callback(self.window, self._key_callback)
+        -0.5,0.5,-0.5,
+        0.5,0.5,-0.5,
+        0.5,-0.5,-0.5,
+        #left
+        -0.5,-0.5,0.5,
+        -0.5,0.5,0.5,
+        -0.5,-0.5,-0.5,
+        
+        -0.5,0.5,0.5,
+        -0.5,-0.5,-0.5,
+        -0.5,0.5,-0.5,
+        #right
+        0.5,-0.5,0.5,
+        0.5,0.5,0.5,
+        0.5,-0.5,-0.5,
+        
+        0.5,0.5,0.5,
+        0.5,-0.5,-0.5,
+        0.5,0.5,-0.5
+        ],dtype=np.float32)
+
+        self.vbo = glGenBuffers(1)
+        self.vao = glGenVertexArrays(1)
+        glBindVertexArray(self.vao)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
+        
+        glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(0)
+        
+        m = glm.identity(glm.mat4)
+        self.v = self.camera.get_view_matrix()
+        p = glm.perspective(glm.radians(60.0), self.width/self.height, 0.1, 100.0)
+        
+        
+        window_width = glGetUniformLocation(self.shaderProgram,"window_width")
+        glUniform1f(window_width, self.width)
+        
+        window_height = glGetUniformLocation(self.shaderProgram,"window_height")
+        glUniform1f(window_height, self.height)
+        
+        m_loc = glGetUniformLocation(self.shaderProgram, "model")
+        glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm.value_ptr(m))
+        
+        v_loc = glGetUniformLocation(self.shaderProgram, "view")
+        glUniformMatrix4fv(v_loc, 1, GL_FALSE, glm.value_ptr(self.v))
+        
+        p_loc = glGetUniformLocation(self.shaderProgram, "projection")
+        glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
+        
+        grid_size = glGetUniformLocation(self.shaderProgram, "grid_size")
+        glUniform3f(grid_size, self.ca_state.shape[0], self.ca_state.shape[1], self.ca_state.shape[2])
+
+        color_data = glGetUniformLocation(self.shaderProgram, "color_data")
+        glUniform1fv(color_data,self.ca_state.size, self.ca_state.flatten().ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
+
+        
+        
+        
+        
 
         self.p_press = False
     
@@ -152,118 +299,25 @@ class CARenderer:
             state_array: 3D numpy array where True/non-zero = cell alive
                         Shape: (depth, height, width) or similar
         """
-        self.ca_state = state_array.astype(bool)
+        self.ca_state = state_array.astype(np.float32)
     
-    def draw_cube(self, x, y, z, size=1.0):
-        """Draw a unit cube at position (x, y, z)"""
-        glPushMatrix()
-        glTranslatef(x, y, z)
-        glScalef(size, size, size)
-        
-        glBegin(GL_TRIANGLES) #change to traingle_strip?
-        
-        # Front face
-        glNormal3f(0, 0, 1)
-        glVertex3f(-0.5, -0.5, 0.5)
-        glVertex3f(0.5, -0.5, 0.5)
-        glVertex3f(0.5, 0.5, 0.5)
-        
-        glVertex3f(0.5, 0.5, 0.5)
-        glVertex3f(-0.5, 0.5, 0.5)
-        glVertex3f(-0.5, -0.5, 0.5)
-        
-        # Back face
-        glNormal3f(0, 0, -1)
-        glVertex3f(0.5, -0.5, -0.5)
-        glVertex3f(-0.5, -0.5, -0.5)
-        glVertex3f(-0.5, 0.5, -0.5)
-        
-        glVertex3f(-0.5, 0.5, -0.5)
-        glVertex3f(0.5, 0.5, -0.5)
-        glVertex3f(0.5, -0.5, -0.5)
-        
-        # Top face
-        glNormal3f(0, 1, 0)
-        glVertex3f(-0.5, 0.5, -0.5)
-        glVertex3f(-0.5, 0.5, 0.5)
-        glVertex3f(0.5, 0.5, 0.5)
-        
-        glVertex3f(0.5, 0.5, 0.5)
-        glVertex3f(0.5, 0.5, -0.5)
-        glVertex3f(-0.5, 0.5, -0.5)
-        
-        # Bottom face
-        glNormal3f(0, -1, 0)
-        glVertex3f(-0.5, -0.5, 0.5)
-        glVertex3f(-0.5, -0.5, -0.5)
-        glVertex3f(0.5, -0.5, -0.5)
-        
-        glVertex3f(0.5, -0.5, -0.5)
-        glVertex3f(0.5, -0.5, 0.5)
-        glVertex3f(-0.5, -0.5, 0.5)
-        
-        # Right face
-        glNormal3f(1, 0, 0)
-        glVertex3f(0.5, -0.5, 0.5)
-        glVertex3f(0.5, -0.5, -0.5)
-        glVertex3f(0.5, 0.5, -0.5)
-        
-        glVertex3f(0.5, 0.5, -0.5)
-        glVertex3f(0.5, 0.5, 0.5)
-        glVertex3f(0.5, -0.5, 0.5)
-        
-        # Left face
-        glNormal3f(-1, 0, 0)
-        glVertex3f(-0.5, -0.5, -0.5)
-        glVertex3f(-0.5, -0.5, 0.5)
-        glVertex3f(-0.5, 0.5, 0.5)
-        
-        glVertex3f(-0.5, 0.5, 0.5)
-        glVertex3f(-0.5, 0.5, -0.5)
-        glVertex3f(-0.5, -0.5, -0.5)
-        
-        glEnd()
-        glPopMatrix()
+    
     
     def render(self):
-        """Main render loop"""
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
-        # Setup projection
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        gluPerspective(45.0, self.width / self.height, 0.1, 500.0)
-        
-        # Setup modelview
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        
-        # Update camera
-        self.camera.update()
-        pos, target, up = self.camera.get_view_matrix()
-        gluLookAt(pos[0], pos[1], pos[2],
-                  target[0], target[1], target[2],
-                  up[0], up[1], up[2])
-        
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        # glBindBuffer(GL_ARRAY_BUFFER,self.vbo)
+        glBindVertexArray(self.vao)
 
-        # Draw origin marker (small red cube)
-        glColor3f(1.0, 0.0, 0.0)
-        self.draw_cube(0, 0, 0, 0.2)
-        
-        # Draw CA cells
-        if self.ca_state is not None:
-            glColor4f(0.3, 0.8, 0.3, 0.5)  # Green for alive cells
-            
-            indices = np.where(self.ca_state)
-            for i, j, k in zip(indices[0], indices[1], indices[2]):
-                # Center around origin
-                x = (i - self.ca_state.shape[0] / 2) * self.cell_size
-                y = (j - self.ca_state.shape[1] / 2) * self.cell_size
-                z = (k - self.ca_state.shape[2] / 2) * self.cell_size
-                self.draw_cube(x, y, z, self.cell_size * 0.95)
-        
-        
-        
+        self.camera.update()
+        self.v = self.camera.get_view_matrix()
+        v_loc = glGetUniformLocation(self.shaderProgram, "view")
+        glUniformMatrix4fv(v_loc, 1, GL_FALSE, glm.value_ptr(self.v))
+
+        color_data = glGetUniformLocation(self.shaderProgram, "color_data")
+        glUniform1fv(color_data,self.ca_state.size, self.ca_state.flatten().ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
+
+
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6*2*3,np.prod(self.ca_state.shape))
         glfw.swap_buffers(self.window)
     
     def run(self, update_callback=None):
@@ -295,8 +349,8 @@ if __name__ == "__main__":
     
     # Example: Create a simple 3D pattern
     # Shape: (depth, height, width)
-    example_state = np.random.choice(a=[0,1],p=[0.8,0.2],size = (10,10,10))#np.random.randint(low=2,size=(10,10,10))
-    renderer.set_ca_state(example_state)
+    # example_state = np.random.choice(a=[0,1],p=[0.8,0.2],size = (10,10,10))#np.random.randint(low=2,size=(10,10,10))
+    # renderer.set_ca_state(example_state)
     
     # Run without update (static display)
     renderer.run()
