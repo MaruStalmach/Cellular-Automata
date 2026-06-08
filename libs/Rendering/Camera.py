@@ -10,7 +10,7 @@ class Camera:
         self.up = np.array([0, 1, 0], dtype=np.float32)
         
         self.velocity = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.speed = 0.2
+        self.speed = 0.05
         
         # Key states
         self.keys = {
@@ -41,22 +41,22 @@ class Camera:
         up = np.cross(right, direction)
         
         movement = np.array([0.0, 0.0, 0.0])
-        
+        speed_mod = np.linalg.norm(self.position)
         # Horizontal movement
         if self.keys['W']:
-            movement += direction * self.speed
+            movement += direction * self.speed * speed_mod
         if self.keys['S']:
-            movement -= direction * self.speed
+            movement -= direction * self.speed * speed_mod
         if self.keys['D']:
-            movement += right * self.speed
+            movement += right * self.speed * speed_mod
         if self.keys['A']:
-            movement -= right * self.speed
+            movement -= right * self.speed * speed_mod
         
         # Vertical movement
         if self.keys['Q']:
-            movement += up * self.speed
+            movement += up * self.speed * speed_mod
         if self.keys['E']:
-            movement -= up * self.speed
+            movement -= up * self.speed * speed_mod
         
         self.position += movement
         # self.target += movement
