@@ -1,6 +1,5 @@
 from libs.Geometry import Geometry
 import numpy as np
-from copy import copy
 
 
 
@@ -114,8 +113,10 @@ class Cell():
     def __str__(self):
         if self.is_zero_cell:
             out = 'Zero Cell'
+            return out
         else:
             out = f'Cell with data: {self.data}'
+            return out
         
     @staticmethod
     def from_dict(dict : dict):

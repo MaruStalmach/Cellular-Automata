@@ -1,4 +1,4 @@
-from libs.Cells import State, Cell
+from libs.Cells import Cell
 from libs.Geometry import Geometry
 import numpy as np
 
