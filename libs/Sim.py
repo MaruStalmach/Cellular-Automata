@@ -1,7 +1,7 @@
 from libs.Rules import Rule
 import numpy as np
 from libs.Geometry import Geometry
-from libs.Cells import State, ZERO_CELL, Cell
+from libs.Cells import State, Cell
 
 
 
