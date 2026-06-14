@@ -4,7 +4,7 @@ from random import random
 
 import numpy as np
 
-from libs.Geometry import Geometry
+from libs2.Geometry import Geometry
 from libs2.State import State
 
 

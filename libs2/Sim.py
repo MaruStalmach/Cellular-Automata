@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from libs.Geometry import Geometry
+from libs2.Geometry import Geometry
 from libs2.State import State
 from libs2.Rules import Rule
 

@@ -2,7 +2,7 @@ from typing import Callable, Iterable, Optional
 
 import numpy as np
 
-from libs.Geometry import Geometry
+from libs2.Geometry import Geometry
 
 
 class State:
@@ -31,6 +31,7 @@ class State:
         
 
         self.geometry = geometry
+
         self.keys = tuple(cell_keys)
         self.key_to_index = {key: idx for idx, key in enumerate(self.keys)}
         self.dtype = dtype
@@ -145,9 +146,14 @@ class State:
 
     def __setitem__(self, key: str, value: np.ndarray) -> None:
         '''set val for a key'''
-        # Respect per-key dtype if provided, otherwise fall back to global dtype
-        kd = self.key_dtypes.get(key, self.dtype)
-        self._data[key] = np.asarray(value, dtype=kd).copy()
+        # respect per-key dtype if provided, otherwise fall back to global dtype
+        if key not in self._data:
+            raise KeyError("key not in set")
+
+        self._data[key][...] = value
+        
+        # kd = self.key_dtypes.get(key, self.dtype)
+        # self._data[key] = np.asarray(value, dtype=kd).copy()
 
 
     def key_grid(self, key: str, as_bool: bool = False) -> np.ndarray:
