@@ -2,6 +2,8 @@ from libs2.Rules import GameOfLife3D
 from libs.Geometry import Geometry
 from libs2.Sim import CellularAutomaton
 
+import time
+
 from argparse import ArgumentParser
 
 
@@ -16,7 +18,7 @@ def main():
 
     size = (int(args.xsize), int(args.ysize), int(args.zsize))
     geometry = Geometry(size, 'xyz', '')
-    rules = [GameOfLife3D(geometry)]
+    rules = [GameOfLife3D(geometry,2,3,3,3)]
     ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
 
     if args.max_steps:
@@ -24,10 +26,13 @@ def main():
     else:
         max_steps = 0
 
+    
+    start = time.time()
     while True:
         ca_sim.step()
         if max_steps > 0 and ca_sim.step_no > max_steps:
             break
+    print(f'time={time.time()-start}')
 
 
 if __name__ == '__main__':
