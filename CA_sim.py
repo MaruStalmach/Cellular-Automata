@@ -1,6 +1,5 @@
 from libs2.Rules import *
 from libs.Geometry import *
-from libs2.Cells import *
 from libs2.Sim import *
 from libs2.State import *
 from libs.Rendering.Renderer import CARenderer
@@ -23,7 +22,7 @@ import threading
 if __name__=='__main__':
     #TODO parse args
 
-    size = (500, 500, 100)
+    size = (100, 100, 100)
     axes = 'xyz'
     p = ''
     geometry = Geometry(size,axes,p)
@@ -33,7 +32,11 @@ if __name__=='__main__':
     ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
 
     
-
+    sim_state = {
+        'running': True,
+        'step_count': 0,
+        'max_steps':1000
+    }
     
     def update_callback(step=True):
         """Called each frame to get the latest CA state"""
