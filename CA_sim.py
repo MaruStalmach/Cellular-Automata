@@ -25,7 +25,7 @@ if __name__=='__main__':
 
     size = (500, 500, 100)
     axes = 'xyz'
-    p = 'yz'
+    p = ''
     geometry = Geometry(size,axes,p)
 
     rules = [GameOfLife3D(geometry)]
@@ -33,11 +33,7 @@ if __name__=='__main__':
     ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
 
     
-    
-    # Store simulation state
-    sim_state = {'running': True, 'step_count': 0, 'max_steps': 500}
-    
-                
+
     
     def update_callback(step=True):
         """Called each frame to get the latest CA state"""
@@ -48,8 +44,6 @@ if __name__=='__main__':
             print(f"Step {sim_state['step_count']}/{sim_state['max_steps']}")
         
         # Convert CA state to numpy array for rendering
-        # Assuming the CA state is stored in ca_sim.grid or similar
-        # This will need to be adjusted based on your actual data structures
         try:
             cell_array = ca_sim.state.data
             cell_array = cell_array.reshape(size)
