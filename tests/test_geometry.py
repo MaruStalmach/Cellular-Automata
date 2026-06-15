@@ -1,36 +1,42 @@
 from libs.Geometry import Geometry
 import pytest
+import numpy as np
+from scipy.sparse import csr_matrix
 
-test_data = [
-    ((2,3), 'xy', '', 2, 6),
-    ((3,4,1), 'xyz', "y", 3, 12),
-    ((2,1,5,2), 'xyza', 'a', 4, 20),
-    ((5,5), 'xy', '', 2, 25),
-    ((10,10,10), 'xyz', '', 3, 1000),
+
+init_test_data = [
+    ((10, 10), 'xy', 'y', 2, 100, {1}, 8),           
+    ((3, 4, 2), 'xyz', 'xy', 3, 24, {0, 1}, 26),     
+    ((5,), 'x', '', 1, 5, set(), 2),                 
+    ((2, 2, 2, 2), 'xyza', 'xyza', 4, 16, {0, 1, 2, 3}, 80), 
 ]
-
-@pytest.mark.parametrize("size,axes,periodicity,expected_ndim,expected_cells", test_data)
-def test_geometry_initialisation(size, axes, periodicity, expected_ndim, expected_cells):
-    geometry = Geometry(size, axes, periodicity)
-
-    #check basic properties
-    assert geometry.size == size
+@pytest.mark.parametrize(
+    "size, axes, periodicity, expected_ndim, expected_num_cells, expected_periodic_dims, expected_offsets",
+    init_test_data
+)
+def test_geometry_initialization(size, axes, periodicity, expected_ndim, expected_num_cells, expected_periodic_dims, expected_offsets):
+    geometry = Geometry(size=size, axes=axes, periodicity=periodicity)
+    
     assert geometry.ndim == expected_ndim
-    assert geometry.num_cells == expected_cells
-    assert geometry.axes == axes.lower()
-    assert geometry.periodicity == periodicity.lower()
+    assert geometry.num_cells == expected_num_cells
+    assert geometry.periodic_dims == expected_periodic_dims
+    assert len(geometry._offsets) == expected_offsets
+    assert geometry._offsets.dtype == np.int64
+
+
+def test_neighbourhood_matrix_2d_non_periodic():
+    geometry = Geometry((3, 3), axes='xy', periodicity='')
+    matrix = geometry.generate_neighbourhood_matrix()
     
-    #check periodic dimensions
-    periodic_dims = set()
-    for i, ax in enumerate(axes):
-        if ax in geometry.periodicity:
-            periodic_dims.add(i)
+    assert isinstance(matrix, csr_matrix)
+    assert matrix.shape == (9, 9)
     
-    assert geometry.periodic_dims == periodic_dims
-
-# def test_applying_offset():
-#     geometry = Geometry((2,2), axes='xy', periodicity='y')
-
-#     adj_matrix = geometry.generate_neighbourhood_matrix()
-
-#     print(ad)
+    #convert to dense array for further tests
+    neighbor_counts = np.array(matrix.sum(axis=1)).flatten()
+    
+    #corner cell (0,0) -> flat index 0
+    assert neighbor_counts[0] == 3
+    #edge cell (0,1) -> flat index 1
+    assert neighbor_counts[1] == 5
+    #center cell (1,1) -> flat index 4
+    assert neighbor_counts[4] == 8

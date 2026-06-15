@@ -20,7 +20,7 @@ class Geometry():
         self.ndim = len(size)
 
         self.periodic_dims = {
-            dim_idx for dim_idx, axis in enumerate(reversed(self.axes))
+            dim_idx for dim_idx, axis in enumerate(self.axes) 
             if axis in self.periodicity
         }
 
