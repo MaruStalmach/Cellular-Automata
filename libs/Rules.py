@@ -185,6 +185,39 @@ class Diffusion(Rule):
             old_layers[...,i] = state[key]
         new_layers = np.zeros_like(old_layers)
         
+        #each layer corresponds to the dircetion a particle is moving, list p contains probablities of the next direction
+        # p0 - no change, p3 - 180 deg turn, p1,p2,p4,p5 - 90 degree turns
+        
+        # layer 0 - +z
+        # l1      - +y
+        # l2      - +x
+        # l3      - -z
+        # l4      - -y
+        # l5      - -x
+        
+        rolls = np.random.choice([0,1,2,3,4,5], size = old_layers.shape, p=self.p)
+        
+        h = np.stack([np.full(shape=state.shape, fill_value=x,dtype=np.uint8) for x in range(6)], axis=-1)
+        
+        rolls = ((rolls + h) %6)
+        #set empty cells as invalid value
+        rolls[old_layers==0]=6
+        
+        #does check for collisions
+        for i in range(6):
+            r2 = np.zeros_like(rolls)
+            r2[rolls==i]=1
+            new_layers[...,i]=np.add.reduce(r2,axis=-1)
+            #TODO:deal with collisions
+            
+            
+        #doesnt check for collisions
+        for i in range(6):
+            new_layers[np.any(rolls==i,axis=-1),i]=1
+        
+        
+        
+        
         
         
         
