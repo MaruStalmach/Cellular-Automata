@@ -147,4 +147,31 @@ class GutDrift(Rule):
 
         state[self.target_key] = shifted
         return state
+    
+    
+class Diffusion(Rule):
+    '''Random walk diffusion based on "Quantitative Cellular Automaton Model For Biofilms" by Pizarro G.'''
+    
+    def __init__(self, geometry, a, p, target_key='substrate'):
+        super().__init__(geometry)
+        
+        self.required_keys = [f'{target_key}{x}' for x in range(6)]
+        p3 = (1-4*p)/(a+1)
+        self.p = [a*p3,
+                  p,
+                  p,
+                  p3,
+                  p,
+                  p]
+        
+    def apply_state(self, state) -> State:
+    
+        old_layers = np.empty(shape=state.shape+(6,))
+        for i,key in enumerate(self.required_keys):
+            old_layers[...,i] = state[key]
+        new_layers = np.zeros_like(old_layers)
+        
+        
+        
+        
  
