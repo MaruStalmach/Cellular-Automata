@@ -2,7 +2,7 @@ from typing import Callable, Iterable, Optional
 
 import numpy as np
 
-from libs2.Geometry import Geometry
+from libs.Geometry import Geometry
 
 
 class State:

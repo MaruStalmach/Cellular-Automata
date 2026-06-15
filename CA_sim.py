@@ -1,7 +1,7 @@
-from libs2.Rules import *
+from libs.Rules import *
 from libs.Geometry import *
-from libs2.Sim import *
-from libs2.State import *
+from libs.Sim import *
+from libs.State import *
 from libs.Rendering.Renderer import CARenderer
 
 from time import time

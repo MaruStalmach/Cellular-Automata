@@ -1,6 +1,6 @@
-from libs2.Rules import GutDrift
-from libs2.Geometry import Geometry
-from libs2.Sim import CellularAutomaton
+from libs.Rules import GutDrift
+from libs.Geometry import Geometry
+from libs.Sim import CellularAutomaton
 from libs.Rendering.Renderer import CARenderer
 
 import numpy as np

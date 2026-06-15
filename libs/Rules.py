@@ -1,126 +1,191 @@
-from libs.Cells import Cell
-from libs.Geometry import Geometry
-import numpy as np
+from __future__ import annotations
+
 from random import random
 
+import numpy as np
 
-#TODO implement
-class Rule():
-    
+from libs.Geometry import Geometry
+from libs.State import State
+
+
+class Rule:
     def __init__(self, geometry: Geometry):
         self.geometry = geometry
-        self.required_keys = []
-    
-    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
+        self.required_keys: list[str] = []
+
+    def apply(self, neighbors, cell, coords=None):
         return cell
     
-    def neighbors_matrix(self):
-        return self.geometry.generate_neighbourhood_matrix()
-    
-    
-    
-    
-    
-    
-    
-#TODO implement
-class TestRule(Rule):
-    
-    def __init__(self, geometry: Geometry):
-        super().__init__(geometry)
-        
-    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
-        return cell
+    def apply_state(self, state: State) -> State:
+        '''if state is applayed to a whole array, not per cell'''
+        raise NotImplementedError()
 
 
 
 
 
 class GameOfLife3D(Rule):
-    """
-    test rule that implements game of life in 3D"""
+    """vectorized 3DGoL based on arrays
     
+    args:
+    eb
+    eh
+    fb
+    fh
+    
+    """
+
     def __init__(self, geometry, eb=5, eh=7, fb=6, fh=6):
         super().__init__(geometry)
-        self.required_keys.extend(['alive'])
+        self.required_keys.extend(["alive"])
         self.eb = eb
         self.eh = eh
         self.fb = fb
         self.fh = fh
 
-    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
-        alive_neighbors = [n_cell['alive'] for n_cell in neighbors] #zero cell handled in Cell.__setitem__
-        alive_sum = np.sum(alive_neighbors)
+    def _shift_for_offset(self, grid: np.ndarray, offset: tuple[int, ...]) -> np.ndarray:
+        shifted = grid
 
-        if cell['alive']==1:
-            if alive_sum<self.eb or alive_sum>self.eh:
-                cell['alive'] = 0
-        else:
-            if alive_sum>=self.fb and alive_sum<=self.fh:
-                cell['alive'] = 1
+        for axis, shift in enumerate(offset):
+            if shift != 0 and axis in self.geometry.periodic_dims:
+                shifted = np.roll(shifted, shift=shift, axis=axis)
 
-        return cell
-    
+        non_periodic_axes = [axis for axis in range(self.geometry.ndim) if axis not in self.geometry.periodic_dims]
+        if non_periodic_axes:
+            pad_width = [(0, 0)] * shifted.ndim
+            for axis in non_periodic_axes:
+                pad_width[axis] = (1, 1)
+            shifted = np.pad(shifted, pad_width, mode="constant")
 
+            slices = []
+            for axis, shift in enumerate(offset):
+                if axis in self.geometry.periodic_dims:
+                    slices.append(slice(None))
+                else:
+                    start = 1 + shift
+                    stop = start + grid.shape[axis]
+                    slices.append(slice(start, stop))
+            shifted = shifted[tuple(slices)]
+
+        return shifted
+
+    def apply_state(self, state: State) -> State:
+        # Use per-key accessors so reads/writes affect the underlying arrays
+        alive_grid = state['alive'].astype(np.int8, copy=False)
+        alive_counts = np.zeros_like(alive_grid, dtype=np.int16)
+
+        for offset in self.geometry._offsets:
+            alive_counts += self._shift_for_offset(alive_grid, tuple(int(value) for value in offset))
+
+        current_alive = state['alive'] == 1
+        survives = current_alive & (alive_counts >= self.eb) & (alive_counts <= self.eh)
+        born = (~current_alive) & (alive_counts >= self.fb) & (alive_counts <= self.fh)
+
+        updated_alive = np.zeros_like(state['alive'])
+        updated_alive[survives | born] = 1
+        state['alive'] = updated_alive
+        return state
 
 
 class BiofilmDetachment(Rule):
-    '''checks how close the cell is to the gut wall and decides whether it should be detached during cell drift
-    the closer the cell is to the center of the gut, the more likely it is to detach
-    '''
-    def __init__(self, geometry, detachment_rate, scaling):
+    ''''''
+    def __init__(self, geometry, detachment_rate:float, scaling:float, target_key:str = 'biofilm'):
         super().__init__(geometry=geometry)
-        self.detachment_probability = detachment_rate * scaling #the bacteria closer to wall is less likely to detach
+        self.detachment_probability = detachment_rate * scaling
 
-        #TODO: required keys
+        self.target_key = target_key
+        self.required_keys.append(target_key)
 
-    def would_detach(self, cell: Cell) -> bool:
-        if cell.coords is not None:
-            coord_z = cell.coords[-1]
+    def apply_state(self, state: State) -> State:
+        grid = state[self.target_key].copy()
+        chances = np.random.random(grid.shape)
+        total_layers = grid.shape[-1]
+
+        assert self.geometry.ndim == 3  #only works for 3D
+
+        original_dtype = grid.dtype
+        mask = grid.astype(bool)
+
+        #probability ~ detachment_probability * (z ** 2)
+        for z in range(total_layers):
+            chance_detachment = self.detachment_probability * (z ** 2)
+            chance_detachment = min(chance_detachment, 1.0)
+
+            detached = chances[..., z] < chance_detachment
+            mask[..., z][detached] = False
+
+        #write back preserving original dtype
+        if original_dtype == bool:
+            grid = mask
         else:
-            coord_z = 0
- 
-        distance_sq = coord_z ** 2
-        probability = min(self.detachment_probability * distance_sq, 1.0)
-        
-        return random() < probability
+            grid[...] = mask.astype(original_dtype)
 
+        state[self.target_key] = grid
 
-    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
-
-        if self.would_detach(cell):
-            #cell changes state and detaches
-            pass
-
-        return cell
-
+        return state
 
 
 class GutDrift(Rule):
-    '''defines the drift along z-axis in 3D simulations of the human gut'''
-    def __init__(self, geometry, drift_speed: int, detachment_rule: BiofilmDetachment | None = None):
+    '''periodically moves floating bacteria down the z-axis and flushes some of the biofilm down the z-axis
+    the closer the biofilm is to the wall of the gut, the harder it is for it to get detached'''
+    def __init__(self, geometry, drift_speed: int, target_key: str = 'floating_bacteria', detachment_rule: BiofilmDetachment | None = None):
         super().__init__(geometry=geometry)
-
-        #TODO: required keys
-
-        assert self.geometry.ndim == 3 # only pushes along z-axis if there are 3 axis present
-        
         self.drift_speed = drift_speed
+
+        # 
+        #target key for the layer to be drifted
+        self.target_key = target_key
+        self.required_keys.append(target_key)
+
+        #optional detachment rule for parity with object-based implementation
         self.detachment_rule = detachment_rule
+
+        assert self.geometry.ndim == 3  #only works for 3D
+
+    def apply_state(self, state: State) -> State:
+        grid = state[self.target_key].copy()
+
+        pwidth = [(0, 0)] * self.geometry.ndim
+
+        z_axis = self.geometry.ndim - 1
+
+        if z_axis in self.geometry.periodic_dims:
+            shifted = np.roll(grid, shift=self.drift_speed, axis=z_axis)  #rolls element along axis z
+        else:  #if bacteria are being flushed out (nonperiodic)
+            pwidth[z_axis] = (self.drift_speed, 0)
+            padded = np.pad(grid, pwidth, mode='constant', constant_values=0)
+
+            indexer = [slice(None)] * grid.ndim
+            indexer[z_axis] = slice(0, grid.shape[z_axis])
+            shifted = padded[tuple(indexer)]
+
+        state[self.target_key] = shifted
+        return state
     
-    def _is_valid_for_drift(self, cell:Cell) -> bool | None:
-        if self.detachment_rule is not None:
-            if self.detachment_rule.would_detach(cell):
-                return True
-
-        return False
-
-
-    def apply(self, neighbors: list[Cell], cell: Cell) -> Cell:
-        #change cell coords here
-        if cell.coords is not None:
-            coord_z = cell.coords[-1] - self.drift_speed
-            cell.coords = (*cell.coords[:-1], coord_z)
-
-        return cell
+    
+class Diffusion(Rule):
+    '''Random walk diffusion based on "Quantitative Cellular Automaton Model For Biofilms" by Pizarro G.'''
+    
+    def __init__(self, geometry, a, p, target_key='substrate'):
+        super().__init__(geometry)
         
+        self.required_keys = [f'{target_key}{x}' for x in range(6)]
+        p3 = (1-4*p)/(a+1)
+        self.p = [a*p3,
+                  p,
+                  p,
+                  p3,
+                  p,
+                  p]
+        
+    def apply_state(self, state) -> State:
+    
+        old_layers = np.empty(shape=state.shape+(6,))
+        for i,key in enumerate(self.required_keys):
+            old_layers[...,i] = state[key]
+        new_layers = np.zeros_like(old_layers)
+        
+        
+        
+        
+ 

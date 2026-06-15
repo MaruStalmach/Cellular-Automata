@@ -1,106 +1,71 @@
-from libs.Rules import Rule
+from __future__ import annotations
+
 import numpy as np
+
 from libs.Geometry import Geometry
-from libs.Cells import State, Cell
+from libs.State import State
+from libs.Rules import Rule
 
 
-
-
-
-
-#TODO implement
-class CellularAutomaton():
-    """
-CA Simulation engine
-    """
+class CellularAutomaton:
+    """Simulation engine
     
-    def __init__(self,geometry: Geometry, rules: list[Rule]):
-        """Heart of the CA simulation, allows advancing the simulation by applying rules to the current state. Tracks number of steps since start.
+    args:
+    - geometry - Geometry object
+    - rules - list of Rule objects used within the siimulation
+    """
 
-        Args:
-            rules (list[Rule]): list of rules to apply to states
-        """
+    def __init__(self, geometry: Geometry, rules: list[Rule]):
         self.rules = rules
         self.geometry = geometry
+        self.neighbours = None
+        self._neighbours_idx = None
 
-        self.neighbours = geometry.generate_neighbourhood_matrix()
-        self._neighbours_idx = [
-            self.neighbours.indices[
-                self.neighbours.indptr[i]:self.neighbours.indptr[i+1]
-            ] for i in range(geometry.num_cells)]
-    
-        # self.mask = np.array([
-        #     [
-        #         [1,1,1],
-        #         [1,1,1],
-        #         [1,1,1]
-        #     ],
-        #     [
-        #         [1,1,1],
-        #         [1,0,1],
-        #         [1,1,1]
-        #     ],
-        #     [
-        #         [1,1,1],
-        #         [1,1,1],
-        #         [1,1,1]
-        #     ],
-        # ])
-
-        # get keys reuired by rules used in the simulation
-        keys = []
+        #collect necessary keys for rules
+        keys: list[str] = []
         for rule in rules:
-            keys.extend(rule.required_keys)
+            for key in rule.required_keys:
+                if key not in keys:
+                    keys.append(key)
 
-        
-        self.state = State(geometry,True,keys)
-        # self._state_padded = np.pad(self.state._data,((1,1),(1,1),(1,1)),constant_values=ZERO_CELL)
+        self.state = State(geometry, random=True, cell_keys=keys)
         self.step_no = 0
-        
+
+
+
     def step(self):
-        """
-    advance the simulation one step.
-        """
-        self._apply(self.state)
-        self.step_no+=1
-        
-        
-    def _apply(self,state:State):
+        '''increments the timestep of the simulation and applies all '''
+        for rule in self.rules:
+            if hasattr(rule, "apply_state"):
+                self.state = rule.apply_state(self.state)
+            else:
+                self._apply_cellwise(rule)
 
-        # initialize new state as Cell objects
-        new_state = np.empty(state.shape, dtype=object)
+        self.step_no += 1
 
 
-        # get neighbors from geometry
-        # neighbors_matrix = state.geometry.generate_neighbourhood_matrix().tocsr()
-        flattened = state.data.flatten()
 
+    def _apply_cellwise(self, rule: Rule):
 
-        # iterate over all the cells in the state matrix
-        #TODO: split among threads
-        for cell in range(len(flattened)): 
-            neighbours = self._select_neighbors(cell, flattened)
+        #builds neighbourhood index list
+        if self._neighbours_idx is None:
+            self.neighbours = self.geometry.generate_neighbourhood_matrix()
+            self._neighbours_idx = [
+                self.neighbours.indices[self.neighbours.indptr[i] : self.neighbours.indptr[i + 1]]
+                for i in range(self.geometry.num_cells)
+            ]
 
-            original_cell = flattened[cell]
-            coords = np.unravel_index(cell, state.shape)
-            this_cell = Cell(keys=original_cell.keys,random=False, coords=coords)
-            for key in original_cell.keys:
-                this_cell[key] = original_cell[key]
+        source = self.state.data.copy()
+        target = np.empty_like(source)
+        #flatten to 2D
+        flat_source = source.reshape(-1, source.shape[-1])
+        flat_target = target.reshape(-1, target.shape[-1])
 
-            
-            for rule in self.rules:
-                this_cell = rule.apply(neighbours, this_cell)
-            x,y,z = self._dim1_to_dim3_coords(cell,state.shape)
-            new_state[x, y, z] = this_cell
-        
-        # thru setter implementation this will set the new values correctly and update the padding
-        state.data = new_state
-    
-    def _dim1_to_dim3_coords(self,dim1_coord,state_shape):
-        """converts 1D coordinate to 3D coordinate, given the shape of the state matrix"""
-        return np.unravel_index(dim1_coord, state_shape)
-        
-    def _select_neighbors(self,cell_idx_1d:int, flattened_state: np.ndarray):
-        """select neighbors of a cell given its location in the state matrix"""
-        neighbours_idx = self._neighbours_idx[cell_idx_1d]
-        return [flattened_state[idx] for idx in neighbours_idx]
+        #per-cell apply
+        for cell_idx, neighbours_idx in enumerate(self._neighbours_idx):
+            neighbours = flat_source[neighbours_idx]
+            cell = flat_source[cell_idx].copy()
+            coords = tuple(int(coord) for coord in np.unravel_index(cell_idx, self.geometry.size))
+            flat_target[cell_idx] = rule.apply(neighbours, cell, coords)
+
+        self.state.data = target
