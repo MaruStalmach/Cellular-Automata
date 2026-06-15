@@ -4,7 +4,7 @@ from random import random
 
 import numpy as np
 
-from libs.Geometry import Geometry
+from libs2.Geometry import Geometry
 from libs2.State import State
 
 
@@ -97,21 +97,28 @@ class BiofilmDetachment(Rule):
         self.required_keys.append(target_key)
 
     def apply_state(self, state: State) -> State:
-        grid = state[self.target_key].copy() 
+        grid = state[self.target_key].copy()
         chances = np.random.random(grid.shape)
         total_layers = grid.shape[-1]
 
-        assert self.geometry.ndim == 3 #only works for 3D
-        assert grid.dtype == bool #True/False layer defining the existence of biofilm
-        
+        assert self.geometry.ndim == 3  #only works for 3D
+
+        original_dtype = grid.dtype
+        mask = grid.astype(bool)
+
+        #probability ~ detachment_probability * (z ** 2)
         for z in range(total_layers):
-            dist_from_wall = z / max(1, total_layers - 1)
-            
-            chance_detachment = self.detachment_probability * (dist_from_wall ** 2)
+            chance_detachment = self.detachment_probability * (z ** 2)
             chance_detachment = min(chance_detachment, 1.0)
 
             detached = chances[..., z] < chance_detachment
-            grid[..., z][detached] = False
+            mask[..., z][detached] = False
+
+        #write back preserving original dtype
+        if original_dtype == bool:
+            grid = mask
+        else:
+            grid[...] = mask.astype(original_dtype)
 
         state[self.target_key] = grid
 
@@ -121,29 +128,36 @@ class BiofilmDetachment(Rule):
 class GutDrift(Rule):
     '''periodically moves floating bacteria down the z-axis and flushes some of the biofilm down the z-axis
     the closer the biofilm is to the wall of the gut, the harder it is for it to get detached'''
-    def __init__(self, geometry, drift_speed: int, target_key:str = 'floating_bacteria'):
+    def __init__(self, geometry, drift_speed: int, target_key: str = 'floating_bacteria', detachment_rule: BiofilmDetachment | None = None):
         super().__init__(geometry=geometry)
         self.drift_speed = drift_speed
-    
-        self.target_key = self.target_key
+
+        # 
+        #target key for the layer to be drifted
+        self.target_key = target_key
         self.required_keys.append(target_key)
 
-        assert self.geometry.ndim == 3 #only works for 3D
+        #optional detachment rule for parity with object-based implementation
+        self.detachment_rule = detachment_rule
+
+        assert self.geometry.ndim == 3  #only works for 3D
 
     def apply_state(self, state: State) -> State:
         grid = state[self.target_key].copy()
 
-        pwidth = [(0,0)] * self.geometry.ndim
+        pwidth = [(0, 0)] * self.geometry.ndim
 
-        z_axis = 2
+        z_axis = self.geometry.ndim - 1
 
-        if z_axis in self.geometry.periodic_dims:    
-            shifted = np.roll(grid, shift=self.drift_speed, axis=z_axis) #rolls element along axis z
-        else: #if bacteria are being flushed out (nonperiodic)
+        if z_axis in self.geometry.periodic_dims:
+            shifted = np.roll(grid, shift=self.drift_speed, axis=z_axis)  #rolls element along axis z
+        else:  #if bacteria are being flushed out (nonperiodic)
             pwidth[z_axis] = (self.drift_speed, 0)
-            padded = np.pad(grid, pwidth, mode='constant', constant_values=False)
-            shifted = padded[..., :-self.drift_speed]
+            padded = np.pad(grid, pwidth, mode='constant', constant_values=0)
 
+            indexer = [slice(None)] * grid.ndim
+            indexer[z_axis] = slice(0, grid.shape[z_axis])
+            shifted = padded[tuple(indexer)]
 
         state[self.target_key] = shifted
         return state
