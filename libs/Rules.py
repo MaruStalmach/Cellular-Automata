@@ -211,9 +211,30 @@ class Diffusion(Rule):
             #TODO:deal with collisions
             
             
-        #doesnt check for collisions
+        #doesnt check for collisions, some particles disappear
         for i in range(6):
             new_layers[np.any(rolls==i,axis=-1),i]=1
+
+
+        #move particles according to their movement direction (corresponding layer)
+        # layer 0 - +z
+        # l1      - +y
+        # l2      - +x
+        # l3      - -z
+        # l4      - -y
+        # l5      - -x
+        for i, ax_dir in enumerate([(2,1),
+                                    (1,1),
+                                    (0,1)]):
+            ax, dir = ax_dir
+            if not (ax in state.geometry.periodic_dims):
+                edges
+
+
+            new_layers[...,i]=np.roll(new_layers[...,i],dir,ax)
+            new_layers[...,i+3]=np.roll(new_layers[...,i+3],dir*-1,ax)
+            
+
         
         
         
