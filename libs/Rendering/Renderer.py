@@ -292,7 +292,6 @@ class CARenderer:
                         Shape: (depth, height, width) or similar
         """
         self.ca_state = state_array.astype(np.float32)
-        # TODO: update ssbo
         self.transShader.use_program()
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
         glBufferData(GL_SHADER_STORAGE_BUFFER, self.ca_state.nbytes, self.ca_state.flatten(), GL_DYNAMIC_COPY)
