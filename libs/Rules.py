@@ -208,12 +208,11 @@ class Diffusion(Rule):
             r2 = np.zeros_like(rolls)
             r2[rolls==i]=1
             new_layers[...,i]=np.add.reduce(r2,axis=-1)
-            #TODO:deal with collisions
             
             
-        #doesnt check for collisions, some particles disappear
-        for i in range(6):
-            new_layers[np.any(rolls==i,axis=-1),i]=1
+        # #doesnt check for collisions, some particles disappear
+        # for i in range(6):
+        #     new_layers[np.any(rolls==i,axis=-1),i]=1
 
 
         #move particles according to their movement direction (corresponding layer)
@@ -228,11 +227,27 @@ class Diffusion(Rule):
                                     (0,1)]):
             ax, dir = ax_dir
             if not (ax in state.geometry.periodic_dims):
-                edges
+                sel = [slice(None)]*3
+                #save the edge next to wall and zero it in the array so that when it rolls later zeros come out on the other side
+                sel[ax] = -1
+                edge = new_layers[tuple(sel)+(i,)]
+                new_layers[tuple(sel)+(i,)] = 0
+                # put the edge values on -2 as if they bounced
+                sel[ax] = -2
+                new_layers[tuple(sel)+(i,)] += edge
+                #similarly for the opposite direction
+                sel[ax] = 0
+                edge = new_layers[tuple(sel)+(i+3,)]
+                new_layers[tuple(sel)+(i+3,)] = 0
+                # put the edge values on 1 as if they bounced
+                sel[ax] = 1
+                new_layers[tuple(sel)+(i+3,)] += edge
+
 
 
             new_layers[...,i]=np.roll(new_layers[...,i],dir,ax)
             new_layers[...,i+3]=np.roll(new_layers[...,i+3],dir*-1,ax)
+            #TODO: deal with collsions >1 values in arrays need to be spread out or some shit idk
             
 
         
