@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from random import random
-
 import numpy as np
 
 from libs.Geometry import Geometry
@@ -115,7 +113,7 @@ class BiofilmDetachment(Rule):
             mask[..., z][detached] = False
 
         #write back preserving original dtype
-        if original_dtype == bool:
+        if original_dtype is bool:
             grid = mask
         else:
             grid[...] = mask.astype(original_dtype)
@@ -137,7 +135,6 @@ class GutDrift(Rule):
         self.target_key = target_key
         self.required_keys.append(target_key)
 
-        #optional detachment rule for parity with object-based implementation
         self.detachment_rule = detachment_rule
 
         assert self.geometry.ndim == 3  #only works for 3D
@@ -229,7 +226,7 @@ class Diffusion(Rule):
                                     (1,1),
                                     (0,1)]):
             ax, dir = ax_dir
-            if not (ax in state.geometry.periodic_dims):
+            if ax not in state.geometry.periodic_dims:
                 sel = [slice(None)]*3
                 #save the edge next to wall and zero it in the array so that when it rolls later zeros come out on the other side
                 sel[ax] = -1
