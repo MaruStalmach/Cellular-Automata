@@ -140,15 +140,15 @@ class GutDrift(Rule):
         assert self.geometry.ndim == 3  #only works for 3D
 
     def apply_state(self, state: State) -> State:
-        grid = state[self.target_key].copy()
-
-        pwidth = [(0, 0)] * self.geometry.ndim
+        grid = state[self.target_key]
 
         z_axis = self.geometry.ndim - 1
 
         if z_axis in self.geometry.periodic_dims:
             shifted = np.roll(grid, shift=self.drift_speed, axis=z_axis)  #rolls element along axis z
         else:  #if bacteria are being flushed out (nonperiodic)
+            pwidth = [(0, 0)] * self.geometry.ndim
+
             pwidth[z_axis] = (self.drift_speed, 0)
             padded = np.pad(grid, pwidth, mode='constant', constant_values=0)
 
