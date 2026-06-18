@@ -86,47 +86,44 @@ class GameOfLife3D(Rule):
 
 
 class BiofilmDetachment(Rule):
-    ''''''
-    def __init__(self, geometry, detachment_rate:float, scaling:float, target_key:str = 'biofilm'):
+    '''the closer the biofilm is to the wall of the gut, the harder it is for it to get detached
+    moves detached cells from biofilm layer to detached bacteria layer'''
+    def __init__(self, geometry, detachment_rate:float, scaling:float):
         super().__init__(geometry=geometry)
         self.detachment_probability = detachment_rate * scaling
 
-        self.target_key = target_key
-        self.required_keys.append(target_key)
+        self.target_keys = ['biofilm', 'floating_bacteria']
+        self.required_keys.extend(self.target_keys)
 
     def apply_state(self, state: State) -> State:
-        grid = state[self.target_key].copy()
-        chances = np.random.random(grid.shape)
-        total_layers = grid.shape[-1]
 
         assert self.geometry.ndim == 3  #only works for 3D
 
-        original_dtype = grid.dtype
-        mask = grid.astype(bool)
+        biofilm_grid, floating_bact_grid = state['biofilm'], state['floating_bacteria']
+        total_layers = biofilm_grid.shape[-1]
 
-        #probability ~ detachment_probability * (z ** 2)
-        for z in range(total_layers):
-            chance_detachment = self.detachment_probability * (z ** 2)
-            chance_detachment = min(chance_detachment, 1.0)
+        z_indices = np.arange(total_layers)
+        #chooses the chance of detachment based on the distance from the wall of the gut
+        #TODO: check the distance to the wall at both sides
+        chance_detachment = np.clip(self.detachment_probability * (z_indices ** 2), 0.0, 1.0)
+     
+        chances = np.random.random(biofilm_grid.shape)
 
-            detached = chances[..., z] < chance_detachment
-            mask[..., z][detached] = False
+        #checks for biofilm on square and checks the prob of detachment
+        detached_mask = biofilm_grid & (chances < chance_detachment)
+        biofilm_grid[detached_mask] = False
 
-        #write back preserving original dtype
-        if original_dtype is bool:
-            grid = mask
-        else:
-            grid[...] = mask.astype(original_dtype)
+        floating_bact_grid |= detached_mask #bitwise or adds detached cells to floating bact layer
 
-        state[self.target_key] = grid
+        state['biofilm'] = biofilm_grid
+        state['floating_bacteria'] = floating_bact_grid
 
         return state
 
 
 class GutDrift(Rule):
-    '''periodically moves floating bacteria down the z-axis and flushes some of the biofilm down the z-axis
-    the closer the biofilm is to the wall of the gut, the harder it is for it to get detached'''
-    def __init__(self, geometry, drift_speed: int, target_key: str = 'floating_bacteria', detachment_rule: BiofilmDetachment | None = None):
+    '''periodically moves floating bacteria down the z-axis and flushes some of the biofilm down the z-axis'''
+    def __init__(self, geometry, drift_speed: int, target_key: str = 'floating_bacteria'):
         super().__init__(geometry=geometry)
         self.drift_speed = drift_speed
 
@@ -135,13 +132,15 @@ class GutDrift(Rule):
         self.target_key = target_key
         self.required_keys.append(target_key)
 
-        self.detachment_rule = detachment_rule
 
         assert self.geometry.ndim == 3  #only works for 3D
 
     def apply_state(self, state: State) -> State:
-        grid = state[self.target_key]
+        if self.drift_speed == 0:
+            return state
+        
 
+        grid = state[self.target_key]
         z_axis = self.geometry.ndim - 1
 
         if z_axis in self.geometry.periodic_dims:
