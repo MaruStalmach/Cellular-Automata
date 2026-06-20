@@ -160,7 +160,13 @@ class GutDrift(Rule):
     
     
 class Diffusion(Rule):
-    '''Random walk diffusion based on "Quantitative Cellular Automaton Model For Biofilms" by Pizarro G.'''
+    '''Random walk diffusion based on "Quantitative Cellular Automaton Model For Biofilms" by Pizarro G.
+    
+    arguments:
+    a - defined as p0/p3, where p0 is probability that a particle wont change direction and p3 is probability that a particle will make a 180 deg turn
+    p - probability for a particle to do a 90 deg turn. p=p1=p2=p4=p5 because of symmetry. 
+    
+    '''
     
     def __init__(self, geometry : Geometry, a : float, p : float, target_key : str ='substrate'):
         super().__init__(geometry)
@@ -194,6 +200,7 @@ class Diffusion(Rule):
         rolls = np.random.choice([0,1,2,3,4,5], size = layers.shape, p=self.p)
         
         h = np.stack([np.full(shape=state.shape, fill_value=x,dtype=np.uint8) for x in range(6)], axis=-1)
+        
         
         rolls = ((rolls + h) %6)
         #set empty cells as invalid value
