@@ -21,12 +21,14 @@ class State:
     def __init__(
         self,
         geometry: Geometry,
-        random: bool = True,
         cell_keys: Iterable[str] = (),
-        random_func: Optional[Callable[..., object]] = None,
-        random_args: Optional[dict] = None,
-        dtype: np.dtype | type = np.uint8,
         key_dtypes: Optional[dict[str, np.dtype | type]] = None,
+        key_layers: Optional[Iterable] = None,
+        random: Iterable[bool] = None,
+        random_func: Optional[Iterable[Callable[..., object]]] = None,
+        random_args: Optional[Iterable[dict]] = None,
+        dtype: np.dtype | type = np.uint8,
+        
     ) -> None:
         
 
@@ -41,51 +43,69 @@ class State:
             self.key_dtypes:dict[str, np.dtype | type] = key_dtypes.copy()
         else:
             self.key_dtypes:dict[str, np.dtype | type] = {}
+            
+        if key_layers is not None:
+            self.key_layers = key_layers.copy()
+        else:
+            self.key_layers = [1 for _ in range(len(cell_keys))]
 
         #shape of the spatial grid and number of keys
         grid_dims = tuple(self.geometry.size)
         num_of_keys = len(self.keys)
+        num_of_arrays = sum(self.key_layers)
 
         # store per-key arrays in a dict so each key can have its own dtype
         self._data: dict[str, np.ndarray] = {}
-        for key in self.keys:
+        for i,key in enumerate(self.keys):
             kd = self.key_dtypes.get(key, self.dtype)
-            self._data[key] = np.zeros(grid_dims, dtype=kd)
+            ### for keys with multiple layers create a bigger array
+            self._data[key] = np.zeros(grid_dims+(self.key_layers[i],), dtype=kd)
 
 
 
 
-        if not random or num_of_keys == 0:
+        if random is None or num_of_keys == 0:
             return
 
 
         #fill array with initial values
-        expected_shape = grid_dims + (num_of_keys,)
 
         if random_func is None:
-            for key in self.keys:
+            for i,key in enumerate(self.keys):
                 kd = self.key_dtypes.get(key, self.dtype)
-                self._data[key][...] = np.random.randint(0, 2, size=grid_dims).astype(kd)
+                
+                self._data[key][...] = np.random.randint(0, 2, size=grid_dims+(self.key_layers[i],)).astype(kd)
             return
 
-        rand_args = random_args or {}
-        try:
-            generated = random_func(size=expected_shape, **rand_args)
-        except TypeError:
-            generated = random_func(**rand_args)
-
-        generated = np.asarray(generated)
-        if generated.shape != expected_shape:
-            generated = np.broadcast_to(generated, expected_shape)
-
-        #distribute to per-key arrays 
-        for idx, key in enumerate(self.keys):
+        rand_args = random_args or [{} for _ in range(len(self.keys))]
+        for i,key in enumerate(self.keys):
             kd = self.key_dtypes.get(key, self.dtype)
-            self._data[key][...] = np.asarray(generated[..., idx]).astype(kd)
+            expected_shape = grid_dims + (self.key_layers[i],)
+            try:
+                generated = random_func[i](size=expected_shape, dtype=kd, **rand_args[i])
+            except TypeError:
+                try:
+                    generated = random_func[i](size=expected_shape, **rand_args[i])
+                except TypeError:
+                    generated = random_func[i](**rand_args[i])
 
+            generated = np.asarray(generated)
+            if generated.shape != expected_shape:
+                generated = np.broadcast_to(generated, expected_shape)
+                
+            
+            self._data[key][...] = generated.astype(kd)
+            
+        
+        ### squeeze last dim
+        for key in self.keys:
+            try:
+                ### if there was only one layer, remove the last dim/axis
+                self._data[key] = self._data[key].squeeze(axis=-1)
+            except ValueError:
+                ### squeeeze raises a ValueError if selected dim is not 1
+                pass
     
-
-
 
     # -- Properties -------------------------------------------------
     @property
@@ -93,17 +113,34 @@ class State:
         """return a view of the internal ndarray"""
         if len(self.keys) == 0:
             return np.empty(tuple(self.geometry.size) + (0,), dtype=self.dtype)
-        return np.stack([self._data[k] for k in self.keys], axis=-1)
+        # had to change this since introducing the concept of layers per key - it should still return similiar output
+        list_to_stack = []
+        for k in self.keys:
+            arr = self._data[k].copy()
+            # keys with multiple layers will have 4d dimensions
+            if len(arr.shape)==4:
+                # has to be unstacked to become a tuple of grid_dim shaped arrays
+                list_to_stack.extend(np.unstack(arr,axis=-1))
+            else:
+                list_to_stack.append(arr)
+        return np.stack(list_to_stack, axis=-1)
 
     @data.setter
     def data(self, new_data: np.ndarray) -> None:
         '''replace internal data with array'''
         arr = np.asarray(new_data)
-        required_shape = tuple(self.geometry.size) + (len(self.keys),)
+        # required_shape = tuple(self.geometry.size) + (len(self.keys),)
 
-        for idx, key in enumerate(self.keys):
+        for key_cnt, key in enumerate(self.keys):
+            arr_cnt = 0
             kd = self.key_dtypes.get(key, self.dtype)
-            self._data[key] = arr[..., idx].astype(kd).copy()
+            layers = self.key_layers[key_cnt]
+            # stack multiple layer keys
+            if layers>1:
+                self._data[key] = np.stack(arr[...,arr_cnt:arr_cnt+layers],axis=-1).astype(kd)
+            else:
+                self._data[key] = arr[...,arr_cnt].astype(kd).copy()
+            arr_cnt+=layers
 
 
 
@@ -115,6 +152,7 @@ class State:
         return self.geometry.size
 
     def copy(self) -> "State":
+        ##TODO:FIX THIS
         new_state = State(self.geometry, random=False, cell_keys=self.keys, dtype=self.dtype)
         for key in self.keys:
             new_state._data[key] = self._data[key].copy()

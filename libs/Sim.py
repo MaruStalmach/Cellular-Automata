@@ -15,7 +15,7 @@ class CellularAutomaton:
     - rules - list of Rule objects used within the siimulation
     """
 
-    def __init__(self, geometry: Geometry, rules: list[Rule]):
+    def __init__(self, geometry: Geometry, rules: list[Rule], state : State = None):
         self.rules = rules
         self.geometry = geometry
         self.neighbours = None
@@ -28,7 +28,11 @@ class CellularAutomaton:
                 if key not in keys:
                     keys.append(key)
 
-        self.state = State(geometry, random=True, cell_keys=keys)
+        if state is not None:
+            self.state = state
+            #TODO: check if state keys are the same as rule keys
+        else:
+            self.state = State(geometry, random=True, cell_keys=keys)
         self.step_no = 0
 
 
