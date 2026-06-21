@@ -1,0 +1,54 @@
+{
+"sim":
+{
+    "size":"(30,30,30)",
+    "periodicity" : "",
+    "dtype":"np.uint8",
+    "render":true,
+    "max_steps":1000
+},
+
+"state_keys":[
+    {
+        "name" : "alive",
+        "layers":1,
+        "dtype" : "np.uint8",
+        "random" : true,
+        "random_func" : "np.random.choice",
+        "random_args" : 
+        {
+            "a" : [0,1],
+            "p" : [0.8,0.2]
+        } 
+    },
+    {
+        "name":"substrate",
+        "layers":6,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func":"np.random.choice",
+        "random_args":
+        {
+            "a" : [0,1],
+            "p" : [0.3,0.7]
+        }
+    }
+],
+
+"rules":[
+    {
+        "name":"GameOfLife3D",
+        "eb":2,
+        "eh":3,
+        "fb":3,
+        "fh":3,
+        "target_key":"alive"
+    },
+    {
+        "name":"Diffusion",
+        "target_key":"substrate",
+        "a" : 5,
+        "p" : 0.1
+    }
+]
+}
