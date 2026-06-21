@@ -12,12 +12,17 @@ from libs.Rendering.Shader import Shader
 
 
 class CARenderer:
-    """Renders 3D cellular automaton"""
+    """Renders 3D cellular automata"""
     
-    def __init__(self, init_state : np.ndarray, width=1000, height=600):
+    def __init__(self, init_state : np.ndarray, width=1000, height=600, update_callback: callable = None):
 
         self.width=width
         self.height=height
+        
+        if update_callback is None:
+            self.update_callback = None
+        else:
+            self.update_callback = update_callback
 
         
         self.ca_state = init_state.astype(dtype=np.float32)  # Will hold 3D numpy array
@@ -383,7 +388,7 @@ class CARenderer:
         
         glfw.swap_buffers(self.window)
     
-    def run(self, update_callback=None):
+    def run(self):
         """
         Main loop. update_callback will be called each frame to update CA state.
         
@@ -392,10 +397,10 @@ class CARenderer:
         """
         while self.running and not glfw.window_should_close(self.window):
             # Update CA state if callback provided
-            if update_callback:
+            if self.update_callback:
                 new_state = None
                 if self.p_press:
-                    new_state = update_callback()
+                    new_state = self.update_callback()
                     self.p_press = False
                 if new_state is not None:
                     self.set_ca_state(new_state)
