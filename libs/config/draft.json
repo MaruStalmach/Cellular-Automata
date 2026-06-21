@@ -38,17 +38,15 @@
 "rules":[
     {
         "name":"GameOfLife3D",
-        "eb":2,
-        "eh":3,
-        "fb":3,
-        "fh":3,
-        "target_key":"alive"
-    },
-    {
-        "name":"Diffusion",
-        "target_key":"substrate",
-        "a" : 5,
-        "p" : 0.1
+        "args" : 
+        {
+            "eb":2,
+            "eh":3,
+            "fb":3,
+            "fh":3,
+            "target_key":"alive"
+        }
+        
     }
 ]
 }
