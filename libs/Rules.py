@@ -33,9 +33,9 @@ class GameOfLife3D(Rule):
     
     """
 
-    def __init__(self, geometry, eb=5, eh=7, fb=6, fh=6):
+    def __init__(self, geometry, eb=5, eh=7, fb=6, fh=6, target_key : str='alive'):
         super().__init__(geometry)
-        self.required_keys.extend(["alive"])
+        self.required_keys.extend([target_key])
         self.eb = eb
         self.eh = eh
         self.fb = fb
