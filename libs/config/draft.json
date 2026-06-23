@@ -1,9 +1,9 @@
 {
 "sim":
 {
-    "size":"(30,30,30)",
+    "size":[50,30,30],
     "periodicity" : "",
-    "dtype":"np.uint8",
+    "dtype":"uint8",
     "render":true,
     "max_steps":1000
 },
@@ -12,13 +12,13 @@
     {
         "name" : "alive",
         "layers":1,
-        "dtype" : "np.uint8",
+        "dtype" : "uint8",
         "random" : true,
         "random_func" : "np.random.choice",
         "random_args" : 
         {
             "a" : [0,1],
-            "p" : [0.8,0.2]
+            "p" : [0.9,0.1]
         } 
     },
     {
@@ -48,5 +48,19 @@
         }
         
     }
-]
+],
+
+"renderer":
+{
+    "key":"alive",
+    "window_size":[1200,800],
+    "callback" :
+    {
+        "name":"Callback",
+        "args":
+        {
+            "step_stride":10
+        }
+    }
+}
 }

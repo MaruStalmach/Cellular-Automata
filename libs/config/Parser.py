@@ -5,6 +5,22 @@ from libs.Rules import *
 from libs.State import *
 from libs.State import *
 from libs.Sim import *
+from libs.Callback import *
+import numpy as np
+
+
+def getnestedattr(module, name:str) -> object:
+    names = name.split('.')
+    obj=module
+    while True:
+        n=names.pop(0)
+        if globals().get(n,None)==module:
+            continue
+        obj = getattr(obj,n)
+        if len(names)<=0:
+            return obj
+        
+    
 
 def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     with open(f'libs/config/{filename}', 'r') as file:
@@ -17,9 +33,8 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     size = sim_data['size'] # string of a tuple
     period = sim_data['periodicity']
 
-    geometry = None
+    geometry = Geometry(size=tuple(size), axes='xyz', periodicity=period)
 
-    exec(f"geometry = Geometry(size={size}, axes='xyz', periodicity='{period}')")
 
     ### next create State obj
 
@@ -38,8 +53,12 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         key_layers.append(sk.get('layers', 1))
         random.append(sk.get('random', True))
         random_args.append(sk['random_args'])
-        exec(f"key_dtypes['{sk['name']}']={sk.get('dtype',sim_data.get('dtype', np.uint8))}")
-        exec(f"random_func.append({sk.get('random_func',None)})")
+        key_dtypes[sk['name']]=getnestedattr(np,sk.get('dtype',sim_data.get('dtype', 'np.uint8')))
+        func_name = sk.get('random_func', None)
+        if func_name is None:
+            random_func.append(None)
+        else:
+            random_func.append(getnestedattr(np,func_name))
 
     state = State(geometry=geometry, cell_keys=cell_keys, key_layers=key_layers, key_dtypes=key_dtypes, random=random, random_func= random_func, random_args= random_args)
 
@@ -49,8 +68,8 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     rules = []
     for rd in rules_data:
         args = rd.get('args',{})
-        rule = None
-        exec(f"rule={rd['name']}(geometry, **args)")
+        rule_class = globals()[rd['name']]
+        rule=rule_class(geometry, **args)
         rules.append(rule)
 
     ### finally create a CA object
@@ -62,7 +81,26 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     
     
     ### next setup renderer
-    renderer = CARenderer()
+    
+    ### get update_callback
+    renderer_data = data['renderer']
+    #TODO:multiple key rendering, will have to adjust renderer code also
+    key = renderer_data.get('key', ca_sim.state.keys[0])
+    window_size = renderer_data.get('window_size', ())
+    callback_data = renderer_data.get('callback', None)
+    
+    
+    if callback_data is None:
+        callback = Callback()
+    else:
+        cb_args = {} or callback_data.get('args', None)
+        callback = globals()[callback_data['name']](key, ca_sim, **cb_args)
+
+
+    
+    renderer = CARenderer(callback(False), *window_size, update_callback=callback)
+    
+    return ca_sim, renderer
     
     
     
