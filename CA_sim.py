@@ -3,6 +3,7 @@ from libs.Geometry import *
 from libs.Sim import *
 from libs.State import *
 from libs.Rendering.Renderer import CARenderer
+from libs.Callback import Callback
 
 from time import time
 import numpy as np
@@ -37,29 +38,13 @@ if __name__=='__main__':
         'step_count': 0,
         'max_steps':1000
     }
-    
-    def update_callback(step=True):
-        """Called each frame to get the latest CA state"""
-        if sim_state['running'] and sim_state['step_count'] < sim_state['max_steps']:
-            if step:
-                ca_sim.step()
-                sim_state['step_count'] += 1
-            print(f"Step {sim_state['step_count']}/{sim_state['max_steps']}")
         
-        # Convert CA state to numpy array for rendering
-        try:
-            cell_array = ca_sim.state.data
-            cell_array = cell_array.reshape(size)
-            return cell_array
-        except:
-            # Fallback if structure is different
-            print('update_callback fallback triggered')
-            return None
+    ub = Callback('alive',ca_sim,10)
     # Initialize renderer
-    renderer = CARenderer(width=1200, height=800, init_state=update_callback(step=False))
+    renderer = CARenderer(width=1200, height=800, init_state=ub(step=False), update_callback=ub)
     
     # Run renderer with CA updates
     try:
-        renderer.run(update_callback=update_callback)
+        renderer.run()
     except KeyboardInterrupt:
         print("Simulation stopped by user")   
