@@ -31,6 +31,10 @@ class CellularAutomaton:
         if state is not None:
             self.state = state
             #TODO: check if state keys are the same as rule keys
+            try:
+                assert keys==self.state.keys
+            except AssertionError:
+                print('key mismatch between rules and state arrays (soft error)')
         else:
             self.state = State(geometry, random=True, cell_keys=keys)
         self.step_no = 0
