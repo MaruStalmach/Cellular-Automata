@@ -10,6 +10,7 @@ from time import time
 import numpy as np
 import threading
 
+import argparse
 
 
 
@@ -20,10 +21,20 @@ import threading
 
 
 
+### example usage: 
+#   python -m CA_sim -f draft.json
 
 if __name__=='__main__':
+    parser = argparse.ArgumentParser(prog='CA_sim', 
+                                     description='''simulate microbial growth (including biofilms) via a Cellular Automaton
+                                     with customizable rules''')
     
-    ca_sim, renderer = parse_json('draft.json')
+    parser.add_argument('--filename','-f',required=True)
+    
+    args = parser.parse_args()
+    
+    
+    ca_sim, renderer = parse_json(args.filename)
     
     # Run renderer with CA updates
     try:
