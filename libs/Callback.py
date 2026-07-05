@@ -20,6 +20,7 @@ class Callback():
         try:
             return self.sim.state[self.key]
         except:
+            print(f"RENDERER ERROR: NO SUCH KEY TO RENDER AS {self.key}")
             return 0
         
 class ReduceCallback(Callback):
