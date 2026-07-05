@@ -42,7 +42,7 @@
     "window_size":[1200,800],
     "callback" :
     {
-        "name":"Callback",
+        "name":"ReduceCallback",
         "args":
         {
             "step_stride":100
