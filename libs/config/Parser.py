@@ -11,6 +11,8 @@ import numpy as np
 
 def getnestedattr(module, name:str) -> object:
     names = name.split('.')
+    if len(names)==1:
+        return globals().get(name)
     obj=module
     while True:
         n=names.pop(0)
