@@ -318,9 +318,9 @@ class SpeciesInteraction(Rule):
         for sp in bacteria_types:
             presence[sp] = state[sp].astype(bool) #checks presence of each species on the grid
             occupied |= presence[sp] #mark all occupied grid spots for all species
-            neighbour_counts[sp] = self._get_neighbour_counts(presence[sp].astype(np.int32))
+            neighbour_counts[sp] = self._get_neighbour_counts(presence[sp].astype(np.uint8))
 
-            spawns[sp] = np.zeros(state.shape, dtype=np.float64) #how much a species sp wnats to grow on a gridspot
+            spawns[sp] = np.zeros(state.shape, dtype=np.float32) #how much a species sp wnats to grow on a gridspot
             deaths[sp] = np.zeros(state.shape, dtype=bool) #defines cells to die
         
         empty = ~occupied
