@@ -273,9 +273,10 @@ class Diffusion(Rule):
 InteractionConfig = Dict[str, Dict[str, float]]        
         
 class SpeciesInteraction(Rule):
-    def __init__(self, geometry, interactions: InteractionConfig):
+    def __init__(self, geometry: Geometry, interactions: InteractionConfig, spawn_claim_scale: float | None = None):
         super().__init__(geometry=geometry)
         self._interactions = interactions
+        self.spawn_claim_scale = spawn_claim_scale
 
         self.required_keys.extend(interactions.keys())
 
@@ -345,12 +346,17 @@ class SpeciesInteraction(Rule):
             state[sp] = (presence[sp] & ~deaths[sp]).astype(state[sp].dtype)
 
         
-        claim_grid_spot = np.stack(
-            [spawns[sp] + np.random.random(state.shape) * 1e-6 for sp in bacteria_types], axis=-1
-        )
-        winner_idx = np.argmax(claim_grid_spot, axis=-1)
-        any_claim = np.stack([spawns[sp] > 0 for sp in bacteria_types], axis=-1).any(axis=-1)
-        spawn_here = empty & any_claim
+        claim_grid_spot = np.stack([spawns[sp] for sp in bacteria_types], axis=-1)
+        max_claim = claim_grid_spot.max(axis=-1)
+
+        winner_idx = np.argmax(claim_grid_spot + np.random.random(claim_grid_spot.shape) * 1e-6, axis=-1)
+        any_claim = max_claim > 0
+
+        if self.spawn_claim_scale is None:
+            spawn_here = empty & any_claim #if scale set to none, prob of spawn is = 1 for any claim
+        else:
+            spawn_probability = np.clip(max_claim / self.spawn_claim_scale, 0.0, 1.0)
+            spawn_here = empty & any_claim & (np.random.random(state.shape) < spawn_probability)
 
 
 
