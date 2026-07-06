@@ -35,6 +35,7 @@ if __name__=='__main__':
     
     
     ca_sim, renderer = parse_json(args.filename)
+
     
     # Run renderer with CA updates
     try:

@@ -1,7 +1,7 @@
 {
 "sim":
 {
-    "size":[100,100,100],
+    "size":[70,70,70],
     "periodicity" : "",
     "dtype":"uint8",
     "render":true,
@@ -14,11 +14,12 @@
         "layers":1,
         "dtype" : "uint8",
         "random" : true,
-        "random_func" : "np.random.choice",
+        "random_func" : "init_block",
         "random_args" : 
         {
-            "a" : [0,1],
-            "p" : [0.99,0.01]
+            "start":[0,0,0],
+            "block_size":[10,2,2],
+            "value":1
         } 
     },
     {
@@ -26,11 +27,12 @@
         "layers":6,
         "dtype":"np.uint8",
         "random":true,
-        "random_func":"np.random.choice",
+        "random_func":"init_block",
         "random_args":
         {
-            "a" : [0,1],
-            "p" : [0.9,0.1]
+            "start":[50,20,0],
+            "block_size":[5,5,5],
+            "value":1
         }
     }
 ],
@@ -58,14 +60,14 @@
 
 "renderer":
 {
-    "key":"substrate",
+    "key":"bacteria",
     "window_size":[1200,800],
     "callback" :
     {
-        "name":"ReduceCallback",
+        "name":"Callback",
         "args":
         {
-            "step_stride":1
+            "step_stride":10
         }
     }
 }
