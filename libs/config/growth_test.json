@@ -1,0 +1,72 @@
+{
+"sim":
+{
+    "size":[100,100,100],
+    "periodicity" : "",
+    "dtype":"uint8",
+    "render":true,
+    "max_steps":1000
+},
+
+"state_keys":[
+    {
+        "name" : "bacteria",
+        "layers":1,
+        "dtype" : "uint8",
+        "random" : true,
+        "random_func" : "np.random.choice",
+        "random_args" : 
+        {
+            "a" : [0,1],
+            "p" : [0.99,0.01]
+        } 
+    },
+    {
+        "name":"substrate",
+        "layers":6,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func":"np.random.choice",
+        "random_args":
+        {
+            "a" : [0,1],
+            "p" : [0.9,0.1]
+        }
+    }
+],
+
+"rules":[
+    {
+        "name":"Diffusion",
+        "args" : 
+        {
+            "target_key":"substrate",
+            "a" : 6,
+            "p" : 0.08
+        }
+        
+    },
+    {
+        "name" : "BacteriaGrowth",
+        "args" :
+            {
+                "bacteria_keys":["bacteria"],
+                "substrate_key":"substrate"
+            }
+    }
+],
+
+"renderer":
+{
+    "key":"substrate",
+    "window_size":[1200,800],
+    "callback" :
+    {
+        "name":"ReduceCallback",
+        "args":
+        {
+            "step_stride":1
+        }
+    }
+}
+}

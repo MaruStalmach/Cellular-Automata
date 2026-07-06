@@ -261,13 +261,207 @@ class Diffusion(Rule):
         
         state[self.target_key]=layers[...]
         return state
-                        
+    
+class BacteriaGrowth(Rule):
 
-        
-        
-        
-        
-        
-        
-        
- 
+    def __init__(
+        self,
+        geometry,
+        bacteria_keys: list[str],
+        substrate_key: str,
+        utilization_rate: float = 1.0,
+        growth_yield: float = 1.0,
+    ):
+        super().__init__(geometry)
+        self.b_keys = bacteria_keys
+        self.sub_key = substrate_key
+        self.utilization_rate = float(utilization_rate)
+        self.growth_yield = float(growth_yield)
+
+        self.required_keys.extend([*bacteria_keys, substrate_key])
+
+    def _cell_mask(self, grid: np.ndarray) -> np.ndarray:
+        if grid.ndim == self.geometry.ndim + 1:
+            return np.any(grid > 0, axis=-1)
+        return grid > 0
+
+    def _substrate_presence(self, grid: np.ndarray) -> np.ndarray:
+        if grid.ndim == self.geometry.ndim + 1:
+            return np.any(grid > 0, axis=-1)
+        return grid > 0
+
+    def _substrate_layer_count(self, grid: np.ndarray) -> np.ndarray:
+        if grid.ndim == self.geometry.ndim + 1:
+            return (grid > 0).sum(axis=-1)
+        return grid.astype(np.int64, copy=False)
+
+    def _shift_spatial(self, grid: np.ndarray, offset: tuple[int, ...]) -> np.ndarray:
+        shifted = grid
+
+        for axis, shift in enumerate(offset):
+            if shift != 0 and axis in self.geometry.periodic_dims:
+                shifted = np.roll(shifted, shift=shift, axis=axis)
+
+        non_periodic_axes = [axis for axis in range(self.geometry.ndim) if axis not in self.geometry.periodic_dims]
+        if non_periodic_axes:
+            pad_width = [(0, 0)] * shifted.ndim
+            for axis in non_periodic_axes:
+                pad_width[axis] = (1, 1)
+            shifted = np.pad(shifted, pad_width, mode="constant")
+
+            slices = []
+            for axis, shift in enumerate(offset):
+                if axis in self.geometry.periodic_dims:
+                    slices.append(slice(None))
+                else:
+                    start = 1 + shift
+                    stop = start + grid.shape[axis]
+                    slices.append(slice(start, stop))
+            shifted = shifted[tuple(slices)]
+
+        return shifted
+
+    def _neighbour_candidates(self, coords: tuple[int, ...]) -> list[tuple[int, ...]]:
+        candidates: list[tuple[int, ...]] = []
+        for offset in self.geometry._offsets:
+            target = []
+            valid = True
+            for axis, (coord, delta) in enumerate(zip(coords, offset, strict=True)):
+                value = coord + int(delta)
+                if axis in self.geometry.periodic_dims:
+                    value %= self.geometry.size[axis]
+                elif value < 0 or value >= self.geometry.size[axis]:
+                    valid = False
+                    break
+                target.append(value)
+
+            if valid:
+                candidates.append(tuple(target))
+
+        return candidates
+
+    def _substrate_neighborhood_count(self, substrate_grid: np.ndarray) -> np.ndarray:
+        substrate_layer_count = self._substrate_layer_count(substrate_grid)
+        count = np.zeros_like(substrate_layer_count, dtype=np.int64)
+        for offset in self.geometry._offsets:
+            count += self._shift_spatial(substrate_layer_count, tuple(int(value) for value in offset))
+        return count
+
+    def _substrate_candidates_for_cell(
+        self,
+        substrate_grid: np.ndarray,
+        coords: tuple[int, ...],
+    ) -> list[tuple[tuple[int, ...], int]]:
+        candidates: list[tuple[tuple[int, ...], int]] = []
+        for offset in self.geometry._offsets:
+            neighbour = []
+            valid = True
+            for axis, (coord, delta) in enumerate(zip(coords, offset, strict=True)):
+                value = coord + int(delta)
+                if axis in self.geometry.periodic_dims:
+                    value %= self.geometry.size[axis]
+                elif value < 0 or value >= self.geometry.size[axis]:
+                    valid = False
+                    break
+                neighbour.append(value)
+
+            if not valid:
+                continue
+
+            neighbour_coords = tuple(neighbour)
+            if substrate_grid.ndim == self.geometry.ndim + 1:
+                active_layers = np.flatnonzero(substrate_grid[neighbour_coords] > 0)
+                for layer in active_layers:
+                    candidates.append((neighbour_coords, int(layer)))
+            elif substrate_grid[neighbour_coords] > 0:
+                candidates.append((neighbour_coords, 0))
+
+        return candidates
+
+    def _consume_substrate_particle(self, substrate_grid: np.ndarray, coords: tuple[int, ...]) -> None:
+        if substrate_grid.ndim == self.geometry.ndim + 1:
+            layer_coords = coords[:-1] + (coords[-1],)
+            substrate_grid[layer_coords] = 0
+            return
+
+        substrate_grid[coords] = 0
+
+    def apply(self, neighbors, cell, coords=None):
+        return super().apply(neighbors, cell, coords)
+                        
+    def apply_state(self, state):
+        substrate_grid = state[self.sub_key].copy()
+        bacteria_grids = {key: state[key].copy() for key in self.b_keys}
+
+        occupied_mask = np.zeros(state.shape, dtype=bool)
+        for grid in bacteria_grids.values():
+            occupied_mask |= self._cell_mask(grid)
+
+        substrate_count = self._substrate_neighborhood_count(substrate_grid).astype(np.float64, copy=False)
+        utilization_prob = np.clip(1.0 - np.exp(-self.utilization_rate * substrate_count), 0.0, 1.0)
+        utilization_prob = np.where(occupied_mask, utilization_prob, 0.0)
+
+        consumption_draw = np.random.random(state.shape)
+        consumed_cells = occupied_mask & (consumption_draw < utilization_prob)
+
+        substrate_claims: list[tuple[float, tuple[int, ...], tuple[int, ...]]] = []
+        for coords in map(tuple, np.argwhere(consumed_cells)):
+            candidates = self._substrate_candidates_for_cell(substrate_grid, coords)
+            if not candidates:
+                continue
+
+            target_cell, target_layer = candidates[int(np.random.randint(len(candidates)))]
+            substrate_claims.append((float(np.random.random()), coords, target_cell + (target_layer,)))
+
+        substrate_claims.sort(key=lambda item: item[0], reverse=True)
+        claimed_substrate_targets: set[tuple[int, ...]] = set()
+
+        for _, _, substrate_coords in substrate_claims:
+            if substrate_coords in claimed_substrate_targets:
+                continue
+
+            self._consume_substrate_particle(substrate_grid, substrate_coords)
+            claimed_substrate_targets.add(substrate_coords)
+
+        growth_prob = np.clip(self.growth_yield * utilization_prob, 0.0, 1.0)
+
+        proposals: list[tuple[float, str, tuple[int, ...], tuple[int, ...]]] = []
+        for key, grid in bacteria_grids.items():
+            key_mask = self._cell_mask(grid)
+            dividing_cells = key_mask & (np.random.random(state.shape) < growth_prob)
+
+            for parent_coords in map(tuple, np.argwhere(dividing_cells)):
+                empty_targets = [
+                    target
+                    for target in self._neighbour_candidates(parent_coords)
+                    if not occupied_mask[target]
+                ]
+                if not empty_targets:
+                    continue
+
+                target = empty_targets[int(np.random.randint(len(empty_targets)))]
+                proposals.append((float(np.random.random()), key, parent_coords, target))
+
+        proposals.sort(key=lambda item: item[0], reverse=True)
+        claimed_targets: set[tuple[int, ...]] = set()
+
+        for _, key, parent_coords, target_coords in proposals:
+            if target_coords in claimed_targets or occupied_mask[target_coords]:
+                continue
+
+            bacteria_grids[key][target_coords] = state[key][parent_coords]
+            occupied_mask[target_coords] = True
+            claimed_targets.add(target_coords)
+
+        state[self.sub_key] = substrate_grid
+        for key, grid in bacteria_grids.items():
+            state[key] = grid
+
+        return state
+
+
+
+
+
+
+
