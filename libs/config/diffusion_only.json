@@ -1,0 +1,52 @@
+{
+"sim":
+{
+    "size":[10,5,5],
+    "periodicity" : "",
+    "dtype":"uint8",
+    "render":true,
+    "max_steps":10000
+},
+
+"state_keys":[
+    {
+        "name":"substrate",
+        "layers":6,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func":"np.random.choice",
+        "random_args":
+        {
+            "a" : [0,1],
+            "p" : [0.7,0.3]
+        }
+    }
+],
+
+"rules":[
+    {
+        "name":"Diffusion",
+        "args" : 
+        {
+            "target_key":"substrate",
+            "a" : 6,
+            "p" : 0.08
+        }
+        
+    }
+],
+
+"renderer":
+{
+    "key":"substrate",
+    "window_size":[1200,800],
+    "callback" :
+    {
+        "name":"ReduceCallback",
+        "args":
+        {
+            "step_stride":100
+        }
+    }
+}
+}

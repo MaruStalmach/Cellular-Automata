@@ -63,9 +63,9 @@ class GameOfLife3D(Rule):
     
     """
 
-    def __init__(self, geometry, eb=5, eh=7, fb=6, fh=6):
+    def __init__(self, geometry, eb=5, eh=7, fb=6, fh=6, target_key : str='alive'):
         super().__init__(geometry)
-        self.required_keys.extend(["alive"])
+        self.required_keys.extend([target_key])
         self.eb = eb
         self.eh = eh
         self.fb = fb
@@ -177,7 +177,7 @@ class Diffusion(Rule):
     def __init__(self, geometry : Geometry, a : float, p : float, target_key : str ='substrate'):
         super().__init__(geometry)
         
-        self.required_keys = [f'{target_key}{x}' for x in range(6)]
+        self.target_key = target_key
         p3 = (1-4*p)/(a+1)
         self.p = [a*p3,
                   p,
@@ -189,8 +189,7 @@ class Diffusion(Rule):
     def apply_state(self, state) -> State:
     
         layers = np.empty(shape=state.shape+(6,))
-        for i,key in enumerate(self.required_keys):
-            layers[...,i] = state[key]
+        layers[...] = state[self.target_key]
         # layers = np.zeros_like(layers)
         
         #each layer corresponds to the dircetion a particle is moving, list p contains probablities of the next direction
@@ -234,6 +233,8 @@ class Diffusion(Rule):
         # l3      - -z
         # l4      - -y
         # l5      - -x
+
+        ## TODO: maybe instead of this reroll edge particles with p_0=0
         for i, ax_dir in enumerate([(2,1),
                                     (1,1),
                                     (0,1)]):
@@ -265,8 +266,8 @@ class Diffusion(Rule):
         # naive collision resolution -> delete colliding particles
         layers[layers>1]=1
         
-        for i,key in enumerate(self.required_keys):
-            state[key] = layers[...,i]
+        
+        state[self.target_key]=layers[...]
         return state
                         
 
