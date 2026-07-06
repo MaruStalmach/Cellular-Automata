@@ -338,7 +338,7 @@ class SpeciesInteraction(Rule):
                 deaths[bact_b] |= killed
 
             elif coeff > 0: #species are in symbiosis
-                spawns[bact_b] += empty * coeff * neighbour_counts[bact_a]
+                spawns[bact_b] += empty * coeff * neighbour_counts[bact_a] * (neighbour_counts[bact_b]>=1)
         
         # resolving deaths from previous stes
         for sp in bacteria_types:
