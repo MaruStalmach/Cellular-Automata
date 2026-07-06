@@ -228,6 +228,8 @@ class Diffusion(Rule):
         # l3      - -z
         # l4      - -y
         # l5      - -x
+
+        ## TODO: maybe instead of this reroll edge particles with p_0=0
         for i, ax_dir in enumerate([(2,1),
                                     (1,1),
                                     (0,1)]):
