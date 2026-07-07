@@ -14,10 +14,12 @@ from libs.Rendering.Shader import Shader
 class CARenderer:
     """Renders 3D cellular automata"""
     
-    def __init__(self, init_state : np.ndarray, width=1000, height=600, update_callback: callable = None):
+    def __init__(self, init_state : np.ndarray, width=1000, height=600, update_callback: callable = None, keys_to_render : int = 1):
 
         self.width=width
         self.height=height
+
+        self.num_keys=keys_to_render
         
         if update_callback is None:
             self.update_callback = None
@@ -25,10 +27,10 @@ class CARenderer:
             self.update_callback = update_callback
 
         
-        self.ca_state = init_state.astype(dtype=np.float32)  # Will hold 3D numpy array
+        self.ca_state = init_state.astype(dtype=np.float32)
         self.cell_size = 1.0
         self.running = True
-        self.camera = Camera(position=(0, 0, init_state.shape[2]*1.2))
+        self.camera = Camera(position=(0, 0, init_state.shape[-1]*1.2))
         
         #const setup
         self.zero_filler = glm.vec4(0.0)
@@ -243,7 +245,10 @@ class CARenderer:
         glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
         
         grid_size = glGetUniformLocation(self.transShader.program, "grid_size")
-        glUniform3f(grid_size, self.ca_state.shape[0], self.ca_state.shape[1], self.ca_state.shape[2])
+        glUniform3f(grid_size, self.ca_state.shape[-3], self.ca_state.shape[-2], self.ca_state.shape[-1])
+
+        n_keys = glGetUniformLocation(self.transShader.program,"n_keys")
+        glUniform1i(n_keys, keys_to_render)
 
 
         # send pvm to soild  shader
@@ -348,7 +353,7 @@ class CARenderer:
         self.transShader.use_program()
         
         glBindVertexArray(self.vao)
-        glDrawArraysInstanced(GL_TRIANGLES, 0, 6*2*3,np.prod(self.ca_state.shape))
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6*2*3,np.prod(self.ca_state.shape)//self.num_keys)
         
         #draw composite image
         glDepthFunc(GL_ALWAYS)

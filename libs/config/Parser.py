@@ -99,9 +99,12 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         cb_args = {} or callback_data.get('args', None)
         callback = globals()[callback_data['name']](key, ca_sim, **cb_args)
 
-
+    if isinstance(key,list):
+        keys_amt = len(key)
+    else:
+        keys_amt=1
     
-    renderer = CARenderer(callback(False), *window_size, update_callback=callback)
+    renderer = CARenderer(callback(False), *window_size, update_callback=callback,keys_to_render=keys_amt)
     
     return ca_sim, renderer
     

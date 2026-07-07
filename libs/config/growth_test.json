@@ -1,7 +1,7 @@
 {
 "sim":
 {
-    "size":[70,70,70],
+    "size":[50,50,50],
     "periodicity" : "",
     "dtype":"uint8",
     "render":true,
@@ -18,7 +18,7 @@
         "random_args" : 
         {
             "start":[0,0,0],
-            "block_size":[10,2,2],
+            "block_size":[10,10,2],
             "value":1
         } 
     },
@@ -30,7 +30,7 @@
         "random_func":"init_block",
         "random_args":
         {
-            "start":[50,20,0],
+            "start":[30,30,30],
             "block_size":[5,5,5],
             "value":1
         }
@@ -60,11 +60,11 @@
 
 "renderer":
 {
-    "key":"bacteria",
+    "key":["bacteria","substrate"],
     "window_size":[1200,800],
     "callback" :
     {
-        "name":"Callback",
+        "name":"MultiKeyCallback",
         "args":
         {
             "step_stride":10
