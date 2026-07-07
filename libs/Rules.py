@@ -397,8 +397,19 @@ class BacteriaGrowth(Rule):
         for grid in bacteria_grids.values():
             occupied_mask |= self._cell_mask(grid)
 
-        substrate_count = self._substrate_neighborhood_count(substrate_grid).astype(np.float64, copy=False)
-        utilization_prob = np.clip(1.0 - np.exp(-self.utilization_rate * substrate_count), 0.0, 1.0)
+        substrate_count = self._substrate_neighborhood_count(substrate_grid).astype(np.float32, copy=False)
+        #some constants
+        q=8
+        Sb=15
+        Xf=40
+        Ks=10
+        dt=0.05
+        # reusing the same array for calculations
+        utilization_prob = q*((Sb*substrate_count/27)/(Ks+(Sb*substrate_count/27)))*Xf*dt
+        #p=r/S *dt=q*(1/(10+S))*40*dt
+        #S=15*neighbors/max
+        #r=q*(S/(10+S))*40
+        utilization_prob = np.clip(utilization_prob, 0.0, 1.0)
         utilization_prob = np.where(occupied_mask, utilization_prob, 0.0)
 
         consumption_draw = np.random.random(state.shape)
@@ -422,8 +433,17 @@ class BacteriaGrowth(Rule):
 
             self._consume_substrate_particle(substrate_grid, substrate_coords)
             claimed_substrate_targets.add(substrate_coords)
+        
+        # constants
+        dx = 4e-6 
+        Yy=0.5
 
-        growth_prob = np.clip(self.growth_yield * utilization_prob, 0.0, 1.0)
+        #calculations
+        Ms = Sb*(dx**3)/27
+        Mx = Xf * (dx**3)
+        Yca = Yy*Ms/Mx 
+
+        growth_prob = np.clip(Yca*utilization_prob, 0.0, 1.0)
 
         proposals: list[tuple[float, str, tuple[int, ...], tuple[int, ...]]] = []
         for key, grid in bacteria_grids.items():
