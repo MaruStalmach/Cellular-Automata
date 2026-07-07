@@ -269,14 +269,10 @@ class BacteriaGrowth(Rule):
         geometry,
         bacteria_keys: list[str],
         substrate_key: str,
-        utilization_rate: float = 1.0,
-        growth_yield: float = 1.0,
     ):
         super().__init__(geometry)
         self.b_keys = bacteria_keys
         self.sub_key = substrate_key
-        self.utilization_rate = float(utilization_rate)
-        self.growth_yield = float(growth_yield)
 
         self.required_keys.extend([*bacteria_keys, substrate_key])
 
@@ -390,14 +386,19 @@ class BacteriaGrowth(Rule):
         return super().apply(neighbors, cell, coords)
                         
     def apply_state(self, state):
+        # get data from simulation
         substrate_grid = state[self.sub_key].copy()
         bacteria_grids = {key: state[key].copy() for key in self.b_keys}
 
+        #which cells are occupied by bacteria?
         occupied_mask = np.zeros(state.shape, dtype=bool)
         for grid in bacteria_grids.values():
             occupied_mask |= self._cell_mask(grid)
 
+        # counts amt of substrate particles in each cell
         substrate_count = self._substrate_neighborhood_count(substrate_grid).astype(np.float32, copy=False)
+        ###################################################################################################
+        #equations based on 'QUANTITATIVE CELLULAR AUTOMATON MODEL FOR BIOFILMS' by pizarro
         #some constants
         q=8
         Sb=15
@@ -406,15 +407,21 @@ class BacteriaGrowth(Rule):
         dt=0.05
         # reusing the same array for calculations
         utilization_prob = q*((Sb*substrate_count/27)/(Ks+(Sb*substrate_count/27)))*Xf*dt
-        #p=r/S *dt=q*(1/(10+S))*40*dt
+        #p=r *dt=q*(S/(10+S))*40*dt
         #S=15*neighbors/max
         #r=q*(S/(10+S))*40
         utilization_prob = np.clip(utilization_prob, 0.0, 1.0)
         utilization_prob = np.where(occupied_mask, utilization_prob, 0.0)
+        # utilization prob is the probabilty that a 
+        # a bacteria cell uses/eats a substrate particle
 
+        # roll which bacteria cells eat a substrate particle
         consumption_draw = np.random.random(state.shape)
         consumed_cells = occupied_mask & (consumption_draw < utilization_prob)
 
+        # a substrate particle should be claimed by one bacteria only (no double spending)
+        # this lets every bacteria cell claim an uneaten particle and remove it from the 'plate',
+        # so other bacteria dont eat the particle again 
         substrate_claims: list[tuple[float, tuple[int, ...], tuple[int, ...]]] = []
         for coords in map(tuple, np.argwhere(consumed_cells)):
             candidates = self._substrate_candidates_for_cell(substrate_grid, coords)
@@ -434,6 +441,7 @@ class BacteriaGrowth(Rule):
             self._consume_substrate_particle(substrate_grid, substrate_coords)
             claimed_substrate_targets.add(substrate_coords)
         
+        #equations based on QUANTITATIVE CELLULAR AUTOMATON MODEL FOR BIOFILMS by pizarro
         # constants
         dx = 4e-6 
         Yy=0.5
@@ -445,6 +453,8 @@ class BacteriaGrowth(Rule):
 
         growth_prob = np.clip(Yca*utilization_prob, 0.0, 1.0)
 
+        
+        # the code below prevents two diffrent bacteria from growing into the same empty cell 
         proposals: list[tuple[float, str, tuple[int, ...], tuple[int, ...]]] = []
         for key, grid in bacteria_grids.items():
             key_mask = self._cell_mask(grid)
@@ -466,6 +476,7 @@ class BacteriaGrowth(Rule):
         claimed_targets: set[tuple[int, ...]] = set()
 
         for _, key, parent_coords, target_coords in proposals:
+            # dont grow if spot taken
             if target_coords in claimed_targets or occupied_mask[target_coords]:
                 continue
 
