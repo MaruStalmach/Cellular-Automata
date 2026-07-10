@@ -1,12 +1,9 @@
 import json
-from libs.Geometry import *
-from libs.Rendering.Renderer import *
-from libs.Rules import *
-from libs.State import *
-from libs.State import *
-from libs.Sim import *
-from libs.Callback import *
-from libs.util.helper_functions import *
+from libs.Geometry import Geometry
+from libs.Rendering.Renderer import CARenderer
+from libs.State import State
+from libs.Sim import CellularAutomaton
+from libs.Callback import Callback
 import numpy as np
 
 
