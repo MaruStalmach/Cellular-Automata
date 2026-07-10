@@ -19,7 +19,7 @@ class Callback():
         
         try:
             return self.sim.state[self.key]
-        except:
+        except KeyError:
             print(f"RENDERER ERROR: NO SUCH KEY TO RENDER AS {self.key}")
             return 0
         
@@ -39,7 +39,7 @@ class ReduceCallback(Callback):
         
         try:
             return self.op.reduce(self.sim.state[self.key],axis=-1)
-        except:
+        except KeyError:
             return 0
         
 class MultiKeyCallback(Callback):
@@ -62,7 +62,7 @@ class MultiKeyCallback(Callback):
         for cb in self.callbacks:
             try:
                 arr_list.append(cb(step=False))
-            except:
+            except Exception:
                 print('ERROR IN MULTICALLBACK')
                 arr_list.append(0)
         # stack on axis 0 so it gives the arrays in order when flattened
