@@ -41,3 +41,29 @@ class ReduceCallback(Callback):
             return self.op.reduce(self.sim.state[self.key],axis=-1)
         except:
             return 0
+        
+class MultiKeyCallback(Callback):
+    def __init__(self, keys_to_display, sim_obj_reference, step_stride=1):
+        super().__init__(keys_to_display,sim_obj_reference,step_stride)
+        self.callbacks = []
+        for k in self.key:
+            if len(self.sim.state[k].shape)==4:
+                self.callbacks.append(ReduceCallback(k,self.sim,step_stride))
+            else:
+                self.callbacks.append(Callback(k,self.sim,step_stride))
+    
+    def __call__(self, step = True):
+        arr_list = []
+
+        if step:
+            for _ in range(self.stride):
+                self.sim.step()
+
+        for cb in self.callbacks:
+            try:
+                arr_list.append(cb(step=False))
+            except:
+                print('ERROR IN MULTICALLBACK')
+                arr_list.append(0)
+        # stack on axis 0 so it gives the arrays in order when flattened
+        return np.stack(arr_list,axis=0)

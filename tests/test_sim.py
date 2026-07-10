@@ -1,6 +1,7 @@
 from libs.Geometry import Geometry
-from libs.Rules import GameOfLife3D
+from libs.Rules import BacteriaGrowth, GameOfLife3D
 from libs.Sim import CellularAutomaton
+from libs.State import State
 
 import numpy as np
 
@@ -109,6 +110,64 @@ def test_gol_correctness():
         ca.step()
         ca_state_arr = array_from_gol_state(ca.state)
         assert np.array_equal(ca_state_arr,states[i])
+
+
+def test_bacteria_growth_consumes_only_one_substrate_particle_per_cell(monkeypatch):
+    geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
+    rule = BacteriaGrowth(
+        geometry=geometry,
+        bacteria_keys=["alive"],
+        substrate_key="substrate",
+        utilization_rate=100.0,
+        growth_yield=0.0,
+    )
+    ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
+    ca.state = State(geometry, random=None, cell_keys=["alive", "substrate"], key_layers=[1, 6])
+
+    ca.state["alive"][1, 1, 1, 0] = 1
+    ca.state["substrate"][1, 1, 2] = np.array([1, 1, 0, 0, 0, 0], dtype=np.uint8)
+
+    monkeypatch.setattr(
+        np.random,
+        "random",
+        lambda *args, **kwargs: np.zeros(args[0], dtype=float) if args else 0.0,
+    )
+    monkeypatch.setattr(np.random, "choice", lambda values: int(values[0]))
+
+    ca.step()
+
+    assert int(np.sum(ca.state["substrate"])) == 1
+    assert int(np.sum(ca.state["alive"])) == 1
+
+
+def test_bacteria_growth_claims_each_target_cell_once(monkeypatch):
+    geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
+    rule = BacteriaGrowth(
+        geometry=geometry,
+        bacteria_keys=["alive"],
+        substrate_key="substrate",
+        utilization_rate=100.0,
+        growth_yield=1.0,
+    )
+    ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
+    ca.state = State(geometry, random=None, cell_keys=["alive", "substrate"], key_layers=[1, 1])
+
+    ca.state["alive"][..., 0] = np.ones((3, 3, 3), dtype=np.uint8)
+    ca.state["alive"][1, 1, 1, 0] = 0
+
+    ca.state["substrate"][..., 0] = np.zeros((3, 3, 3), dtype=np.uint8)
+    ca.state["substrate"][1, 1, 1, 0] = 1
+
+    monkeypatch.setattr(
+        np.random,
+        "random",
+        lambda *args, **kwargs: np.zeros(args[0], dtype=float) if args else 0.0,
+    )
+
+    ca.step()
+
+    assert ca.state["alive"][1, 1, 1, 0] == 1
+    assert int(np.sum(ca.state["alive"])) == 27
         
         
 if __name__ == "__main__":
