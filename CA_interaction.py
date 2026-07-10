@@ -1,12 +1,9 @@
-from libs.Rules import *
-from libs.Geometry import *
-from libs.Sim import *
-from libs.State import *
+from libs.Rules import SpeciesInteraction
+from libs.Geometry import Geometry
+from libs.Sim import CellularAutomaton
 from libs.Rendering.Renderer import CARenderer
 
-from time import time
 import numpy as np
-import threading
 
 
 
@@ -68,7 +65,7 @@ if __name__=='__main__':
             cell_array = ca_sim.state['bac1']
             cell_array = cell_array.reshape(size)
             return cell_array
-        except:
+        except Exception:
             # Fallback if structure is different
             print('update_callback fallback triggered')
             return None
