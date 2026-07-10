@@ -91,13 +91,13 @@ class GameOfLife3D(Rule):
         return state
 
 
-class BiofilmDetachment(Rule):
+class BiofilmDetachmentAndDecay(Rule):
     '''the closer the biofilm is to the wall of the gut, the harder it is for it to get detached
     moves detached cells from biofilm layer to detached bacteria layer'''
-    def __init__(self, geometry, detachment_rate:float, scaling:float):
+    def __init__(self, geometry, detachment_rate:float, decay_rate:float, scaling:float):
         super().__init__(geometry=geometry)
         self.detachment_probability = detachment_rate * scaling
-
+        self.decay_probability = decay_rate
         self.target_keys = ['biofilm', 'floating_bacteria']
         self.required_keys.extend(self.target_keys)
 
@@ -111,8 +111,7 @@ class BiofilmDetachment(Rule):
         z_indices = np.arange(total_layers)
         #chooses the chance of detachment based on the distance from the wall of the gut
         #TODO: check the distance to the wall at both sides
-        chance_detachment = np.clip(self.detachment_probability * (z_indices ** 2), 0.0, 1.0)
-     
+        chance_detachment = np.clip(self.detachment_probability * (z_indices ** 2) + self.decay_probability, 0.0, 1.0)
         chances = np.random.random(biofilm_grid.shape)
 
         #checks for biofilm on square and checks the prob of detachment
