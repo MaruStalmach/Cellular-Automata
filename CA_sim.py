@@ -1,14 +1,4 @@
-from libs.Rules import *
-from libs.Geometry import *
-from libs.Sim import *
-from libs.State import *
-from libs.Rendering.Renderer import CARenderer
-from libs.Callback import Callback
 from libs.config.Parser import parse_json
-
-from time import time
-import numpy as np
-import threading
 
 import argparse
 
