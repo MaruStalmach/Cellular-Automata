@@ -11,6 +11,44 @@ class Rule:
         self.geometry = geometry
         self.required_keys: list[str] = []
 
+    def _shift_for_offset(self, grid: np.ndarray, offset: tuple[int, ...]) -> np.ndarray:
+        shifted = grid
+
+        for axis, shift in enumerate(offset):
+            if shift != 0 and axis in self.geometry.periodic_dims:
+                shifted = np.roll(shifted, shift=shift, axis=axis)
+
+        non_periodic_axes = [axis for axis in range(self.geometry.ndim) if axis not in self.geometry.periodic_dims]
+        if non_periodic_axes:
+            pad_width = [(0, 0)] * shifted.ndim
+            for axis in non_periodic_axes:
+                pad_width[axis] = (1, 1)
+            shifted = np.pad(shifted, pad_width, mode="constant")
+
+            slices = []
+            for axis, shift in enumerate(offset):
+                if axis in self.geometry.periodic_dims:
+                    slices.append(slice(None))
+                else:
+                    start = 1 + shift
+                    stop = start + grid.shape[axis]
+                    slices.append(slice(start, stop))
+            shifted = shifted[tuple(slices)]
+
+        return shifted
+    
+    def _layer_count(self, grid: np.ndarray) -> np.ndarray:
+        if grid.ndim == self.geometry.ndim + 1:
+            return (grid > 0).sum(axis=-1)
+        return grid.astype(np.int8, copy=False)
+    
+    def neighborhood_count(self, grid : np.ndarray):
+        dim_count = self._layer_count(grid)
+        count = np.zeros_like(dim_count, dtype=np.int8)
+        for offset in self.geometry._offsets:
+            count += self._shift_for_offset(dim_count, tuple(int(value) for value in offset))
+        return count
+
     def apply(self, neighbors, cell, coords=None):
         return cell
     
@@ -41,39 +79,11 @@ class GameOfLife3D(Rule):
         self.fb = fb
         self.fh = fh
 
-    def _shift_for_offset(self, grid: np.ndarray, offset: tuple[int, ...]) -> np.ndarray:
-        shifted = grid
-
-        for axis, shift in enumerate(offset):
-            if shift != 0 and axis in self.geometry.periodic_dims:
-                shifted = np.roll(shifted, shift=shift, axis=axis)
-
-        non_periodic_axes = [axis for axis in range(self.geometry.ndim) if axis not in self.geometry.periodic_dims]
-        if non_periodic_axes:
-            pad_width = [(0, 0)] * shifted.ndim
-            for axis in non_periodic_axes:
-                pad_width[axis] = (1, 1)
-            shifted = np.pad(shifted, pad_width, mode="constant")
-
-            slices = []
-            for axis, shift in enumerate(offset):
-                if axis in self.geometry.periodic_dims:
-                    slices.append(slice(None))
-                else:
-                    start = 1 + shift
-                    stop = start + grid.shape[axis]
-                    slices.append(slice(start, stop))
-            shifted = shifted[tuple(slices)]
-
-        return shifted
 
     def apply_state(self, state: State) -> State:
         # Use per-key accessors so reads/writes affect the underlying arrays
-        alive_grid = state['alive'].astype(np.int8, copy=False)
-        alive_counts = np.zeros_like(alive_grid, dtype=np.int16)
-
-        for offset in self.geometry._offsets:
-            alive_counts += self._shift_for_offset(alive_grid, tuple(int(value) for value in offset))
+        alive_grid = state[self.required_keys[0]].astype(np.int8, copy=False)
+        alive_counts += self.neighborhood_count(alive_grid)
 
         current_alive = state['alive'] == 1
         survives = current_alive & (alive_counts >= self.eb) & (alive_counts <= self.eh)
@@ -281,15 +291,7 @@ class BacteriaGrowth(Rule):
             return np.any(grid > 0, axis=-1)
         return grid > 0
 
-    def _substrate_presence(self, grid: np.ndarray) -> np.ndarray:
-        if grid.ndim == self.geometry.ndim + 1:
-            return np.any(grid > 0, axis=-1)
-        return grid > 0
-
-    def _substrate_layer_count(self, grid: np.ndarray) -> np.ndarray:
-        if grid.ndim == self.geometry.ndim + 1:
-            return (grid > 0).sum(axis=-1)
-        return grid.astype(np.int64, copy=False)
+    
 
     def _shift_spatial(self, grid: np.ndarray, offset: tuple[int, ...]) -> np.ndarray:
         shifted = grid
@@ -336,12 +338,6 @@ class BacteriaGrowth(Rule):
 
         return candidates
 
-    def _substrate_neighborhood_count(self, substrate_grid: np.ndarray) -> np.ndarray:
-        substrate_layer_count = self._substrate_layer_count(substrate_grid)
-        count = np.zeros_like(substrate_layer_count, dtype=np.int64)
-        for offset in self.geometry._offsets:
-            count += self._shift_spatial(substrate_layer_count, tuple(int(value) for value in offset))
-        return count
 
     def _substrate_candidates_for_cell(
         self,
@@ -396,7 +392,7 @@ class BacteriaGrowth(Rule):
             occupied_mask |= self._cell_mask(grid)
 
         # counts amt of substrate particles in each cell
-        substrate_count = self._substrate_neighborhood_count(substrate_grid).astype(np.float32, copy=False)
+        substrate_count = self.neighborhood_count(substrate_grid).astype(np.float32, copy=False)
         ###################################################################################################
         #equations based on 'QUANTITATIVE CELLULAR AUTOMATON MODEL FOR BIOFILMS' by pizarro
         #some constants
