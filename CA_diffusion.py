@@ -19,7 +19,7 @@ import numpy as np
 if __name__=='__main__':
     #TODO parse args
 
-    size = (50, 50, 4)
+    size = (50, 50, 50)
     axes = 'xyz'
     p = ''
     geometry = Geometry(size,axes,p)
@@ -28,7 +28,7 @@ if __name__=='__main__':
 
     ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
     
-    init = np.zeros_like(ca_sim.state.data)
+    init = np.zeros_like(ca_sim.state.data,dtype=np.uint8)
     init[0:3,0:3,0:3,0] = 1
     
     
