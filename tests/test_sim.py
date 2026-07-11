@@ -124,7 +124,7 @@ def test_bacteria_growth_consumes_only_one_substrate_particle_per_cell(monkeypat
     ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
     ca.state = State(geometry, random=None, cell_keys=["alive", "substrate"], key_layers=[1, 6])
 
-    ca.state["alive"][1, 1, 1, 0] = 1
+    ca.state["alive"][1, 1, 1] = 1
     ca.state["substrate"][1, 1, 2] = np.array([1, 1, 0, 0, 0, 0], dtype=np.uint8)
 
     monkeypatch.setattr(
@@ -152,11 +152,11 @@ def test_bacteria_growth_claims_each_target_cell_once(monkeypatch):
     ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
     ca.state = State(geometry, random=None, cell_keys=["alive", "substrate"], key_layers=[1, 1])
 
-    ca.state["alive"][..., 0] = np.ones((3, 3, 3), dtype=np.uint8)
-    ca.state["alive"][1, 1, 1, 0] = 0
+    ca.state["alive"][...] = np.ones((3, 3, 3), dtype=np.uint8)
+    ca.state["alive"][1, 1, 1] = 0
 
-    ca.state["substrate"][..., 0] = np.zeros((3, 3, 3), dtype=np.uint8)
-    ca.state["substrate"][1, 1, 1, 0] = 1
+    ca.state["substrate"][...] = np.zeros((3, 3, 3), dtype=np.uint8)
+    ca.state["substrate"][1, 1, 1] = 1
 
     monkeypatch.setattr(
         np.random,
@@ -166,7 +166,7 @@ def test_bacteria_growth_claims_each_target_cell_once(monkeypatch):
 
     ca.step()
 
-    assert ca.state["alive"][1, 1, 1, 0] == 1
+    assert ca.state["alive"][1, 1, 1] == 1
     assert int(np.sum(ca.state["alive"])) == 27
         
         
