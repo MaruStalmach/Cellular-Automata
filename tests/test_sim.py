@@ -117,9 +117,7 @@ def test_bacteria_growth_consumes_only_one_substrate_particle_per_cell(monkeypat
     rule = BacteriaGrowth(
         geometry=geometry,
         bacteria_keys=["alive"],
-        substrate_key="substrate",
-        utilization_rate=100.0,
-        growth_yield=0.0,
+        substrate_key="substrate"
     )
     ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
     ca.state = State(geometry, random=None, cell_keys=["alive", "substrate"], key_layers=[1, 6])
@@ -127,11 +125,18 @@ def test_bacteria_growth_consumes_only_one_substrate_particle_per_cell(monkeypat
     ca.state["alive"][1, 1, 1] = 1
     ca.state["substrate"][1, 1, 2] = np.array([1, 1, 0, 0, 0, 0], dtype=np.uint8)
 
-    monkeypatch.setattr(
-        np.random,
-        "random",
-        lambda *args, **kwargs: np.zeros(args[0], dtype=float) if args else 0.0,
-    )
+    class MockRandom:
+        def __init__(self):
+            self.calls = 0
+            
+        def __call__(self, *args, **kwargs):
+            self.calls += 1
+            if self.calls == 3:
+                return np.ones(args[0], dtype=float) if args else 1.0
+            
+            return np.zeros(args[0], dtype=float) if args else 0.0
+
+    monkeypatch.setattr(np.random, "random", MockRandom())
     monkeypatch.setattr(np.random, "choice", lambda values: int(values[0]))
 
     ca.step()
@@ -146,8 +151,6 @@ def test_bacteria_growth_claims_each_target_cell_once(monkeypatch):
         geometry=geometry,
         bacteria_keys=["alive"],
         substrate_key="substrate",
-        utilization_rate=100.0,
-        growth_yield=1.0,
     )
     ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
     ca.state = State(geometry, random=None, cell_keys=["alive", "substrate"], key_layers=[1, 1])
