@@ -224,7 +224,7 @@ class Diffusion(Rule):
                   p]
         
     def apply_state(self, state) -> State:
-    
+        ###TODO: force dtype at layers initialization
         layers = np.empty(shape=state.shape+(6,))
         layers[...] = state[self.target_key]
         # layers = np.zeros_like(layers)
@@ -238,8 +238,22 @@ class Diffusion(Rule):
         # l3      - -z
         # l4      - -y
         # l5      - -x
+
         
-        rolls = np.random.choice([0,1,2,3,4,5], size = layers.shape, p=self.p)
+        layers_shape = layers.shape
+        num_particles = layers.sum()
+        # breakpoint()
+
+        rands = np.random.choice([0,1,2,3,4,5], size = int(num_particles), p=self.p)
+        rolls = np.zeros(shape=layers_shape)
+
+        rolls = rolls.flatten()
+        layers = layers.flatten()
+
+        rolls[layers==1] = rands
+
+        layers = layers.reshape(layers_shape)
+        rolls = rolls.reshape(layers_shape)
         
         h = np.stack([np.full(shape=state.shape, fill_value=x,dtype=np.uint8) for x in range(6)], axis=-1)
         
