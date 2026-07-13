@@ -1,13 +1,13 @@
 from OpenGL.GL import *
 
 
-class Shader():
+class Shader:
     def __init__(self):
         self.shaderProgram = glCreateProgram()
-        
-    def add_vertex(self,filename):
+
+    def add_vertex(self, filename):
         vs = glCreateShader(GL_VERTEX_SHADER)
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             source = f.read()
         glShaderSource(vs, source)
         glCompileShader(vs)
@@ -16,10 +16,10 @@ class Shader():
             print(glGetShaderInfoLog(vs).decode())
         glAttachShader(self.shaderProgram, vs)
         glDeleteShader(vs)
-    
-    def add_fragment(self,filename):
+
+    def add_fragment(self, filename):
         fs = glCreateShader(GL_FRAGMENT_SHADER)
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             source = f.read()
         glShaderSource(fs, source)
         glCompileShader(fs)
@@ -28,16 +28,16 @@ class Shader():
             print(glGetShaderInfoLog(fs).decode())
         glAttachShader(self.shaderProgram, fs)
         glDeleteShader(fs)
-        
+
     def link_program(self):
         glLinkProgram(self.shaderProgram)
         if glGetProgramiv(self.shaderProgram, GL_LINK_STATUS) == GL_FALSE:
             print("Linking error:")
             print(glGetProgramInfoLog(self.shaderProgram).decode())
-            
+
     def use_program(self):
         glUseProgram(self.shaderProgram)
-        
+
     @property
     def program(self):
         return self.shaderProgram

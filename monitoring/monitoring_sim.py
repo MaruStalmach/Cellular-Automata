@@ -1,7 +1,8 @@
-import psutil, shlex, subprocess
+import psutil
+import shlex
+import subprocess
 import logging
 import time
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -10,42 +11,31 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+MEM_UNITS = ["B", "KB", "MB", "GB", "TB"]
 
 
-
-
-
-
-
-MEM_UNITS = [
-    'B',
-    'KB',
-    'MB',
-    'GB',
-    'TB'
-]
-
-def monitor_application(pid, interval=5, duration = 10):
+def monitor_application(pid, interval=5, duration=10):
     """Monitor a Python process and log its resource usage."""
     process = psutil.Process(pid)
-    bytes=[]
+    bytes = []
     start = time.time()
     while (time.time() - start) < duration:
         try:
             # Get CPU and memory usage
             cpu_percent = process.cpu_percent(interval=0.1)
             memory_info = process.memory_info()
-            
-            unit=0
+
+            unit = 0
             mem = memory_info.rss
             bytes.append(mem)
             while mem > 1024:
-                mem = mem/1024
-                unit+=1
-            
-            
-            logger.info(f"PID {pid} - CPU: {cpu_percent}% - Memory: {mem:.2f} {MEM_UNITS[unit]}")
-            
+                mem = mem / 1024
+                unit += 1
+
+            logger.info(
+                f"PID {pid} - CPU: {cpu_percent}% - Memory: {mem:.2f} {MEM_UNITS[unit]}"
+            )
+
             time.sleep(interval)
         except psutil.NoSuchProcess:
             logger.error(f"Process {pid} no longer exists")
@@ -53,36 +43,35 @@ def monitor_application(pid, interval=5, duration = 10):
         except Exception as e:
             logger.error(f"Monitoring error: {e}")
             break
-    print('KILLING PROCESS WITH PID =', pid)
+    print("KILLING PROCESS WITH PID =", pid)
     process.kill()
     return max(bytes)
 
+
 # Example usage: monitor_application(your_app_pid)
 
-if __name__=='__main__':
-    
+if __name__ == "__main__":
     sizes = [
-        (100,100,100),
-        (101,100,100),
-        (102,100,100),
-        (103,100,100),
-        (104,100,100),
+        (100, 100, 100),
+        (101, 100, 100),
+        (102, 100, 100),
+        (103, 100, 100),
+        (104, 100, 100),
     ]
-    
+
     mem_usage = []
-    
+
     for size in sizes:
-    
-        command = f'python -m sim_no_render -x {size[0]} -y {size[1]} -z {size[2]}'
+        command = f"python -m sim_no_render -x {size[0]} -y {size[1]} -z {size[2]}"
         args = shlex.split(command)
         print("\nLAUNCHING NEW PROCESS")
-        print("grid size =",size)
+        print("grid size =", size)
         subproc = subprocess.Popen(args)
-        print('process pid =', subproc.pid)
-        
-        mu = monitor_application(subproc.pid, interval=3,duration=30)
+        print("process pid =", subproc.pid)
+
+        mu = monitor_application(subproc.pid, interval=3, duration=30)
         mem_usage.append(mu)
-        
-    #plot
-    plt.plot([np.prod(size) for size in sizes],mem_usage)
+
+    # plot
+    plt.plot([np.prod(size) for size in sizes], mem_usage)
     plt.show()

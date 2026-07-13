@@ -9,16 +9,16 @@ from argparse import ArgumentParser
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('-x', '--xsize')
-    parser.add_argument('-y', '--ysize')
-    parser.add_argument('-z', '--zsize')
-    parser.add_argument('-s', '--max_steps', default=None)
+    parser.add_argument("-x", "--xsize")
+    parser.add_argument("-y", "--ysize")
+    parser.add_argument("-z", "--zsize")
+    parser.add_argument("-s", "--max_steps", default=None)
 
     args = parser.parse_args()
 
     size = (int(args.xsize), int(args.ysize), int(args.zsize))
-    geometry = Geometry(size, 'xyz', '')
-    rules = [GameOfLife3D(geometry,2,3,3,3)]
+    geometry = Geometry(size, "xyz", "")
+    rules = [GameOfLife3D(geometry, 2, 3, 3, 3)]
     ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
 
     if args.max_steps:
@@ -26,14 +26,13 @@ def main():
     else:
         max_steps = 0
 
-    
     start = time.time()
     while True:
         ca_sim.step()
         if max_steps > 0 and ca_sim.step_no > max_steps:
             break
-    print(f'time={time.time()-start}')
+    print(f"time={time.time() - start}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
