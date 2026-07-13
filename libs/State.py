@@ -10,7 +10,7 @@ class State:
     
     args:
     geometry - Geometry object definind the size of the array
-    random - whether or not to fill cells with random values
+    random - whether or not to fill cells with random values, False fills with 0s, True fills with random values or if provided - based on random_func
     cell_keys - keys to use for creation of arrays
     random_func (optional) - func generating initial state of array
     random_args (optional) - args for random_func
@@ -24,7 +24,7 @@ class State:
         cell_keys: Iterable[str] = (),
         key_dtypes: Optional[dict[str, np.dtype | type]] = None,
         key_layers: Optional[Iterable] = None,
-        random: Iterable[bool] = None,
+        random: bool = False,
         random_func: Optional[Iterable[Callable[..., object]]] = None,
         random_args: Optional[Iterable[dict]] = None,
         dtype: np.dtype | type = np.uint8,
@@ -61,40 +61,38 @@ class State:
             self._data[key] = np.zeros(grid_dims+(self.key_layers[i],), dtype=kd)
 
 
+        if random is True:
 
+            #fill array with initial values
 
-        if random is None or num_of_keys == 0:
-            return
+            if random_func is None:
+                for i,key in enumerate(self.keys):
+                    kd = self.key_dtypes.get(key, self.dtype)
+                    
+                    self._data[key][...] = np.random.randint(0, 2, size=grid_dims+(self.key_layers[i],)).astype(kd)
+            else: 
+                if callable(random_func):
+                    random_func = [random_func] * len(self.keys)
 
+                rand_args = random_args or [{} for _ in range(len(self.keys))]
+                for i,key in enumerate(self.keys):
+                    kd = self.key_dtypes.get(key, self.dtype)
+                    expected_shape = grid_dims + (self.key_layers[i],)
+                    try:
+                        generated = random_func[i](size=expected_shape, dtype=kd, **rand_args[i])
+                    except TypeError:
+                        try:
+                            generated = random_func[i](size=expected_shape, **rand_args[i])
+                        except TypeError:
+                            generated = random_func[i](**rand_args[i])
 
-        #fill array with initial values
-
-        if random_func is None:
-            for i,key in enumerate(self.keys):
-                kd = self.key_dtypes.get(key, self.dtype)
+                    generated = np.asarray(generated)
+                    if generated.shape != expected_shape:
+                        generated = np.broadcast_to(generated, expected_shape)
+                        
+                    
+                    self._data[key][...] = generated.astype(kd)
                 
-                self._data[key][...] = np.random.randint(0, 2, size=grid_dims+(self.key_layers[i],)).astype(kd)
-            return
-
-        rand_args = random_args or [{} for _ in range(len(self.keys))]
-        for i,key in enumerate(self.keys):
-            kd = self.key_dtypes.get(key, self.dtype)
-            expected_shape = grid_dims + (self.key_layers[i],)
-            try:
-                generated = random_func[i](size=expected_shape, dtype=kd, **rand_args[i])
-            except TypeError:
-                try:
-                    generated = random_func[i](size=expected_shape, **rand_args[i])
-                except TypeError:
-                    generated = random_func[i](**rand_args[i])
-
-            generated = np.asarray(generated)
-            if generated.shape != expected_shape:
-                generated = np.broadcast_to(generated, expected_shape)
-                
-            
-            self._data[key][...] = generated.astype(kd)
-            
         
         ### squeeze last dim
         for key in self.keys:
@@ -116,8 +114,8 @@ class State:
         list_to_stack = []
         for k in self.keys:
             arr = self._data[k].copy()
-            # keys with multiple layers will have 4d dimensions
-            if len(arr.shape)==4:
+            # keys with multiple layers will have dim + 1 dimensions
+            if len(arr.shape)==len(self.geometry.size) + 1:
                 # has to be unstacked to become a tuple of grid_dim shaped arrays
                 list_to_stack.extend(np.unstack(arr,axis=-1))
             else:
@@ -187,7 +185,13 @@ class State:
         if key not in self._data:
             raise KeyError("key not in set")
 
-        self._data[key][...] = value
+        target = self._data[key]
+        arr = np.asarray(value)
+
+        if target.ndim == arr.ndim + 1 and target.shape[-1] == 1:
+            arr = np.expand_dims(arr, axis=-1)
+
+        target[...] = arr
         
         # kd = self.key_dtypes.get(key, self.dtype)
         # self._data[key] = np.asarray(value, dtype=kd).copy()

@@ -31,7 +31,7 @@ def test_load_json_config(tmp_path: Path):
     loaded = SpeciesInteraction.load_json_config(str(config_file))
     assert loaded == mock_data
     
-    with pytest.raises(RuntimeError, match="config file not found"):
+    with pytest.raises(FileNotFoundError, match="config file not found"):
         SpeciesInteraction.load_json_config("nonexistent_file.json")
         
     bad_json_file = tmp_path / "bad.json"
@@ -85,15 +85,23 @@ def test_symbiotic_interaction(geometry: Geometry, base_state: State):
     
 
     base_state["A"][2, 2] = 1
+    base_state["B"][1, 1] = 1
     
+    initial_b_count = np.sum(base_state["B"])
     new_state = rule.apply_state(base_state)
+    final_b_count = np.sum(new_state["B"])
+
+    assert initial_b_count < final_b_count
     
-    assert new_state["B"][1, 2] == 1
-    assert new_state["B"][2, 3] == 1
+    #A is supposed to be overwritten by B
+    assert new_state["A"][2, 2] == 1
+    assert new_state["B"][2, 2] == 0
     
-   
-    assert new_state["B"][0, 0] == 0 #TODO: consider if B can spawn somewhere else without A
-    assert new_state["B"][2, 2] == 0 #B can't spawn over A
+    #ensure one cell is occupied only by one cell type
+    are_overlaping = (new_state["A"] == 1) & (new_state["B"] == 1)
+    assert not np.any(are_overlaping)
+
+    assert new_state["B"][0, 0] == 0 #TODO: consider if B can spawn somewhere (outside neighbourhood)else without A
 
 
 def test_no_interaction_preserves_state(geometry: Geometry, base_state: State):
@@ -125,6 +133,8 @@ def test_tiebreaker(geometry: Geometry, base_state: State):
     
   
     base_state["A"][2, 2] = 1
+    base_state["B"][1, 3] = 1 
+    base_state["C"][3, 3] = 1
     
     np.random.seed(42)
     new_state = rule.apply_state(base_state)

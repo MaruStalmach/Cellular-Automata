@@ -114,7 +114,8 @@ class GameOfLife3D(Rule):
     def apply_state(self, state: State) -> State:
         # Use per-key accessors so reads/writes affect the underlying arrays
         alive_grid = state[self.required_keys[0]].astype(np.int8, copy=False)
-        alive_counts = np.zeros_like(alive_grid, dtype=np.int16)
+
+        alive_counts = np.zeros_like(alive_grid, dtype=np.int8)
         alive_counts += self.neighborhood_count(alive_grid)
 
         current_alive = state['alive'] == 1
@@ -420,11 +421,10 @@ class BacteriaGrowth(Rule):
 
     def _consume_substrate_particle(self, substrate_grid: np.ndarray, coords: tuple[int, ...]) -> None:
         if substrate_grid.ndim == self.geometry.ndim + 1:
-            layer_coords = coords[:-1] + (coords[-1],)
-            substrate_grid[layer_coords] = 0
+            substrate_grid[coords] = 0
             return
 
-        substrate_grid[coords] = 0
+        substrate_grid[coords[:-1]] = 0
 
     def apply(self, neighbors, cell, coords=None):
         return super().apply(neighbors, cell, coords)
@@ -559,10 +559,10 @@ class SpeciesInteraction(Rule):
             with open(filepath, 'r', encoding='utf-8') as file:
                 interaction_rules = load(file)
             return interaction_rules
-        except FileNotFoundError:
-            raise RuntimeError('config file not found')
+        except FileNotFoundError as e:
+            raise FileNotFoundError('config file not found') from e
         except JSONDecodeError as e:
-            raise ValueError(e) 
+            raise ValueError(e) from e
     
     def get_interaction(self, species_a: str, species_b: str) -> float:
         '''gets interaction coeff, returns 0.0 if there's no interaction'''
@@ -590,7 +590,7 @@ class SpeciesInteraction(Rule):
         deaths = {}
 
         for sp in bacteria_types:
-            presence[sp] = state[sp].astype(bool) #checks presence of each species on the grid
+            presence[sp] = state[sp].reshape(state.shape).astype(bool) #checks presence of each species on the grid
             occupied |= presence[sp] #mark all occupied grid spots for all species
             neighbour_counts[sp] = self._get_neighbour_counts(presence[sp].astype(np.uint8))
 
@@ -616,7 +616,7 @@ class SpeciesInteraction(Rule):
         
         # resolving deaths from previous stes
         for sp in bacteria_types:
-            state[sp] = (presence[sp] & ~deaths[sp]).astype(state[sp].dtype)
+            state[sp] = (presence[sp] & ~deaths[sp]).reshape(state[sp].shape).astype(state[sp].dtype)
 
         
         claim_grid_spot = np.stack([spawns[sp] for sp in bacteria_types], axis=-1)
@@ -636,7 +636,7 @@ class SpeciesInteraction(Rule):
         for i, sp in enumerate(bacteria_types):
             wins = spawn_here & (winner_idx == i)
             if wins.any():
-                state[sp] = np.where(wins, 1, state[sp])
+                state[sp] = np.where(wins.reshape(state[sp].shape), 1, state[sp])
 
         return state
 
