@@ -1,4 +1,4 @@
-from libs.Rules import GutDrift
+from libs.rules import GutDrift
 from libs.Geometry import Geometry
 from libs.Sim import CellularAutomaton
 from libs.Rendering.Renderer import CARenderer

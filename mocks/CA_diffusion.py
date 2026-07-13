@@ -1,4 +1,4 @@
-from libs.Rules import Diffusion
+from libs.rules import Diffusion
 from libs.Geometry import Geometry
 from libs.Sim import CellularAutomaton
 from libs.Rendering.Renderer import CARenderer

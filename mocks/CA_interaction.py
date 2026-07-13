@@ -1,4 +1,4 @@
-from libs.Rules import SpeciesInteraction
+from libs.rules import SpeciesInteraction
 from libs.Geometry import Geometry
 from libs.Sim import CellularAutomaton
 from libs.Rendering.Renderer import CARenderer

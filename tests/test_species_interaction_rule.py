@@ -5,7 +5,7 @@ from pathlib import Path
 
 from libs.Geometry import Geometry
 from libs.State import State
-from libs.Rules import SpeciesInteraction
+from libs.rules import SpeciesInteraction
 
 
 @pytest.fixture
