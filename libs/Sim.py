@@ -4,7 +4,7 @@ import numpy as np
 
 from libs.Geometry import Geometry
 from libs.State import State
-from libs.Rules import Rule
+from libs.Rule import Rule
 
 
 class CellularAutomaton:

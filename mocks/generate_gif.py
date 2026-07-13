@@ -1,7 +1,6 @@
-from libs.Rules import *
-from libs.Geometry import *
-from libs.Cells import *
-from libs.Sim import *
+from libs.rules import GameOfLife3D
+from libs.Geometry import Geometry
+from libs.Sim import CellularAutomaton
 from libs.Rendering import CARenderer
 
 import numpy as np

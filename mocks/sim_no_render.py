@@ -1,4 +1,4 @@
-from libs.Rules import GameOfLife3D
+from libs.rules import GameOfLife3D
 from libs.Geometry import Geometry
 from libs.Sim import CellularAutomaton
 
