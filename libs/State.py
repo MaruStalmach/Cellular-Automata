@@ -6,16 +6,17 @@ from libs.Geometry import Geometry
 
 
 class State:
-    """array-based cellular automaton state -> swapped creating Cell obj on array to working on multiple layers of arrays
+    """Manages multi-layered, array-based cellular automaton states
 
-    args:
-    geometry - Geometry object definind the size of the array
-    random - whether or not to fill cells with random values, False fills with 0s, True fills with random values or if provided - based on random_func
-    cell_keys - keys to use for creation of arrays
-    random_func (optional) - func generating initial state of array
-    random_args (optional) - args for random_func
-    dtype - type of the data stored in array
-    key_dtypes (optional) - overwrites data types for specified keys
+    Args:
+        geometry (Geometry): Grid spatial dimensions and boundaries
+        cell_keys (Iterable[str], optional): Names of simulation layers. Defaults to ()
+        key_dtypes (dict[str, np.dtype | type], optional): Per-key data type overrides. Defaults to None
+        key_layers (Iterable[int], optional): Depth/number of layers per key. Defaults to None
+        random (bool, optional): If True, initializes with random values; otherwise 0s. Defaults to False
+        random_func (Iterable[Callable], optional): Per-key random generation functions. Defaults to None
+        random_args (Iterable[dict], optional): Kwargs mapped to `random_func`. Defaults to None
+        dtype (np.dtype | type, optional): Global default array data type. Defaults to np.uint8
     """
 
     def __init__(
@@ -49,8 +50,7 @@ class State:
 
         # shape of the spatial grid and number of keys
         grid_dims = self.geometry.size
-        num_of_keys = len(self.keys)
-
+    
         # store per-key arrays in a dict so each key can have its own dtype
         self._data: dict[str, np.ndarray] = {}
         for i, key in enumerate(self.keys):

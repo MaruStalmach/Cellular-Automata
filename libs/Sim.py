@@ -34,7 +34,7 @@ class CellularAutomaton:
             try:
                 assert keys == self.state.keys
             except AssertionError:
-                print("key mismatch between rules and state arrays (soft error)")
+                print("key mismatch between rules and state arrays (soft error)") #TODO: comparing tuple to list will always thorw a mismacth
         else:
             self.state = State(geometry, random=True, cell_keys=keys)
         self.step_no = 0

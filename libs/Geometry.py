@@ -1,14 +1,19 @@
+from itertools import product
+
 import numpy as np
 from scipy.sparse import csr_matrix
-from itertools import product
 
 
 class Geometry:
-    """A class to represent the geometry of a CA grid.
-    Contains limits and periodicity information"""
+    """Represents the spatial geometry, limits, and boundary conditions of a cellular automaton grid
+
+    Args:
+        size (tuple[int, ...]): Spatial dimensions of the grid (e.g., (10, 10) or (10, 10, 10))
+        axes (str): String identifier for each axis (e.g., "xy" or "xyz")
+        periodicity (str): String indicating which axes have periodic (wrapping) boundaries (e.g., "xy" means both x and y wrap)
+    """
 
     def __init__(self, size: tuple[int, ...], axes: str, periodicity: str):
-
         self.periodicity = periodicity.lower()
         self.axes = axes.lower()
         self.size = size
