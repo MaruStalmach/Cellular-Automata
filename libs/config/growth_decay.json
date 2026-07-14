@@ -1,0 +1,81 @@
+{
+"sim":
+{
+    "size":[50,50,50],
+    "periodicity" : "",
+    "dtype":"uint8",
+    "render":true,
+    "max_steps":1000
+},
+
+"state_keys":[
+    {
+        "name" : "bacteria",
+        "layers":1,
+        "dtype" : "uint8",
+        "random" : true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[0,10,0],
+            "block_size":[50,5,50],
+            "value":1
+        } 
+    },
+    {
+        "name":"substrate",
+        "layers":6,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func":"init_block",
+        "random_args":
+        {
+            "start":[20,20,20],
+            "block_size":[7,29,7],
+            "value":1
+        }
+    }
+],
+
+"rules":[
+    {
+        "name":"Diffusion",
+        "args" : 
+        {
+            "target_key":"substrate",
+            "a" : 6,
+            "p" : 0.08
+        }
+        
+    },
+    {
+        "name" : "BacteriaGrowth",
+        "args" :
+            {
+                "bacteria_keys":["bacteria"],
+                "substrate_key":"substrate"
+            }
+    },
+    {
+        "name" : "BacteriaDecay",
+        "args" :{
+            "target_key" : "bacteria",
+            "decay_probability" : 0.001
+        }
+    }
+],
+
+"renderer":
+{
+    "key":["bacteria","substrate"],
+    "window_size":[1200,800],
+    "callback" :
+    {
+        "name":"MultiKeyCallback",
+        "args":
+        {
+            "step_stride":100
+        }
+    }
+}
+}

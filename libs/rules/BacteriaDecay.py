@@ -11,14 +11,16 @@ class BacteriaDecay(Rule):
         self.buff = np.zeros(geometry.size, dtype=np.float32)
 
     def apply_state(self, state:State):
+
         grid = state[self.target_key].copy()
 
         self.buff = np.random.random(size=grid.shape)
 
-        self.buff = grid & (self.buff<self.decay_probability)
+        self.buff = grid.astype(np.bool) & (self.buff<self.decay_probability)
 
         grid[self.buff==1] = 0
 
         state[self.target_key]=grid
+        return state
 
 
