@@ -1,31 +1,18 @@
-from libs.Rules import *
-from libs.Geometry import *
-from libs.Cells import *
-from libs.Sim import *
+from libs.rules import GameOfLife3D
+from libs.Geometry import Geometry
+from libs.Sim import CellularAutomaton
 from libs.Rendering import CARenderer
 
-from time import time
 import numpy as np
-import threading
 
 
-
-
-
-
-
-
-
-
-
-
-if __name__=='__main__':
-    #TODO parse args
+if __name__ == "__main__":
+    # TODO parse args
 
     size = (10, 10, 10)
-    axes = 'xyz'
-    p = 'xyz'
-    geometry = Geometry(size,axes,p)
+    axes = "xyz"
+    p = "xyz"
+    geometry = Geometry(size, axes, p)
 
     rules = [GameOfLife3D(geometry)]
 
@@ -33,64 +20,57 @@ if __name__=='__main__':
 
     # Initialize renderer
     renderer = CARenderer(width=1200, height=800, make_gif=True)
-    
+
     # Store simulation state
-    sim_state = {'running': True, 'step_count': 0, 'max_steps': 500}
-    
-    
+    sim_state = {"running": True, "step_count": 0, "max_steps": 500}
+
     init_state = np.zeros(size)
-    init_state[2:4,1:4,1:4] = np.array([[
-            [0,1,0],
-            [0,0,1],
-            [1,1,1]
-        ],
-        [
-            [0,1,0],
-            [0,0,1],
-            [1,1,1]
-        ]])
-    
-    def gol_state_from_array(array : np.ndarray):
-        assert(array.shape==size)
+    init_state[2:4, 1:4, 1:4] = np.array(
+        [[[0, 1, 0], [0, 0, 1], [1, 1, 1]], [[0, 1, 0], [0, 0, 1], [1, 1, 1]]]
+    )
+
+    def gol_state_from_array(array: np.ndarray):
+        assert array.shape == size
         state = np.empty(size, dtype=object)
-        d_a = {'alive':1}
-        d_d = {'alive':0}
+        d_a = {"alive": 1}
+        d_d = {"alive": 0}
         state = state.flatten()
-        for i,val in enumerate(array.flatten()):
+        for i, val in enumerate(array.flatten()):
             if val == 1:
                 state[i] = Cell.from_dict(d_a)
             else:
                 state[i] = Cell.from_dict(d_d)
         state = state.reshape(size)
         return state
-    
+
     init_state = gol_state_from_array(init_state)
     # breakpoint()
     ca_sim.state.data = init_state
-                
-    
+
     def update_callback():
         """Called each frame to get the latest CA state"""
-        if sim_state['running'] and sim_state['step_count'] < sim_state['max_steps']:
-            if sim_state['step_count']>0:
+        if sim_state["running"] and sim_state["step_count"] < sim_state["max_steps"]:
+            if sim_state["step_count"] > 0:
                 ca_sim.step()
-            sim_state['step_count'] += 1
+            sim_state["step_count"] += 1
             print(f"Step {sim_state['step_count']}/{sim_state['max_steps']}")
-        
+
         # Convert CA state to numpy array for rendering
         # Assuming the CA state is stored in ca_sim.grid or similar
         # This will need to be adjusted based on your actual data structures
         try:
-            cell_array = np.array([cell['alive'] for cell in ca_sim.state.data.flatten()])
+            cell_array = np.array(
+                [cell["alive"] for cell in ca_sim.state.data.flatten()]
+            )
             cell_array = cell_array.reshape(size)
             return cell_array
         except:
             # Fallback if structure is different
-            print('update_callback fallback triggered')
+            print("update_callback fallback triggered")
             return None
-    
+
     # Run renderer with CA updates
     try:
         renderer.run(update_callback=update_callback)
     except KeyboardInterrupt:
-        print("Simulation stopped by user")   
+        print("Simulation stopped by user")
