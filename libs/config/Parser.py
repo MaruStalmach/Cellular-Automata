@@ -32,6 +32,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     ### first setup geometry
     size = sim_data['size'] # string of a tuple
     period = sim_data['periodicity']
+    max_steps = sim_data['max_steps']
 
     geometry = Geometry(size=tuple(size), axes='xyz', periodicity=period)
 
@@ -73,7 +74,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         rules.append(rule)
 
     ### finally create a CA object
-    ca_sim = CellularAutomaton(geometry=geometry, rules= rules, state=state)
+    ca_sim = CellularAutomaton(geometry=geometry, rules= rules, state=state, max_steps=max_steps)
     
     ### if no rendering then its done
     if not sim_data['render']:

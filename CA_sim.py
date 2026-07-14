@@ -39,5 +39,11 @@ if __name__=='__main__':
     # Run renderer with CA updates
     try:
         renderer.run()
+    except AttributeError:
+        pass
     except KeyboardInterrupt:
-        print("Simulation stopped by user")   
+        print("Simulation stopped by user")
+        quit()
+
+    while True:
+        ca_sim.step()  

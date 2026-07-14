@@ -15,11 +15,12 @@ class CellularAutomaton:
     - rules - list of Rule objects used within the siimulation
     """
 
-    def __init__(self, geometry: Geometry, rules: list[Rule], state : State = None):
+    def __init__(self, geometry: Geometry, rules: list[Rule], state : State = None, max_steps:int=100):
         self.rules = rules
         self.geometry = geometry
         self.neighbours = None
         self._neighbours_idx = None
+        self.max_steps=max_steps
 
         #collect necessary keys for rules
         keys: list[str] = []
@@ -43,6 +44,10 @@ class CellularAutomaton:
 
     def step(self):
         '''increments the timestep of the simulation and applies all '''
+        if self.step_no>=self.max_steps:
+            print('simulation ended')
+            quit()
+            return
         for rule in self.rules:
             if hasattr(rule, "apply_state"):
                 self.state = rule.apply_state(self.state)
