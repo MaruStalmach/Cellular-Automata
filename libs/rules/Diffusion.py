@@ -26,6 +26,7 @@ class Diffusion(Rule):
         self.rolls = np.zeros(shape=geometry.size+(6,))
         self.layers = np.zeros(shape=geometry.size+(6,))
         self.shift_buffer = np.zeros(shape=geometry.size)
+        self.lost_particles : int = 0
         
     def apply_state(self, state) -> State:
     
@@ -140,7 +141,8 @@ class Diffusion(Rule):
             #TODO: deal with collsions >1 values in arrays need to be spread out or some shit idk
             
             
-        print(self.layers[self.layers>1].flatten().sum() - np.prod(self.layers[self.layers>1].shape))
+        self.lost_particles += self.layers[self.layers>1].sum()-np.prod(self.layers[self.layers>1].shape)
+        # print(self.lost_particles)
         # naive collision resolution -> delete colliding particles
         self.layers[self.layers>1]=1
         
