@@ -140,6 +140,7 @@ class Diffusion(Rule):
             #TODO: deal with collsions >1 values in arrays need to be spread out or some shit idk
             
             
+        print(self.layers[self.layers>1].flatten().sum() - np.prod(self.layers[self.layers>1].shape))
         # naive collision resolution -> delete colliding particles
         self.layers[self.layers>1]=1
         
