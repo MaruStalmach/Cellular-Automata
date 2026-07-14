@@ -1,4 +1,5 @@
-from .. import Rule, State
+from libs.Rule import Rule
+from libs.State import State
 import numpy as np
 
 class GutDrift(Rule):

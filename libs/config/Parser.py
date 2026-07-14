@@ -4,6 +4,12 @@ from libs.Rendering.Renderer import CARenderer
 from libs.State import State
 from libs.Sim import CellularAutomaton
 from libs.Callback import Callback
+from libs.rules.BacteriaGrowth import *
+from libs.rules.GameOfLife3D import *
+from libs.rules.GutDrift import *
+from libs.rules.Diffusion import *
+from libs.rules.BiofilmDetachment import *
+from libs.rules.SpeciesInteraction import *
 import numpy as np
 
 

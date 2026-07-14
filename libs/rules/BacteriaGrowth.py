@@ -1,4 +1,4 @@
-from .. import Rule
+from libs.Rule import Rule
 import numpy as np
 from operator import itemgetter
 

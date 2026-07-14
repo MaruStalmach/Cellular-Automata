@@ -1,4 +1,6 @@
-from .. import Rule, State, Geometry
+from libs.Rule import Rule
+from libs.State import State
+from libs.Geometry import Geometry
 import numpy as np
 from json import load, JSONDecodeError
 from typing import Dict
