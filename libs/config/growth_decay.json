@@ -59,7 +59,7 @@
     {
         "name" : "BacteriaDecay",
         "args" :{
-            "target_key" : "bacteria",
+            "target_keys" : ["bacteria"],
             "decay_probability" : 0.001
         }
     }
