@@ -18,8 +18,18 @@ class CARenderer:
             self.running = False
             return
 
-        if key == glfw.KEY_P and action == glfw.PRESS:
+        elif key == glfw.KEY_P and action == glfw.PRESS:
             self.p_press = True
+
+        elif key == glfw.KEY_C and action == glfw.PRESS:
+            self.c_press = True
+
+        elif key == glfw.KEY_J and action == glfw.PRESS:
+            self.j_press = True
+
+        elif key == glfw.KEY_L and action == glfw.PRESS:
+            self.l_press = True
+        
 
         # Map GLFW keys to camera keys
         key_map = {
@@ -47,6 +57,14 @@ class CARenderer:
         self.height = height
 
         self.num_keys = keys_to_render
+
+        self.p_press = False
+        self.c_press = False
+        self.j_press = False
+        self.l_press = False
+
+        self.cross_section = False
+        self.layer=0
 
         if update_callback is None:
             self.update_callback = None
@@ -437,7 +455,7 @@ class CARenderer:
         p_loc = glGetUniformLocation(self.solidShader.program, "projection")
         glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
 
-        self.p_press = False
+        
 
     def set_ca_state(self, state_array):
         """
@@ -557,6 +575,20 @@ class CARenderer:
                 if self.p_press:
                     new_state = self.update_callback()
                     self.p_press = False
+                if self.c_press:
+                    self.c_press = False
+                    self.cross_section = not self.cross_section
+                if self.j_press:
+                    self.j_press = False
+                    if self.cross_section:
+                        self.layer -= 1
+                        self.layer=np.clip(self.layer,0,self.ca_state.shape[-1])
+                if self.l_press:
+                    self.l_press = False
+                    if self.cross_section:
+                        self.layer += 1
+                        self.layer=np.clip(self.layer,0,self.ca_state.shape[-1])
+                    
                 if new_state is not None:
                     self.set_ca_state(new_state)
 
@@ -564,6 +596,7 @@ class CARenderer:
             glfw.poll_events()
 
         glfw.terminate()
+        quit()
 
 
 # Example usage

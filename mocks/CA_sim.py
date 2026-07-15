@@ -14,8 +14,7 @@ if __name__=='__main__':
     parser.add_argument('--filename','-f',required=True)
     
     args = parser.parse_args()
-    
-    
+
     ca_sim, renderer = parse_json(args.filename)
     
     # Run renderer with CA updates
