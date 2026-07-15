@@ -20,8 +20,8 @@ if __name__=='__main__':
     # Run renderer with CA updates
     try:
         renderer.run()
-    except AttributeError:
-        pass
+    except AttributeError as err:
+        print('Attribute error in CA_SIM', err)
     except KeyboardInterrupt:
         print("Simulation stopped by user")
         quit()

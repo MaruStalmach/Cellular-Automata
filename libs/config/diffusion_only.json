@@ -1,7 +1,7 @@
 {
 "sim":
 {
-    "size":[2,2,2],
+    "size":[5,5,5],
     "periodicity" : "",
     "dtype":"uint8",
     "render":true,
@@ -14,13 +14,13 @@
         "layers":6,
         "dtype":"np.uint8",
         "random":true,
-        "random_func":"init_block",
-        "random_args":
+        "random_func" : "init_block",
+        "random_args" : 
         {
-            "start" : [0,0,0],
-            "block_size" : [1,1,1],
-            "value" : 1
-        }
+            "start":[0,0,0],
+            "block_size":[1,2,4],
+            "value":1
+        } 
     }
 ],
 

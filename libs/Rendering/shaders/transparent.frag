@@ -6,10 +6,12 @@ layout (location = 1) out float reveal;
 
 flat in vec3 aColor; 
 in float zPos;
+in float Aalpha;
 
 
 uniform float window_width;
 uniform float window_height;
+uniform float Ualpha;
 
 
 float max(vec3 values) {
@@ -25,7 +27,7 @@ float max(vec3 values) {
 
 
 void main(){
-   float alpha = max(aColor)>0.5?0.2:0.0;
+   float alpha = max(aColor)>0.5?Ualpha:0.0;
    if (alpha < 0.1) discard;
    vec4 color = vec4(aColor, alpha);
    float weight = 

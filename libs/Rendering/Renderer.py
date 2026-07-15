@@ -10,7 +10,16 @@ from libs.Rendering.Shader import Shader
 
 
 class CARenderer:
-    """Renders 3D cellular automata"""
+    """Renders 3D cellular automata
+    
+    controls:
+    W/S - zoom in/out
+    A/D - rotate left/right
+    Q/E - rotate up/down
+    P - advace simulation (step)
+    C - toggle cross section mode
+    J/L - cycle cross section layers up/down
+    X - cycle cross section axis"""
 
     def _key_callback(self, window, key, scancode, action, mods):
         """Handle keyboard input"""
@@ -29,6 +38,9 @@ class CARenderer:
 
         elif key == glfw.KEY_L and action == glfw.PRESS:
             self.l_press = True
+        
+        elif key == glfw.KEY_X and action == glfw.PRESS:
+            self.x_press = True
         
 
         # Map GLFW keys to camera keys
@@ -62,9 +74,12 @@ class CARenderer:
         self.c_press = False
         self.j_press = False
         self.l_press = False
+        self.x_press = False
 
         self.cross_section = False
-        self.layer=0
+        self.layer = 0
+        self.cs_axis = 0
+        self.c_aplha = 0.7
 
         if update_callback is None:
             self.update_callback = None
@@ -72,7 +87,9 @@ class CARenderer:
             self.update_callback = update_callback
 
         self.ca_state = init_state.astype(dtype=np.float32)
+        self.num_cells = np.prod(self.ca_state.shape) // self.num_keys
         self.cell_size = 1.0
+        self.alpha = 0.2
         self.running = True
         self.camera = Camera(position=(0, 0, init_state.shape[-1] * 1.2))
 
@@ -440,6 +457,9 @@ class CARenderer:
         n_keys = glGetUniformLocation(self.transShader.program, "n_keys")
         glUniform1i(n_keys, keys_to_render)
 
+        alpha = glGetUniformLocation(self.transShader.program, "Ualpha")
+        glUniform1f(alpha, self.alpha)
+
         # send pvm to soild  shader
         self.solidShader.use_program()
 
@@ -478,6 +498,96 @@ class CARenderer:
         # unbind
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
 
+    def _toggle_cross_section(self):
+        ### flip cross_section flag
+        self.cross_section = not self.cross_section
+
+        self.transShader.use_program()
+
+        # tmp variable in case num keys is greter than one cause then ca_state is 4d
+        tmp = 1 if self.num_keys>1 else 0
+        grid_shape = list(self.ca_state.shape[tmp:])
+        ### send new grid size, new ssbo, new alpha uniforms
+        if self.cross_section:
+
+            grid_shape[self.cs_axis] = 1
+
+            grid_size = glGetUniformLocation(self.transShader.program, "grid_size")
+            glUniform3f(
+                grid_size,
+                grid_shape[0],
+                grid_shape[1],
+                grid_shape[2],
+            )
+
+            alpha = glGetUniformLocation(self.transShader.program, "Ualpha")
+            glUniform1f(alpha, self.c_aplha)
+
+            sel = [slice(None)] * (3 + tmp)
+            sel[self.cs_axis+tmp] = self.layer
+
+
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
+            glBufferData(
+                GL_SHADER_STORAGE_BUFFER,
+                self.ca_state[tuple(sel)][...,None].nbytes,
+                self.ca_state[tuple(sel)][...,None].flatten(),
+                GL_DYNAMIC_COPY,
+            )
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
+            # unbind
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
+
+            self.num_cells = np.prod(self.ca_state.shape)//self.num_keys//self.ca_state.shape[-1]
+        else:
+            ###restore normal values
+            grid_size = glGetUniformLocation(self.transShader.program, "grid_size")
+            glUniform3f(
+                grid_size,
+                self.ca_state.shape[-3],
+                self.ca_state.shape[-2],
+                self.ca_state.shape[-1],
+            )
+
+            alpha = glGetUniformLocation(self.transShader.program, "Ualpha")
+            glUniform1f(alpha, self.alpha)
+
+
+
+
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
+            glBufferData(
+                GL_SHADER_STORAGE_BUFFER,
+                self.ca_state.nbytes,
+                self.ca_state.flatten(),
+                GL_DYNAMIC_COPY,
+            )
+
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
+            # unbind
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
+
+            self.num_cells = np.prod(self.ca_state.shape)//self.num_keys
+
+    def _update_cs(self):
+
+        # tmp variable in case num keys is greter than one cause then ca_state is 4d
+        tmp = 1 if self.num_keys>1 else 0
+        sel = [slice(None)] * (3 + tmp)
+        sel[self.cs_axis+tmp] = self.layer
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
+        glBufferData(
+            GL_SHADER_STORAGE_BUFFER,
+            self.ca_state[tuple(sel)][...,None].nbytes,
+            self.ca_state[tuple(sel)][...,None].flatten(),
+            GL_DYNAMIC_COPY,
+        )
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
+        # unbind
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
+
+
     def render(self):
 
         self.transShader.use_program()
@@ -502,7 +612,7 @@ class CARenderer:
         glBindFramebuffer(GL_FRAMEBUFFER, self.opqFBO)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        # draw solid objects
+        # draw solid objects - small red square in the center
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, 6 * 2 * 3)
 
@@ -522,7 +632,7 @@ class CARenderer:
 
         glBindVertexArray(self.vao)
         glDrawArraysInstanced(
-            GL_TRIANGLES, 0, 6 * 2 * 3, np.prod(self.ca_state.shape) // self.num_keys
+            GL_TRIANGLES, 0, 6 * 2 * 3, self.num_cells
         )
 
         # draw composite image
@@ -577,17 +687,24 @@ class CARenderer:
                     self.p_press = False
                 if self.c_press:
                     self.c_press = False
-                    self.cross_section = not self.cross_section
+                    self._toggle_cross_section()
                 if self.j_press:
                     self.j_press = False
                     if self.cross_section:
                         self.layer -= 1
-                        self.layer=np.clip(self.layer,0,self.ca_state.shape[-1])
+                        self.layer=np.clip(self.layer,0,self.ca_state.shape[-1]-1)
+                        self._update_cs()
                 if self.l_press:
                     self.l_press = False
                     if self.cross_section:
                         self.layer += 1
-                        self.layer=np.clip(self.layer,0,self.ca_state.shape[-1])
+                        self.layer=np.clip(self.layer,0,self.ca_state.shape[-1]-1)
+                        self._update_cs()
+                if self.x_press:
+                    self.x_press = False
+                    if self.cross_section:
+                        self.cs_axis = (self.cs_axis+1)%3
+                        self._update_cs()
                     
                 if new_state is not None:
                     self.set_ca_state(new_state)
