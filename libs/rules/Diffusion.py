@@ -57,11 +57,11 @@ class Diffusion(Rule):
             if ax not in state.geometry.periodic_dims:
                 l=-1*ax+2
                 l2=(l+3)%6
-                sel = [slice(None)]*3
+                sel = [slice(None)]*4
                 sel[ax]=-1
-                self.rolls[tuple(sel)+(l,)][self.rolls[tuple(sel)+(l,)]==l]=l2
+                self.rolls[tuple(sel)][self.rolls[tuple(sel)]==l]=l2
                 sel[ax]=0
-                self.rolls[tuple(sel)+(l2,)][self.rolls[tuple(sel)+(l2,)]==l2]=l
+                self.rolls[tuple(sel)][self.rolls[tuple(sel)]==l2]=l
         
         #reset layers to zeros
         self.layers[...]=0
