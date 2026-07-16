@@ -4,8 +4,8 @@ from libs.Geometry import Geometry
 import numpy as np
 
 class BacteriaDecay(Rule):
-    def __init__(self, geometry:Geometry, target_keys, decay_probability):
-        super().__init__(geometry)
+    def __init__(self, geometry:Geometry, time_step : float, target_keys, decay_probability):
+        super().__init__(geometry, time_step)
         self.target_keys = target_keys
         self.decay_probability = decay_probability
         self.buff = np.zeros(geometry.size, dtype=np.float32)

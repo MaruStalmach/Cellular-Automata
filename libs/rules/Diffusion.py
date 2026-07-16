@@ -14,8 +14,8 @@ class Diffusion(Rule):
     
     '''
     
-    def __init__(self, geometry : Geometry, a : float, p : float, target_key : str ='substrate'):
-        super().__init__(geometry)
+    def __init__(self, geometry : Geometry, time_step : float, a : float, p : float, target_key : str ='substrate'):
+        super().__init__(geometry, time_step)
         
         self.target_key = target_key
         p3 = (1-4*p)/(a+1)
