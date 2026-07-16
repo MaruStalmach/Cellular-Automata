@@ -4,9 +4,15 @@ import numpy as np
 
 
 class Rule:
-    def __init__(self, geometry: Geometry):
+    def __init__(self, geometry: Geometry, time_step: float):
         self.geometry = geometry
+        self.dt = time_step
         self.required_keys: list[str] = []
+
+    def _cell_mask(self, grid: np.ndarray) -> np.ndarray:
+        if grid.ndim == self.geometry.ndim + 1:
+            return np.any(grid > 0, axis=-1)
+        return grid > 0
 
     def _shift_for_offset(
         self, grid: np.ndarray, offset: tuple[int, ...]
