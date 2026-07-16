@@ -27,7 +27,7 @@ class CellularAutomaton:
         # collect necessary keys for rules and find the smallest dt in rules
         keys: list[str] = []
         for rule in rules:
-            if rule.dt > self.dt:
+            if rule.dt > self.max_dt:
                 self.max_dt = rule.dt
             for key in rule.required_keys:
                 if key not in keys:
@@ -80,7 +80,7 @@ class CellularAutomaton:
             quit()
             return
         for rule in self.rules:
-            times_to_execute = np.clip(self.max_dt//rule.dt,1,500)
+            times_to_execute = int(np.clip(self.max_dt//rule.dt,1,500))
             for _ in range(times_to_execute):
                 if hasattr(rule, "apply_state"):
                     self.state = rule.apply_state(self.state)
