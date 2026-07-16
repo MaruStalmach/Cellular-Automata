@@ -19,13 +19,13 @@ t_ratio = tb//td
 s = (dx*100)**2 / (td/3600/24)
 
 sub_c = q*Xf*td
-print(sub_c)
 
 Sf = [Sb*px/27 for px in range(28)] 
 pu = [q*(1/(Ks+ssf))*Xf*td for ssf in Sf]
 pg = [Yca*ppu for ppu in pu]
 pd = b*td
-print(pu,pg,pd)
+
+print(pg[0]*t_ratio)
 
 # 1 = p0+p3 +4p p -> [0;0.25]
 p = np.linspace(1e-6, 0.5, 100)
