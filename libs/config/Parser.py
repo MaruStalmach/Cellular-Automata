@@ -11,6 +11,8 @@ from libs.rules.Diffusion import *
 from libs.rules.BiofilmDetachment import *
 from libs.rules.SpeciesInteraction import *
 from libs.rules.BacteriaDecay import *
+from libs.rules.Utilization import *
+
 from libs.util.helper_functions import *
 import numpy as np
 

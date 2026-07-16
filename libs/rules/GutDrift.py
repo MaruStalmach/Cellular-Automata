@@ -6,9 +6,9 @@ class GutDrift(Rule):
     """periodically moves floating bacteria down the z-axis and flushes some of the biofilm down the z-axis"""
 
     def __init__(
-        self, geometry, drift_speed: int, target_key: str = "floating_bacteria"
+        self, geometry, time_step : float, drift_speed: int, target_key: str = "floating_bacteria"
     ):
-        super().__init__(geometry=geometry)
+        super().__init__(geometry, time_step)
         self.drift_speed = drift_speed
 
         #

@@ -6,8 +6,8 @@ class BiofilmDetachment(Rule):
     """the closer the biofilm is to the wall of the gut, the harder it is for it to get detached
     moves detached cells from biofilm layer to detached bacteria layer"""
 
-    def __init__(self, geometry, detachment_rate: float, scaling: float):
-        super().__init__(geometry=geometry)
+    def __init__(self, geometry, time_step : float, detachment_rate: float, scaling: float):
+        super().__init__(geometry, time_step)
         self.detachment_probability = detachment_rate * scaling
 
         self.target_keys = ["biofilm", "floating_bacteria"]

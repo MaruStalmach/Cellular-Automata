@@ -18,6 +18,9 @@ t_ratio = tb//td
 
 s = (dx*100)**2 / (td/3600/24)
 
+sub_c = q*Xf*td
+print(sub_c)
+
 Sf = [Sb*px/27 for px in range(28)] 
 pu = [q*(1/(Ks+ssf))*Xf*td for ssf in Sf]
 pg = [Yca*ppu for ppu in pu]
