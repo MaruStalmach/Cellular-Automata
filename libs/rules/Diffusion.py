@@ -142,7 +142,6 @@ class Diffusion(Rule):
             
             
         self.lost_particles += self.layers[self.layers>1].sum()-np.prod(self.layers[self.layers>1].shape)
-        # print(self.lost_particles)
         # naive collision resolution -> delete colliding particles
         self.layers[self.layers>1]=1
         

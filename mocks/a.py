@@ -23,6 +23,7 @@ sub_c = q*Xf*td
 Sf = [Sb*px/27 for px in range(28)] 
 pu = [q*(1/(Ks+ssf))*Xf*td for ssf in Sf]
 pg = [Yca*ppu for ppu in pu]
+print(pg)
 pd = b*td
 
 print(pg[0]*t_ratio)

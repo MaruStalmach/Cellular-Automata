@@ -73,11 +73,11 @@
 
 "renderer":
 {
-    "key":"bacteria",
+    "key":["substrate","bacteria"],
     "window_size":[1200,800],
     "callback" :
     {
-        "name":"Callback",
+        "name":"MultiKeyCallback",
         "args":
         {
             "step_stride":1
