@@ -1,7 +1,7 @@
 {
 "sim":
 {
-    "size":[15,15,15],
+    "size":[100,100,100],
     "periodicity" : "",
     "dtype":"uint8",
     "render":true,
@@ -45,7 +45,7 @@
         "name":"ReduceCallback",
         "args":
         {
-            "step_stride":100
+            "step_stride":10
         }
     }
 }
