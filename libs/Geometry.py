@@ -2,7 +2,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 from libs.Neighbourhood import Neighbourhood
-from libs.neighbourhoods.MooresNeighbourhood import MooresNeighbourhood
+from libs.neighbourhoods.MooreNeighbourhood import MooreNeighbourhood
 
 
 class Geometry:
@@ -27,7 +27,7 @@ class Geometry:
             if axis in self.periodicity
         }
 
-        self.neighbourhood = neighbourhood or MooresNeighbourhood()
+        self.neighbourhood = neighbourhood or MooreNeighbourhood()
         self._offsets = self.neighborhood.generate_offsets(self.ndim)
 
     def _apply_offset(
