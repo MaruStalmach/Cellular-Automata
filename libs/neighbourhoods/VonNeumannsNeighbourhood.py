@@ -1,6 +1,6 @@
 import numpy as np
 
-class VonNeumannNeighborhood:
+class VonNeumannNeighbourhood:
     def generate_offsets(self, ndim: int, radius:int=1) -> np.ndarray:
         assert ndim > 0, "dimensionality must be greater than 0"
         assert radius > 0, "radius must be greater than 0"
