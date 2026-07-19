@@ -127,8 +127,8 @@ class State:
         arr = np.asarray(new_data)
         # required_shape = tuple(self.geometry.size) + (len(self.keys),)
 
+        arr_cnt = 0
         for key_cnt, key in enumerate(self.keys):
-            arr_cnt = 0
             kd = self.key_dtypes.get(key, self.dtype)
             layers = self.key_layers[key_cnt]
             # stack multiple layer keys

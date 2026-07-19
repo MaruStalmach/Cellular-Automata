@@ -33,7 +33,7 @@ class CellularAutomaton:
             self.state = state
             # TODO: check if state keys are the same as rule keys
             try:
-                assert keys == self.state.keys
+                assert keys == tuple(self.state.keys)
             except AssertionError:
                 print("key mismatch between rules and state arrays (soft error)") #TODO: comparing tuple to list will always thorw a mismacth
         else:

@@ -1,4 +1,4 @@
-from libs.rules import GameOfLife3D
+from libs.rules.GameOfLife3D import GameOfLife3D
 from libs.Geometry import Geometry
 from libs.State import State
 
