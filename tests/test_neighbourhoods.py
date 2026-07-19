@@ -16,6 +16,7 @@ def von_neumann():
 ###### 1D
 
 def test_moore_1d(moore: MooreNeighbourhood):
+    '''should shift the index one forward and one back for 1D'''
     offsets = moore.generate_offsets(ndim=1, radius=1)
     expected = np.array([[-1], [1]], dtype=np.int64)
     
@@ -24,8 +25,8 @@ def test_moore_1d(moore: MooreNeighbourhood):
     
     assert np.array_equal(offsets, expected)
 
-def test_von_neumann_1d(von_neumann: VonNeumannNeighbourhood) -> None:
-    """Von Neumann neighborhood in 1D with radius 1 should match Moore 1D ([-1], [1])."""
+def test_von_neumann_1d(von_neumann: VonNeumannNeighbourhood):
+    '''should shift the index one forward and one back for 1D'''
     offsets = von_neumann.generate_offsets(ndim=1, radius=1)
     expected = np.array([[-1], [1]], dtype=np.int64)
     
@@ -37,10 +38,13 @@ def test_von_neumann_1d(von_neumann: VonNeumannNeighbourhood) -> None:
 ###### 2D
 
 def test_moore_2d(moore: MooreNeighbourhood):
+    '''should shift the index one forward and one back + 
+    one above and one below + diagonals for 2D'''
     offsets = moore.generate_offsets(ndim=2, radius=1)
 
     assert len(offsets) == 8
 
+    #center should not be in offsets
     for offset in offsets:
         assert not (offset[0] == 0 and offset[1] == 0)
 
@@ -49,6 +53,8 @@ def test_moore_2d(moore: MooreNeighbourhood):
         assert any(np.array_equal(offset, point) for offset in offsets)
 
 def test_von_neumann_2d(von_neumann: VonNeumannNeighbourhood):
+    '''should shift the index one forward and one back + 
+    one above and one below for 2D'''
     offsets = von_neumann.generate_offsets(ndim=2, radius=1)
     expected = np.array([[-1, 0], [1, 0], [0, -1], [0, 1]], dtype=np.int64)
     
@@ -77,6 +83,8 @@ def test_invalid_arguments(
 ###### 3D
 
 def test_moore_3d(moore):
+    '''should shift the index one forward and one back + 
+    one above and one below in each dim + diagonals for 3D'''
     offsets = moore.generate_offsets(ndim=3, radius=1)
     
     assert len(offsets) == 26
@@ -85,12 +93,14 @@ def test_moore_3d(moore):
         assert not all(component == 0 for component in offset)
 
     expected_set = set(product((-1, 0, 1), repeat=3))
-    expected_set.remove((0, 0, 0))
+    expected_set.remove((0, 0, 0)) 
     
     actual_set = set(tuple(offset) for offset in offsets)
     assert actual_set == expected_set
 
 def test_von_neumann_3d(von_neumann):
+    '''should shift the index one forward and one back + 
+    one above and one below in each dim for 3D'''
     offsets = von_neumann.generate_offsets(ndim=3, radius=1)
     
     assert len(offsets) == 6
