@@ -2,7 +2,7 @@
 "sim":
 {
     "size":[15,15,15],
-    "periodicity" : "xy",
+    "periodicity" : "xyz",
     "dtype":"uint8",
     "render":true,
     "max_steps":10000
@@ -18,7 +18,7 @@
         "random_args":
         {
             "a" : [0,1],
-            "p" : [0.99,0.01]
+            "p" : [0.9,0.1]
         }
     },
     {
@@ -73,11 +73,11 @@
 
 "renderer":
 {
-    "key":["substrate","bacteria"],
+    "key":"bacteria",
     "window_size":[1200,800],
     "callback" :
     {
-        "name":"MultiKeyCallback",
+        "name":"Callback",
         "args":
         {
             "step_stride":1
