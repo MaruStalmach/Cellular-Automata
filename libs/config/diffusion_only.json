@@ -1,7 +1,7 @@
 {
 "sim":
 {
-    "size":[100,100,100],
+    "size":[5,5,5],
     "periodicity" : "",
     "dtype":"uint8",
     "render":true,
@@ -14,12 +14,13 @@
         "layers":6,
         "dtype":"np.uint8",
         "random":true,
-        "random_func":"np.random.choice",
-        "random_args":
+        "random_func" : "init_block",
+        "random_args" : 
         {
-            "a" : [0,1],
-            "p" : [0.99,0.01]
-        }
+            "start":[0,0,0],
+            "block_size":[1,2,4],
+            "value":1
+        } 
     }
 ],
 
@@ -45,7 +46,7 @@
         "name":"ReduceCallback",
         "args":
         {
-            "step_stride":10
+            "step_stride":100
         }
     }
 }

@@ -14,15 +14,14 @@ if __name__=='__main__':
     parser.add_argument('--filename','-f',required=True)
     
     args = parser.parse_args()
-    
-    
+
     ca_sim, renderer = parse_json(args.filename)
     
     # Run renderer with CA updates
     try:
         renderer.run()
-    except AttributeError:
-        pass
+    except AttributeError as err:
+        print('Attribute error in CA_SIM', err)
     except KeyboardInterrupt:
         print("Simulation stopped by user")
         quit()

@@ -67,7 +67,7 @@
         "name":"MultiKeyCallback",
         "args":
         {
-            "step_stride":100
+            "step_stride":10
         }
     }
 }
