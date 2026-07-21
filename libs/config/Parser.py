@@ -4,6 +4,7 @@ from libs.Rendering.Renderer import CARenderer
 from libs.State import State
 from libs.Sim import CellularAutomaton
 from libs.Callback import *
+### RULES ########################
 from libs.rules.BacteriaGrowth import *
 from libs.rules.GameOfLife3D import *
 from libs.rules.GutDrift import *
@@ -11,7 +12,13 @@ from libs.rules.Diffusion import *
 from libs.rules.BiofilmDetachment import *
 from libs.rules.SpeciesInteraction import *
 from libs.rules.BacteriaDecay import *
+### NEIGHBORHOODS #####################
+from libs.neighbourhoods.MooreNeighbourhood import *
+from libs.neighbourhoods.VonNeumannNeighbourhood import *
+
 from libs.util.helper_functions import *
+
+
 import numpy as np
 
 
@@ -39,8 +46,12 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     size = sim_data['size'] # string of a tuple
     period = sim_data['periodicity']
     max_steps = sim_data['max_steps']
+    neighbourhood_name = sim_data.get('neighbourhood',None)
+    neighborhood_name = sim_data.get('neighborhood',None)
+    n_n = neighborhood_name or neighbourhood_name
+    neigh = globals()[n_n]()
 
-    geometry = Geometry(size=tuple(size), axes='xyz', periodicity=period)
+    geometry = Geometry(size=tuple(size), axes='xyz', periodicity=period, neighbourhood=neigh)
 
 
     ### next create State obj

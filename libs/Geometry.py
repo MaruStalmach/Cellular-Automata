@@ -1,7 +1,8 @@
-from itertools import product
-
 import numpy as np
 from scipy.sparse import csr_matrix
+
+from libs.Neighbourhood import Neighbourhood
+from libs.neighbourhoods.MooreNeighbourhood import MooreNeighbourhood
 
 
 class Geometry:
@@ -13,7 +14,7 @@ class Geometry:
         periodicity (str): String indicating which axes have periodic (wrapping) boundaries (e.g., "xy" means both x and y wrap)
     """
 
-    def __init__(self, size: tuple[int, ...], axes: str, periodicity: str):
+    def __init__(self, size: tuple[int, ...], axes: str, periodicity: str, neighbourhood: Neighbourhood | None = None):
         self.periodicity = periodicity.lower()
         self.axes = axes.lower()
         self.size = size
@@ -26,10 +27,8 @@ class Geometry:
             if axis in self.periodicity
         }
 
-        # TODO: hardcoded moores, make this configurable
-        offsets = [o for o in product((-1, 0, 1), repeat=self.ndim) if any(component != 0 for component in o)]
-
-        self._offsets = np.array(offsets, dtype=np.int64)
+        self.neighbourhood = neighbourhood or MooreNeighbourhood()
+        self._offsets = self.neighbourhood.generate_offsets(self.ndim)
 
     def _apply_offset(
         self,

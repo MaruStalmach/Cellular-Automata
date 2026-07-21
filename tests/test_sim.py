@@ -1,5 +1,6 @@
 from libs.Geometry import Geometry
-from libs.rules import BacteriaGrowth, GameOfLife3D
+from libs.rules.BacteriaGrowth import BacteriaGrowth
+from libs.rules.GameOfLife3D import GameOfLife3D
 from libs.Sim import CellularAutomaton
 from libs.State import State
 

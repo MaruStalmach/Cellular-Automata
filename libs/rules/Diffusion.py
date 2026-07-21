@@ -3,6 +3,8 @@ from libs.State import State
 from libs.Geometry import Geometry
 import numpy as np
 
+
+
 class Diffusion(Rule):
     '''Random walk diffusion based on "Quantitative Cellular Automaton Model For Biofilms" by Pizarro G.
     
@@ -27,6 +29,8 @@ class Diffusion(Rule):
         self.layers = np.zeros(shape=geometry.size+(6,))
         self.shift_buffer = np.zeros(shape=geometry.size)
         self.lost_particles : int = 0
+        
+        self.RESTORE_THRESHOLD=1000
         
     def apply_state(self, state) -> State:
     
@@ -145,7 +149,32 @@ class Diffusion(Rule):
         # print(self.lost_particles)
         # naive collision resolution -> delete colliding particles
         self.layers[self.layers>1]=1
-        
+        # restore lost particles
+        if self.lost_particles>=self.RESTORE_THRESHOLD:
+            # find 50 empty spots
+            self._restore_random()
+    
         
         state[self.target_key]=self.layers[...]
         return state
+
+    def _restore_deterministic(self):
+        c1,c2,c3,c4 = np.nonzero(self.layers==0)
+        c1 = c1[:self.RESTORE_THRESHOLD]
+        c2 = c2[:self.RESTORE_THRESHOLD]
+        c3 = c3[:self.RESTORE_THRESHOLD]
+        c4 = c4[:self.RESTORE_THRESHOLD]
+        sel = tuple([c1,c2,c3,c4])
+        self.layers[sel] = 1
+        self.lost_particles -= self.RESTORE_THRESHOLD
+        
+    def _restore_random(self):
+        c1,c2,c3,c4 = np.nonzero(self.layers==0)
+        selection = np.random.choice(a=c1.shape[0],size=(self.RESTORE_THRESHOLD,),replace=False)
+        c1 = c1[selection]
+        c2 = c2[selection]
+        c3 = c3[selection]
+        c4 = c4[selection]
+        sel = tuple([c1,c2,c3,c4])
+        self.layers[sel] = 1
+        self.lost_particles -= self.RESTORE_THRESHOLD
