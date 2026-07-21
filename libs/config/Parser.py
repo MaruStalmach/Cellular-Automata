@@ -49,9 +49,13 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     neighbourhood_name = sim_data.get('neighbourhood',None)
     neighborhood_name = sim_data.get('neighborhood',None)
     n_n = neighborhood_name or neighbourhood_name
-    neigh = globals()[n_n]()
+    neigh_class = globals().get(n_n,None)
+    try:
+        neighborhood = neigh_class()
+    except:
+        neighborhood = None
 
-    geometry = Geometry(size=tuple(size), axes='xyz', periodicity=period, neighbourhood=neigh)
+    geometry = Geometry(size=tuple(size), axes='xyz', periodicity=period, neighbourhood=neighborhood)
 
 
     ### next create State obj
