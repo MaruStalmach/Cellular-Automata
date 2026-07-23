@@ -88,7 +88,6 @@ class CellularAutomaton:
             return
         
         times_to_execute = self.rule_exec_n_times.copy()
-        breakpoint()
         while sum(times_to_execute)>0:
             for i,rule in enumerate(self.rules):
                 if times_to_execute[i] <= 0:
