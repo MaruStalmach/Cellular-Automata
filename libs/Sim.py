@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import numpy as np
+from libs.tracking.StateTracker import StateTracker
 
 from libs.Geometry import Geometry
-from libs.State import State
 from libs.Rule import Rule
+from libs.State import State
 
 
 class CellularAutomaton:
@@ -15,12 +16,13 @@ class CellularAutomaton:
     - rules - list of Rule objects used within the siimulation
     """
 
-    def __init__(self, geometry: Geometry, rules: list[Rule], state : State = None, max_steps:int=100):
+    def __init__(self, geometry: Geometry, rules: list[Rule], state : State = None, max_steps:int=100, tracker: StateTracker | None = None):
         self.rules = rules
         self.geometry = geometry
         self.neighbours = None
         self._neighbours_idx = None
         self.max_steps=max_steps
+        self.tracker = tracker
         self.time = 0.0
         self.max_dt = 0
 
@@ -49,7 +51,10 @@ class CellularAutomaton:
                 print("key mismatch between rules and state arrays (soft error)") #TODO: comparing tuple to list will always thorw a mismacth
         else:
             self.state = State(geometry, random=True, cell_keys=keys)
+        
         self.step_no = 0
+        if self.tracker:
+            self.tracker.record_step(self.state, self.step_no)
 
     def _apply_cellwise(self, rule: Rule):
 
@@ -99,3 +104,5 @@ class CellularAutomaton:
                 times_to_execute[i] -= 1
 
         self.step_no += 1
+        if self.tracker:
+            self.tracker.record_step(self.state, self.step_no)
