@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import numpy as np
-from libs.tracking.StateTracker import StateTracker
 
 from libs.Geometry import Geometry
 from libs.Rule import Rule
 from libs.State import State
+from libs.tracking.StateTracker import StateTracker
 
 
 class CellularAutomaton:
@@ -16,13 +16,14 @@ class CellularAutomaton:
     - rules - list of Rule objects used within the siimulation
     """
 
-    def __init__(self, geometry: Geometry, rules: list[Rule], state : State = None, max_steps:int=100, tracker: StateTracker | None = None):
+    def __init__(self, geometry: Geometry, rules: list[Rule], state : State = None, max_steps:int=100, tracker: StateTracker | None = None, output_filename: str | None = None):
         self.rules = rules
         self.geometry = geometry
         self.neighbours = None
         self._neighbours_idx = None
         self.max_steps=max_steps
         self.tracker = tracker
+        self.output_filename = output_filename
         self.time = 0.0
         self.max_dt = 0
 
@@ -106,3 +107,6 @@ class CellularAutomaton:
         self.step_no += 1
         if self.tracker:
             self.tracker.record_step(self.state, self.step_no)
+
+        if self.step_no >= self.max_steps and self.tracker and self.output_filename:
+            self.tracker.save(self.output_filename)
