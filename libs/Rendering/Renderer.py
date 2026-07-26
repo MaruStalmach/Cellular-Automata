@@ -1,12 +1,13 @@
+import ctypes
+
 import glfw
+import glm
 import numpy as np
 from OpenGL.GL import *
 from OpenGL.GLU import *
-import ctypes
-import glm
 
-from libs.Rendering.Camera import Camera
-from libs.Rendering.Shader import Shader
+from libs.rendering.Camera import Camera
+from libs.rendering.Shader import Shader
 
 
 class CARenderer:

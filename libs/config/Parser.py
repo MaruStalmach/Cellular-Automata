@@ -1,27 +1,29 @@
 import json
-from libs.Geometry import Geometry
-from libs.Rendering.Renderer import CARenderer
-from libs.State import State
-from libs.Sim import CellularAutomaton
+from pathlib import Path
+
+import numpy as np
+
 from libs.Callback import *
-### RULES ########################
-from libs.rules.BacteriaGrowth import *
-from libs.rules.GameOfLife3D import *
-from libs.rules.GutDrift import *
-from libs.rules.Diffusion import *
-from libs.rules.BiofilmDetachment import *
-from libs.rules.SpeciesInteraction import *
-from libs.rules.BacteriaDecay import *
-from libs.rules.Utilization import *
+from libs.Geometry import Geometry
 
 ### NEIGHBORHOODS #####################
 from libs.neighbourhoods.MooreNeighbourhood import *
 from libs.neighbourhoods.VonNeumannNeighbourhood import *
+from libs.rendering.Renderer import CARenderer
+from libs.rules.BacteriaDecay import *
 
+### RULES ########################
+from libs.rules.BacteriaGrowth import *
+from libs.rules.BiofilmDetachment import *
+from libs.rules.Diffusion import *
+from libs.rules.GameOfLife3D import *
+from libs.rules.GutDrift import *
+from libs.rules.SpeciesInteraction import *
+from libs.rules.Utilization import *
+from libs.Sim import CellularAutomaton
+from libs.State import State
+from libs.tracking.StateTracker import StateTracker
 from libs.util.helper_functions import *
-
-
-import numpy as np
 
 
 def getnestedattr(module, name: str) -> object:
@@ -39,7 +41,10 @@ def getnestedattr(module, name: str) -> object:
 
 
 def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
-    with open(f"libs/config/{filename}", "r") as file:
+
+    config_path = Path(__file__).resolve().parent / filename
+
+    with open(config_path, "r") as file:
         data = json.load(file)
 
     sim_data = data["sim"]
@@ -95,6 +100,31 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         random_args=random_args,
     )
 
+    ### parse tracker data from json and pass config 
+    tracker_data = data.get("tracker")
+    tracker = None
+    output_filename = None
+
+    if tracker_data:
+        tracker_name = tracker_data.get("name") or tracker_data.get("type")
+        tracker_args = tracker_data.get("args", {})
+ 
+        if "keys" not in tracker_args:
+            tracker_args["keys"] = list(state.keys)
+ 
+        output_filename = tracker_data.get("save_as") or tracker_data.get("filename")
+ 
+        tracker_class = globals().get(tracker_name)
+        if tracker_class is None:
+            raise RuntimeError
+        try:
+            tracker = tracker_class(**tracker_args)
+        except Exception as e:
+            raise RuntimeError from e
+    else:
+        print("no 'tracker' block found in config JSON -> sim.tracker will be None and no history will be recorded")
+
+
     ### create rules list
     rules_data = data["rules"]
 
@@ -106,7 +136,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         rules.append(rule)
 
     ### finally create a CA object
-    ca_sim = CellularAutomaton(geometry=geometry, rules= rules, state=state, max_steps=max_steps)
+    ca_sim = CellularAutomaton(geometry=geometry, rules= rules, state=state, max_steps=max_steps, tracker=tracker, output_filename=output_filename)
     
     ### if no rendering then its done
     if not sim_data["render"]:
