@@ -1,11 +1,17 @@
 {
 "sim":
 {
-    "size":[15,15,15],
+    "size":[100,100,100],
     "periodicity" : "xyz",
     "dtype":"uint8",
-    "render":true,
-    "max_steps":10000
+    "render":false,
+    "max_steps":10
+},
+
+"tracker": {
+  "name": "StateTracker",
+  "args": {},
+  "save_as": "demo"
 },
 
 "state_keys":[
