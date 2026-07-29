@@ -5,7 +5,9 @@ import numpy as np
 from libs.Geometry import Geometry
 from libs.Rule import Rule
 from libs.State import State
+from libs.Rule import Rule
 from libs.tracking.StateTracker import StateTracker
+from time import time
 
 
 class CellularAutomaton:
@@ -22,9 +24,13 @@ class CellularAutomaton:
         self.neighbours = None
         self._neighbours_idx = None
         self.max_steps=max_steps
+<<<<<<< Updated upstream
+        self.time = 0.0
+=======
         self.tracker = tracker
         self.output_filename = output_filename
-        self.time = 0.0
+        self.start_time = 0.0
+>>>>>>> Stashed changes
         self.max_dt = 0
 
         # collect necessary keys for rules and find the smallest dt in rules
@@ -89,9 +95,11 @@ class CellularAutomaton:
     def step(self):
         '''increments the timestep of the simulation and applies all '''
         if self.step_no>=self.max_steps:
-            print('simulation ended')
+            print(f'simulation ended. time={time()-self.start_time:.2f}s')
             quit()
             return
+        if self.step_no==0:
+            self.start_time = time()
         
         times_to_execute = self.rule_exec_n_times.copy()
         while sum(times_to_execute)>0:

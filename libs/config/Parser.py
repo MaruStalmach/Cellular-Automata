@@ -5,6 +5,15 @@ import numpy as np
 
 from libs.Callback import *
 from libs.Geometry import Geometry
+### RULES ########################
+from libs.rules.BacteriaGrowth import *
+from libs.rules.GameOfLife3D import *
+from libs.rules.GutDrift import *
+from libs.rules.Diffusion import *
+from libs.rules.BiofilmDetachment import *
+from libs.rules.SpeciesInteraction import *
+from libs.rules.BacteriaDecay import *
+from libs.rules.Utilization import *
 
 ### NEIGHBORHOODS #####################
 from libs.neighbourhoods.MooreNeighbourhood import *
