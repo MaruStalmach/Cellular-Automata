@@ -24,13 +24,10 @@ class CellularAutomaton:
         self.neighbours = None
         self._neighbours_idx = None
         self.max_steps=max_steps
-<<<<<<< Updated upstream
-        self.time = 0.0
-=======
+
         self.tracker = tracker
         self.output_filename = output_filename
         self.start_time = 0.0
->>>>>>> Stashed changes
         self.max_dt = 0
 
         # collect necessary keys for rules and find the smallest dt in rules
