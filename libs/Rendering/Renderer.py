@@ -42,6 +42,8 @@ class CARenderer:
         
         elif key == glfw.KEY_X and action == glfw.PRESS:
             self.x_press = True
+        elif key == glfw.KEY_G and action == glfw.PRESS:
+            self.g_press = True
         
 
         # Map GLFW keys to camera keys
@@ -63,6 +65,8 @@ class CARenderer:
         width=1000,
         height=600,
         update_callback: callable = None,
+        frame_callback: callable = None,
+        gif_callback: callable = None,
         keys_to_render: int = 1,
     ):
 
@@ -76,6 +80,7 @@ class CARenderer:
         self.j_press = False
         self.l_press = False
         self.x_press = False
+        self.g_press = False
 
         self.cross_section = False
         self.layer = 0
@@ -86,6 +91,9 @@ class CARenderer:
             self.update_callback = None
         else:
             self.update_callback = update_callback
+
+        self.frame_callback = frame_callback
+        self.gif_callback = gif_callback
 
         self.ca_state = init_state.astype(dtype=np.float32)
         self.num_cells = np.prod(self.ca_state.shape) // self.num_keys
@@ -476,6 +484,12 @@ class CARenderer:
         p_loc = glGetUniformLocation(self.solidShader.program, "projection")
         glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
 
+    def _capture_frame(self) -> np.ndarray:
+        glPixelStorei(GL_PACK_ALIGNMENT, 1)
+        pixels = glReadPixels(0, 0, self.width, self.height, GL_RGB, GL_UNSIGNED_BYTE)
+        frame = np.frombuffer(pixels, dtype=np.uint8).reshape(self.height, self.width, 3)
+        return np.flipud(frame).copy()
+
         
 
     def set_ca_state(self, state_array):
@@ -670,6 +684,9 @@ class CARenderer:
         glBindVertexArray(self.quadVao)
         glDrawArrays(GL_TRIANGLES, 0, 6)
 
+        if self.frame_callback:
+            self.frame_callback(self._capture_frame())
+
         glfw.swap_buffers(self.window)
 
     def run(self):
@@ -706,6 +723,11 @@ class CARenderer:
                     if self.cross_section:
                         self.cs_axis = (self.cs_axis+1)%3
                         self._update_cs()
+
+                if self.g_press:
+                    self.g_press = False
+                    if self.gif_callback:
+                        self.gif_callback()
                     
                 if new_state is not None:
                     self.set_ca_state(new_state)
