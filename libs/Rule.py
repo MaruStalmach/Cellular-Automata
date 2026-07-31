@@ -98,19 +98,3 @@ class Rule:
     def apply_state(self, state: State) -> State:
         """if state is applayed to a whole array, not per cell"""
         raise NotImplementedError()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

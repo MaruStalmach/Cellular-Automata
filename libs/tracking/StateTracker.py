@@ -24,9 +24,9 @@ class StateTracker:
             file_path = base_dir / f"{filename}.npz"
 
         stacked_history = {
-           key: np.stack(arrays, axis=0) for key, arrays in self.history.items()
+            key: np.stack(arrays, axis=0) for key, arrays in self.history.items()
         }
-        
+
         file_path.parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(file_path, **stacked_history)
 

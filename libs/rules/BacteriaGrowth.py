@@ -4,14 +4,25 @@ from operator import itemgetter
 
 
 class BacteriaGrowth(Rule):
-    def __init__(self, geometry, time_step : float, bacteria_keys, substrate_key, Yca, base_prob, time_scale):
+    def __init__(
+        self,
+        geometry,
+        time_step: float,
+        bacteria_keys,
+        substrate_key,
+        Yca,
+        base_prob,
+        time_scale,
+    ):
         super().__init__(geometry, time_step)
         self.b_keys = bacteria_keys
         self.sub_key = substrate_key
 
         self.Yca = Yca
         self.base_prob = base_prob
-        self.time_scale = time_scale # ratio between larger time step and smaller time step
+        self.time_scale = (
+            time_scale  # ratio between larger time step and smaller time step
+        )
 
         self.required_keys.extend([*bacteria_keys, substrate_key])
 
@@ -50,7 +61,9 @@ class BacteriaGrowth(Rule):
 
         # equations based on QUANTITATIVE CELLULAR AUTOMATON MODEL FOR BIOFILMS by pizarro
 
-        growth_prob = np.clip(self.time_scale*self.Yca * self.base_prob * (substrate_count), 0.0, 1.0)
+        growth_prob = np.clip(
+            self.time_scale * self.Yca * self.base_prob * (substrate_count), 0.0, 1.0
+        )
 
         # the code below prevents two diffrent bacteria from growing into the same empty cell
         proposals: list[tuple[float, str, tuple[int, ...], tuple[int, ...]]] = []

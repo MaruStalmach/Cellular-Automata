@@ -22,7 +22,6 @@ from libs.rules.SpeciesInteraction import *
 from libs.rules.Utilization import *
 from libs.Sim import CellularAutomaton
 from libs.State import State
-from libs.tracking.StateTracker import StateTracker
 from libs.util.helper_functions import *
 
 
@@ -50,20 +49,21 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     sim_data = data["sim"]
 
     ### first setup geometry
-    size = sim_data['size'] # string of a tuple
-    period = sim_data['periodicity']
-    max_steps = sim_data['max_steps']
-    neighbourhood_name = sim_data.get('neighbourhood',None)
-    neighborhood_name = sim_data.get('neighborhood',None)
+    size = sim_data["size"]  # string of a tuple
+    period = sim_data["periodicity"]
+    max_steps = sim_data["max_steps"]
+    neighbourhood_name = sim_data.get("neighbourhood", None)
+    neighborhood_name = sim_data.get("neighborhood", None)
     n_n = neighborhood_name or neighbourhood_name
-    neigh_class = globals().get(n_n,None)
+    neigh_class = globals().get(n_n, None)
     try:
         neighborhood = neigh_class()
     except:
         neighborhood = None
 
-    geometry = Geometry(size=tuple(size), axes='xyz', periodicity=period, neighbourhood=neighborhood)
-
+    geometry = Geometry(
+        size=tuple(size), axes="xyz", periodicity=period, neighbourhood=neighborhood
+    )
 
     ### next create State obj
 
@@ -100,7 +100,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         random_args=random_args,
     )
 
-    ### parse tracker data from json and pass config 
+    ### parse tracker data from json and pass config
     tracker_data = data.get("tracker")
     tracker = None
     output_filename = None
@@ -108,12 +108,12 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     if tracker_data:
         tracker_name = tracker_data.get("name") or tracker_data.get("type")
         tracker_args = tracker_data.get("args", {})
- 
+
         if "keys" not in tracker_args:
             tracker_args["keys"] = list(state.keys)
- 
+
         output_filename = tracker_data.get("save_as") or tracker_data.get("filename")
- 
+
         tracker_class = globals().get(tracker_name)
         if tracker_class is None:
             raise RuntimeError
@@ -122,8 +122,9 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         except Exception as e:
             raise RuntimeError from e
     else:
-        print("no 'tracker' block found in config JSON -> sim.tracker will be None and no history will be recorded")
-
+        print(
+            "no 'tracker' block found in config JSON -> sim.tracker will be None and no history will be recorded"
+        )
 
     ### create rules list
     rules_data = data["rules"]
@@ -136,8 +137,15 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         rules.append(rule)
 
     ### finally create a CA object
-    ca_sim = CellularAutomaton(geometry=geometry, rules= rules, state=state, max_steps=max_steps, tracker=tracker, output_filename=output_filename)
-    
+    ca_sim = CellularAutomaton(
+        geometry=geometry,
+        rules=rules,
+        state=state,
+        max_steps=max_steps,
+        tracker=tracker,
+        output_filename=output_filename,
+    )
+
     ### if no rendering then its done
     if not sim_data["render"]:
         return ca_sim, None

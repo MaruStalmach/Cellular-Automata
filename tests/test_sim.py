@@ -154,7 +154,10 @@ def test_gol_correctness():
 def test_bacteria_growth_consumes_only_one_substrate_particle_per_cell(monkeypatch):
     geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
     rule = BacteriaGrowth(
-        geometry=geometry, bacteria_keys=["alive"], substrate_key="substrate", time_step=1000
+        geometry=geometry,
+        bacteria_keys=["alive"],
+        substrate_key="substrate",
+        time_step=1000,
     )
     ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
     ca.state = State(

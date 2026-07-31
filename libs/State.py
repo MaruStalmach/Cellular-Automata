@@ -50,7 +50,7 @@ class State:
 
         # shape of the spatial grid and number of keys
         grid_dims = self.geometry.size
-    
+
         # store per-key arrays in a dict so each key can have its own dtype
         self._data: dict[str, np.ndarray] = {}
         for i, key in enumerate(self.keys):

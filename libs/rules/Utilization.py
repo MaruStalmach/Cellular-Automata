@@ -2,16 +2,17 @@ from libs.Rule import Rule
 import numpy as np
 from operator import itemgetter
 
+
 class Utilization(Rule):
     def __init__(
         self,
         geometry,
-        time_step : float,
+        time_step: float,
         bacteria_keys: list[str],
         substrate_key: str,
-        substitute_constant : float,
-        Ks : float,
-        Sb : float
+        substitute_constant: float,
+        Ks: float,
+        Sb: float,
     ):
         super().__init__(geometry, time_step)
         self.b_keys = bacteria_keys
@@ -24,8 +25,6 @@ class Utilization(Rule):
         self.Sb = Sb
 
         self.mask = np.zeros(shape=geometry.size, dtype=bool)
-
-    
 
     def _shift_spatial(self, grid: np.ndarray, offset: tuple[int, ...]) -> np.ndarray:
         shifted = grid
@@ -136,9 +135,9 @@ class Utilization(Rule):
         ###################################################################################################
         # equations based on 'QUANTITATIVE CELLULAR AUTOMATON MODEL FOR BIOFILMS' by pizarro
         # reusing the same array for calculations
-        utilization_prob = (
-            self.sub_const
-            * ((self.Sb * substrate_count / 27) / (self.Ks + (self.Sb * substrate_count / 27)))
+        utilization_prob = self.sub_const * (
+            (self.Sb * substrate_count / 27)
+            / (self.Ks + (self.Sb * substrate_count / 27))
         )
         # p=r *dt=q*(S/(10+S))*40*dt
         # S=15*neighbors/max
@@ -177,8 +176,6 @@ class Utilization(Rule):
 
             self._consume_substrate_particle(substrate_grid, substrate_coords)
             claimed_substrate_targets.add(substrate_coords)
-
-        
 
         state[self.sub_key] = substrate_grid
 

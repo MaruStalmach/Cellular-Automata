@@ -14,7 +14,13 @@ class Geometry:
         periodicity (str): String indicating which axes have periodic (wrapping) boundaries (e.g., "xy" means both x and y wrap)
     """
 
-    def __init__(self, size: tuple[int, ...], axes: str, periodicity: str, neighbourhood: Neighbourhood | None = None):
+    def __init__(
+        self,
+        size: tuple[int, ...],
+        axes: str,
+        periodicity: str,
+        neighbourhood: Neighbourhood | None = None,
+    ):
         self.periodicity = periodicity.lower()
         self.axes = axes.lower()
         self.size = size
