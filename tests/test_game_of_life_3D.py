@@ -10,7 +10,7 @@ def setup_gol_test(
 ) -> tuple[GameOfLife3D, State, tuple[int, int, int]]:
     geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
     # default parameters: eb=5, eh=7, fb=6, fh=6
-    gol = GameOfLife3D(geometry)
+    gol = GameOfLife3D(geometry, time_step=1000)
     state = State(geometry, random=False, cell_keys=["alive"])
 
     center = (1, 1, 1)

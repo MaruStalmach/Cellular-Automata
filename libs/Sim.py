@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import numpy as np
 from libs.tracking.StateTracker import StateTracker
+from libs.tracking.StateTracker import StateTracker
 
 from libs.Geometry import Geometry
 from libs.Rule import Rule
-from libs.Rule import Rule
 from libs.State import State
-from libs.tracking.StateTracker import StateTracker
 
 
 class CellularAutomaton:
@@ -54,6 +53,7 @@ class CellularAutomaton:
                 print("key mismatch between rules and state arrays (soft error)") #TODO: comparing tuple to list will always thorw a mismacth
         else:
             self.state = State(geometry, random=True, cell_keys=keys)
+        
         
         self.step_no = 0
         if self.tracker:
