@@ -44,7 +44,7 @@ class Geometry:
     ) -> tuple[np.ndarray, np.ndarray]:
 
         shifted = flat_coords + offset
-        is_valid = np.array([True] * self.num_cells)
+        is_valid = np.ones(self.num_cells, dtype=bool)
 
         for dim in range(self.ndim):
             if dim in self.periodic_dims:

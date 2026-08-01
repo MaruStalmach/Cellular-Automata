@@ -150,7 +150,12 @@ class State:
     def copy(self) -> "State":
         ##TODO:FIX THIS
         new_state = State(
-            self.geometry, random=False, cell_keys=self.keys, dtype=self.dtype
+            self.geometry, 
+            random=False, 
+            cell_keys=self.keys, 
+            dtype=self.dtype, 
+            key_dtypes=self.key_dtypes, 
+            key_layers=self.key_layers
         )
         for key in self.keys:
             new_state._data[key] = self._data[key].copy()
