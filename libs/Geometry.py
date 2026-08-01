@@ -34,7 +34,7 @@ class Geometry:
         }
 
         self.neighbourhood = neighbourhood or MooreNeighbourhood()
-        self._offsets = self.neighbourhood.generate_offsets(self.ndim)
+        self._offsets = self.neighbourhood.generate_offsets(ndim=self.ndim)
 
     def _apply_offset(
         self,
