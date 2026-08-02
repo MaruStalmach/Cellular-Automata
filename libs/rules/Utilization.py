@@ -10,9 +10,9 @@ class Utilization(Rule):
         time_step: float,
         bacteria_keys: list[str],
         substrate_key: str,
-        substitute_constant: float,
-        Ks: float,
-        Sb: float,
+        substitute_constant: float = 0.37,
+        Ks: float = 10,
+        Sb: float = 15,
     ):
         super().__init__(geometry, time_step)
         self.b_keys = bacteria_keys

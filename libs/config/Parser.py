@@ -5,6 +5,10 @@ import numpy as np
 
 from libs.Callback import *
 from libs.Geometry import Geometry
+from libs.Sim import CellularAutomaton
+from libs.State import State
+from libs.util.helper_functions import *
+from libs.tracking.StateTracker import *
 
 ### NEIGHBORHOODS #####################
 from libs.neighbourhoods.MooreNeighbourhood import *
@@ -20,9 +24,7 @@ from libs.rules.GameOfLife3D import *
 from libs.rules.GutDrift import *
 from libs.rules.SpeciesInteraction import *
 from libs.rules.Utilization import *
-from libs.Sim import CellularAutomaton
-from libs.State import State
-from libs.util.helper_functions import *
+
 
 
 def getnestedattr(module, name: str) -> object:
