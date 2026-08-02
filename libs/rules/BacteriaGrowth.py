@@ -10,9 +10,9 @@ class BacteriaGrowth(Rule):
         time_step: float,
         bacteria_keys,
         substrate_key,
-        Yca,
-        base_prob,
-        time_scale,
+        Yca = 6.94e-6,
+        base_prob = 0.02,
+        time_scale = 4320000,
     ):
         super().__init__(geometry, time_step)
         self.b_keys = bacteria_keys

@@ -6,7 +6,7 @@ import numpy as np
 
 class BacteriaDecay(Rule):
     def __init__(
-        self, geometry: Geometry, time_step: float, target_keys, decay_probability
+        self, geometry: Geometry, time_step: float, target_keys, decay_probability=0.05
     ):
         super().__init__(geometry, time_step)
         self.target_keys = target_keys

@@ -1,11 +1,12 @@
+from itertools import permutations
+from json import JSONDecodeError, load
+from typing import Dict
+
+import numpy as np
+
+from libs.Geometry import Geometry
 from libs.Rule import Rule
 from libs.State import State
-from libs.Geometry import Geometry
-import numpy as np
-from json import load, JSONDecodeError
-from typing import Dict
-from itertools import permutations
-
 
 InteractionConfig = Dict[str, Dict[str, float]]
 
@@ -80,8 +81,13 @@ class SpeciesInteraction(Rule):
             if coeff == 0.0:  # no influence on each other between species
                 continue
 
+        
+            max_neighbors = max(1, len(getattr(self.geometry, "_offsets", [])))
+
             if coeff < 0:  # species are destructive
-                kill_prob = np.clip(abs(coeff) * neighbour_counts[bact_a], 0.0, 1.0)
+                kill_prob = np.clip(
+                        abs(coeff) * (neighbour_counts[bact_a] / max_neighbors), 0.0, 1.0
+                    )
                 killed = presence[bact_b] & (np.random.random(state.shape) < kill_prob)
                 deaths[bact_b] |= killed
 
@@ -94,12 +100,19 @@ class SpeciesInteraction(Rule):
                 )
 
         # resolving deaths from previous stes
+        any_death = np.zeros(state.shape, dtype=bool)
         for sp in bacteria_types:
+            any_death |= deaths[sp]
             state[sp] = (
                 (presence[sp] & ~deaths[sp])
                 .reshape(state[sp].shape)
                 .astype(state[sp].dtype)
             )
+
+        if any_death.any():
+            for flag_key in ("biofilm", "floating_bacteria"):
+                if flag_key in state.keys:
+                    state[flag_key][any_death] = False
 
         claim_grid_spot = np.stack([spawns[sp] for sp in bacteria_types], axis=-1)
         max_claim = claim_grid_spot.max(axis=-1)

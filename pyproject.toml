@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "cellular-automata"
 version = "0.1.0"
@@ -19,3 +23,7 @@ dependencies = [
 dev = [
     "ruff>=0.15.21",
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
