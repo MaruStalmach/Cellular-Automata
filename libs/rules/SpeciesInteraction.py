@@ -14,7 +14,7 @@ class SpeciesInteraction(Rule):
     def __init__(
         self,
         geometry: Geometry,
-        time_step : float,
+        time_step: float,
         interactions: InteractionConfig,
         spawn_claim_scale: float | None = None,
     ):

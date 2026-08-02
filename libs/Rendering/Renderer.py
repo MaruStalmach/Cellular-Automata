@@ -12,7 +12,7 @@ from libs.rendering.Shader import Shader
 
 class CARenderer:
     """Renders 3D cellular automata
-    
+
     controls:
     W/S - zoom in/out
     A/D - rotate left/right
@@ -39,10 +39,9 @@ class CARenderer:
 
         elif key == glfw.KEY_L and action == glfw.PRESS:
             self.l_press = True
-        
+
         elif key == glfw.KEY_X and action == glfw.PRESS:
             self.x_press = True
-        
 
         # Map GLFW keys to camera keys
         key_map = {
@@ -476,8 +475,6 @@ class CARenderer:
         p_loc = glGetUniformLocation(self.solidShader.program, "projection")
         glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
 
-        
-
     def set_ca_state(self, state_array):
         """
         Set the cellular automaton state.
@@ -506,11 +503,10 @@ class CARenderer:
         self.transShader.use_program()
 
         # tmp variable in case num keys is greter than one cause then ca_state is 4d
-        tmp = 1 if self.num_keys>1 else 0
+        tmp = 1 if self.num_keys > 1 else 0
         grid_shape = list(self.ca_state.shape[tmp:])
         ### send new grid size, new ssbo, new alpha uniforms
         if self.cross_section:
-
             grid_shape[self.cs_axis] = 1
 
             grid_size = glGetUniformLocation(self.transShader.program, "grid_size")
@@ -525,21 +521,22 @@ class CARenderer:
             glUniform1f(alpha, self.c_aplha)
 
             sel = [slice(None)] * (3 + tmp)
-            sel[self.cs_axis+tmp] = self.layer
-
+            sel[self.cs_axis + tmp] = self.layer
 
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
             glBufferData(
                 GL_SHADER_STORAGE_BUFFER,
-                self.ca_state[tuple(sel)][...,None].nbytes,
-                self.ca_state[tuple(sel)][...,None].flatten(),
+                self.ca_state[tuple(sel)][..., None].nbytes,
+                self.ca_state[tuple(sel)][..., None].flatten(),
                 GL_DYNAMIC_COPY,
             )
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
             # unbind
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
 
-            self.num_cells = np.prod(self.ca_state.shape)//self.num_keys//self.ca_state.shape[-1]
+            self.num_cells = (
+                np.prod(self.ca_state.shape) // self.num_keys // self.ca_state.shape[-1]
+            )
         else:
             ###restore normal values
             grid_size = glGetUniformLocation(self.transShader.program, "grid_size")
@@ -553,9 +550,6 @@ class CARenderer:
             alpha = glGetUniformLocation(self.transShader.program, "Ualpha")
             glUniform1f(alpha, self.alpha)
 
-
-
-
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
             glBufferData(
                 GL_SHADER_STORAGE_BUFFER,
@@ -568,26 +562,25 @@ class CARenderer:
             # unbind
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
 
-            self.num_cells = np.prod(self.ca_state.shape)//self.num_keys
+            self.num_cells = np.prod(self.ca_state.shape) // self.num_keys
 
     def _update_cs(self):
 
         # tmp variable in case num keys is greter than one cause then ca_state is 4d
-        tmp = 1 if self.num_keys>1 else 0
+        tmp = 1 if self.num_keys > 1 else 0
         sel = [slice(None)] * (3 + tmp)
-        sel[self.cs_axis+tmp] = self.layer
+        sel[self.cs_axis + tmp] = self.layer
 
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
         glBufferData(
             GL_SHADER_STORAGE_BUFFER,
-            self.ca_state[tuple(sel)][...,None].nbytes,
-            self.ca_state[tuple(sel)][...,None].flatten(),
+            self.ca_state[tuple(sel)][..., None].nbytes,
+            self.ca_state[tuple(sel)][..., None].flatten(),
             GL_DYNAMIC_COPY,
         )
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
         # unbind
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
-
 
     def render(self):
 
@@ -632,9 +625,7 @@ class CARenderer:
         self.transShader.use_program()
 
         glBindVertexArray(self.vao)
-        glDrawArraysInstanced(
-            GL_TRIANGLES, 0, 6 * 2 * 3, self.num_cells
-        )
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6 * 2 * 3, self.num_cells)
 
         # draw composite image
         glDepthFunc(GL_ALWAYS)
@@ -693,20 +684,20 @@ class CARenderer:
                     self.j_press = False
                     if self.cross_section:
                         self.layer -= 1
-                        self.layer=np.clip(self.layer,0,self.ca_state.shape[-1]-1)
+                        self.layer = np.clip(self.layer, 0, self.ca_state.shape[-1] - 1)
                         self._update_cs()
                 if self.l_press:
                     self.l_press = False
                     if self.cross_section:
                         self.layer += 1
-                        self.layer=np.clip(self.layer,0,self.ca_state.shape[-1]-1)
+                        self.layer = np.clip(self.layer, 0, self.ca_state.shape[-1] - 1)
                         self._update_cs()
                 if self.x_press:
                     self.x_press = False
                     if self.cross_section:
-                        self.cs_axis = (self.cs_axis+1)%3
+                        self.cs_axis = (self.cs_axis + 1) % 3
                         self._update_cs()
-                    
+
                 if new_state is not None:
                     self.set_ca_state(new_state)
 
