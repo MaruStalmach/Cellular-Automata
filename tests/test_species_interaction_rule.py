@@ -1,11 +1,12 @@
 import json
-import pytest
-import numpy as np
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 from libs.Geometry import Geometry
-from libs.State import State
 from libs.rules.SpeciesInteraction import SpeciesInteraction
+from libs.State import State
 
 
 @pytest.fixture
@@ -26,7 +27,8 @@ def test_load_json_config(tmp_path: Path):
     mock_data = {"A": {"B": -0.5, "C": 0.2}}
     config_file.write_text(json.dumps(mock_data))
 
-    loaded = SpeciesInteraction.load_json_config(str(config_file))
+    rule = SpeciesInteraction(geometry=geometry, interactions={}, time_step=1000)
+    loaded = rule.load_json_config(str(config_file))
     assert loaded == mock_data
 
     with pytest.raises(FileNotFoundError, match="config file not found"):
@@ -41,7 +43,7 @@ def test_load_json_config(tmp_path: Path):
 def test_get_interaction(geometry: Geometry):
     """tests getting interaction using get_interaction"""
     interactions = {"A": {"B": -0.5}, "B": {}}
-    rule = SpeciesInteraction(geometry, interactions)
+    rule = SpeciesInteraction(geometry, time_step=1000, interactions=interactions)
 
     assert rule.get_interaction("A", "B") == -0.5
     assert rule.get_interaction("A", "C") == 0.0  # missing val should default to 0
@@ -57,7 +59,7 @@ def test_destructive_interaction(geometry: Geometry, base_state: State):
     """
     # -1.0 coeff guarantees a kill
     interactions = {"A": {"B": -1.0}, "B": {}, "C": {}}
-    rule = SpeciesInteraction(geometry, interactions)
+    rule = SpeciesInteraction(geometry, time_step=1000, interactions=interactions)
 
     base_state["A"][2, 2] = 1
 
@@ -77,7 +79,7 @@ def test_symbiotic_interaction(geometry: Geometry, base_state: State):
     A causes B spawning in the neighbourhood
     """
     interactions = {"A": {"B": 1.0}, "B": {}, "C": {}}
-    rule = SpeciesInteraction(geometry, interactions)
+    rule = SpeciesInteraction(geometry, time_step=1000, interactions=interactions)
 
     base_state["A"][2, 2] = 1
     base_state["B"][1, 1] = 1
@@ -89,8 +91,8 @@ def test_symbiotic_interaction(geometry: Geometry, base_state: State):
     assert initial_b_count < final_b_count
 
     # A is supposed to be overwritten by B
-    assert new_state["A"][2, 2] == 1
-    assert new_state["B"][2, 2] == 0
+    assert new_state["A"][2, 2] == 0
+    assert new_state["B"][2, 2] == 1
 
     # ensure one cell is occupied only by one cell type
     are_overlaping = (new_state["A"] == 1) & (new_state["B"] == 1)
@@ -107,7 +109,7 @@ def test_no_interaction_preserves_state(geometry: Geometry, base_state: State):
     everythign should remain unchanged
     """
     interactions = {"A": {"B": 0.0}, "B": {"A": 0.0}, "C": {}}
-    rule = SpeciesInteraction(geometry, interactions)
+    rule = SpeciesInteraction(geometry, time_step=1000, interactions=interactions)
 
     base_state["A"][2, 2] = 1
     base_state["B"][2, 3] = 1
@@ -125,7 +127,7 @@ def test_tiebreaker(geometry: Geometry, base_state: State):
     tests `np.argmax`+ noise to resolve ties between species with identical scores fot an empty cell"""
 
     interactions = {"A": {"B": 1.0, "C": 1.0}, "B": {}, "C": {}}
-    rule = SpeciesInteraction(geometry, interactions)
+    rule = SpeciesInteraction(geometry, time_step=1000, interactions=interactions)
 
     base_state["A"][2, 2] = 1
     base_state["B"][1, 3] = 1

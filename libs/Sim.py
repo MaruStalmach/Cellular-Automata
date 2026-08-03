@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import numpy as np
+from libs.tracking.StateTracker import StateTracker
 
 from libs.Geometry import Geometry
 from libs.Rule import Rule
 from libs.State import State
-from libs.Rule import Rule
-from libs.tracking.StateTracker import StateTracker
 from time import time
 
 
@@ -18,13 +17,20 @@ class CellularAutomaton:
     - rules - list of Rule objects used within the siimulation
     """
 
-    def __init__(self, geometry: Geometry, rules: list[Rule], state : State = None, max_steps:int=100, tracker: StateTracker | None = None, output_filename: str | None = None):
+    def __init__(
+        self,
+        geometry: Geometry,
+        rules: list[Rule],
+        state: State = None,
+        max_steps: int = 100,
+        tracker: StateTracker | None = None,
+        output_filename: str | None = None,
+    ):
         self.rules = rules
         self.geometry = geometry
         self.neighbours = None
         self._neighbours_idx = None
-        self.max_steps=max_steps
-
+        self.max_steps = max_steps
         self.tracker = tracker
         self.output_filename = output_filename
         self.start_time = 0.0
@@ -38,13 +44,12 @@ class CellularAutomaton:
             for key in rule.required_keys:
                 if key not in keys:
                     keys.append(key)
-                    
+
         self.rule_exec_n_times = []
-        #calculate amount execution times for each rule
+        # calculate amount execution times for each rule
         for rule in self.rules:
-            times_to_execute = int(np.clip(self.max_dt//rule.dt,1,500))
-            self.rule_exec_n_times.append(times_to_execute)                    
-    
+            times_to_execute = int(np.clip(self.max_dt // rule.dt, 1, 500))
+            self.rule_exec_n_times.append(times_to_execute)
 
         if state is not None:
             self.state = state
@@ -52,10 +57,12 @@ class CellularAutomaton:
             try:
                 assert keys == tuple(self.state.keys)
             except AssertionError:
-                print("key mismatch between rules and state arrays (soft error)") #TODO: comparing tuple to list will always thorw a mismacth
+                print(
+                    "key mismatch between rules and state arrays (soft error)"
+                )  # TODO: comparing tuple to list will always thorw a mismacth
         else:
             self.state = State(geometry, random=True, cell_keys=keys)
-        
+
         self.step_no = 0
         if self.tracker:
             self.tracker.record_step(self.state, self.step_no)
@@ -99,8 +106,8 @@ class CellularAutomaton:
             self.start_time = time()
         
         times_to_execute = self.rule_exec_n_times.copy()
-        while sum(times_to_execute)>0:
-            for i,rule in enumerate(self.rules):
+        while sum(times_to_execute) > 0:
+            for i, rule in enumerate(self.rules):
                 if times_to_execute[i] <= 0:
                     continue
                 if hasattr(rule, "apply_state"):

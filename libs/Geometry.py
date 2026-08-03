@@ -14,7 +14,13 @@ class Geometry:
         periodicity (str): String indicating which axes have periodic (wrapping) boundaries (e.g., "xy" means both x and y wrap)
     """
 
-    def __init__(self, size: tuple[int, ...], axes: str, periodicity: str, neighbourhood: Neighbourhood | None = None):
+    def __init__(
+        self,
+        size: tuple[int, ...],
+        axes: str,
+        periodicity: str,
+        neighbourhood: Neighbourhood | None = None,
+    ):
         self.periodicity = periodicity.lower()
         self.axes = axes.lower()
         self.size = size
@@ -38,7 +44,7 @@ class Geometry:
     ) -> tuple[np.ndarray, np.ndarray]:
 
         shifted = flat_coords + offset
-        is_valid = np.array([True] * self.num_cells)
+        is_valid = np.ones(self.num_cells, dtype=bool)
 
         for dim in range(self.ndim):
             if dim in self.periodic_dims:
