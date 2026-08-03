@@ -1,11 +1,16 @@
 {
 "sim":
 {
-    "size":[15,15,15],
-    "periodicity" : "xyz",
+    "size":[50,50,50],
+    "periodicity" : "",
     "dtype":"uint8",
-    "render":true,
-    "max_steps":10000
+    "render":false,
+    "max_steps":1000
+},
+"tracker": {
+  "name": "StateTracker",
+  "args": {},
+  "save_as": "diff"
 },
 
 "state_keys":[
@@ -35,6 +40,17 @@
             "p" : 0.07
         }
         
+    },
+    {
+        "name":"Inoculation",
+        "args" :
+        {
+            "time_step" : 0.1,
+            "target_key":"substrate",
+            "location" : [1,1,1],
+            "size" : [3,3,3]
+        }
+
     }
 ],
 
@@ -47,7 +63,7 @@
         "name":"ReduceCallback",
         "args":
         {
-            "step_stride":100
+            "step_stride":1
         }
     }
 }

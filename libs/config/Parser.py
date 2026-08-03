@@ -9,21 +9,22 @@ from libs.Sim import CellularAutomaton
 from libs.State import State
 from libs.util.helper_functions import *
 from libs.tracking.StateTracker import *
+### RULES ########################
+from libs.rules.BacteriaGrowth import *
+from libs.rules.GameOfLife3D import *
+from libs.rules.GutDrift import *
+from libs.rules.Diffusion import *
+from libs.rules.BiofilmDetachment import *
+from libs.rules.SpeciesInteraction import *
+from libs.rules.BacteriaDecay import *
+from libs.rules.Utilization import *
+from libs.rules.Inoculation import *
 
 ### NEIGHBORHOODS #####################
 from libs.neighbourhoods.MooreNeighbourhood import *
 from libs.neighbourhoods.VonNeumannNeighbourhood import *
 from libs.rendering.Renderer import CARenderer
 from libs.rules.BacteriaDecay import *
-
-### RULES ########################
-from libs.rules.BacteriaGrowth import *
-from libs.rules.BiofilmDetachment import *
-from libs.rules.Diffusion import *
-from libs.rules.GameOfLife3D import *
-from libs.rules.GutDrift import *
-from libs.rules.SpeciesInteraction import *
-from libs.rules.Utilization import *
 
 
 

@@ -1,11 +1,11 @@
 {
 "sim":
 {
-    "size":[100,100,100],
-    "periodicity" : "xyz",
+    "size":[100,100,50],
+    "periodicity" : "xy",
     "dtype":"uint8",
     "render":false,
-    "max_steps":10
+    "max_steps":50
 },
 
 "tracker": {
@@ -24,7 +24,7 @@
         "random_args":
         {
             "a" : [0,1],
-            "p" : [0.9,0.1]
+            "p" : [0.999,0.001]
         }
     },
     {
@@ -32,12 +32,13 @@
         "layers":1,
         "dtype":"np.uint8",
         "random":true,
-        "random_func":"np.random.choice",
-        "random_args":
+        "random_func" : "init_block",
+        "random_args" : 
         {
-            "a" : [0,1],
-            "p" : [0.99,0.01]
-        }
+            "start":[50,50,0],
+            "block_size":[3,3,3],
+            "value":1
+        } 
     }
 ],
 
@@ -74,6 +75,17 @@
             "Yca" : 6.94e-6,
             "base_prob" : 0.02 
         }
+    },
+    {
+        "name":"Inoculation",
+        "args" :
+        {
+            "time_step" : 10000,
+            "target_key":"substrate",
+            "location" : [1,1,1],
+            "size" : [3,3,3]
+        }
+
     }
 ],
 
