@@ -1,4 +1,5 @@
 import ctypes
+from pathlib import Path
 
 import glfw
 import glm
@@ -119,24 +120,26 @@ class CARenderer:
         glfw.set_key_callback(self.window, self._key_callback)
 
         # compile shaders
+        shader_dir = Path(__file__).resolve().parent / "shaders"
+
         self.solidShader = Shader()
-        self.solidShader.add_vertex("libs/Rendering/shaders/solid.vert")
-        self.solidShader.add_fragment("libs/Rendering/shaders/solid.frag")
+        self.solidShader.add_vertex(str(shader_dir / "solid.vert"))
+        self.solidShader.add_fragment(str(shader_dir / "solid.frag"))
         self.solidShader.link_program()
 
         self.transShader = Shader()
-        self.transShader.add_vertex("libs/Rendering/shaders/vertex.vert")
-        self.transShader.add_fragment("libs/Rendering/shaders/transparent.frag")
+        self.transShader.add_vertex(str(shader_dir / "vertex.vert"))
+        self.transShader.add_fragment(str(shader_dir / "transparent.frag"))
         self.transShader.link_program()
 
         self.compShader = Shader()
-        self.compShader.add_vertex("libs/Rendering/shaders/composite.vert")
-        self.compShader.add_fragment("libs/Rendering/shaders/composite.frag")
+        self.compShader.add_vertex(str(shader_dir / "composite.vert"))
+        self.compShader.add_fragment(str(shader_dir / "composite.frag"))
         self.compShader.link_program()
 
         self.screenShader = Shader()
-        self.screenShader.add_vertex("libs/Rendering/shaders/screen.vert")
-        self.screenShader.add_fragment("libs/Rendering/shaders/screen.frag")
+        self.screenShader.add_vertex(str(shader_dir / "screen.vert"))
+        self.screenShader.add_fragment(str(shader_dir / "screen.frag"))
         self.screenShader.link_program()
 
         glViewport(0, 0, width, height)
