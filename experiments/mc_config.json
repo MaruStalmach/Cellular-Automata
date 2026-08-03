@@ -1,0 +1,64 @@
+{
+    "sim": {
+        "size": [250, 250, 100],
+        "max_steps": 20,
+        "density": 0.7,
+        "default_time_step": 1.0
+    },
+    "rules": [
+        {
+            "name": "species_interaction",
+            "time_step": 1.0,
+            "params": {
+                "spawn_claim_scale": 1.0
+            }
+        },
+        {
+            "name": "biofilm_detachment",
+            "time_step": 1.0,
+            "params": {
+                "detachment_rate": 0.011111,
+                "scaling": 0.0005
+            }
+        },
+        {
+            "name": "gut_drift",
+            "time_step": 1.0,
+            "params": {
+                "drift_speed": 1
+            }
+        }
+    ],
+    "mc_search": {
+        "n_iterations": 20,
+        "checkpoint_every_s": 60,
+        "checkpoint_path": "best_coeffs_checkpoint.json",
+        "interaction_bounds": [-1.0, 1.0]
+    },
+    "additional_keys": [
+        "biofilm",
+        "floating_bacteria"
+    ],
+    "abundances": {
+        "before": {
+            "BBBBB": 0.725667,
+            "BBBBM": 0.000111,
+            "BBBBT": 0.0,
+            "BFCLL": 0.162,
+            "BFCOO": 0.024611,
+            "BFCOR": 0.002056,
+            "BFCTP": 0.001167,
+            "other": 0.084389
+        },
+        "after": {
+            "BBBBB": 0.757833,
+            "BBBBM": 0.033444,
+            "BBBBT": 0.047278,
+            "BFCLL": 0.029722,
+            "BFCOO": 0.029722,
+            "BFCOR": 0.033333,
+            "BFCTP": 0.0,
+            "other": 0.068667
+        }
+    }
+}
