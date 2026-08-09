@@ -11,7 +11,7 @@
 "tracker": {
   "name": "StateTracker",
   "args": {},
-  "save_as": "full"
+  "save_as": "full2"
 },
 
 "state_keys":[
@@ -216,7 +216,7 @@
             "bacteria_keys" : ["Bacteroidaceae","Lachnospiraceae","Enterobacteriaceae","Synergistaceae","Prevotellaceae","Ruminococcaceae","Muribaculaceae","Oscillospiraceae","Sutterellaceae","Tannerellaceae","Bifidobacteriaceae","Other_bacteria"],
             "substrate_key" : "substrate",
             "Yca" : 6.94e-6,
-            "base_prob" : 0.02 
+            "base_prob" : 0.05 
         }
     },
     {

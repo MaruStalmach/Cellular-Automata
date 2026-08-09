@@ -1,11 +1,11 @@
 {
 "sim":
 {
-    "size":[10,10,10],
-    "periodicity" : "",
+    "size":[10,10,100],
+    "periodicity" : "xy",
     "dtype":"uint8",
     "render":true,
-    "max_steps":1000
+    "max_steps":10000
 },
 
 "state_keys":[
@@ -17,8 +17,21 @@
         "random_func" : "init_block",
         "random_args" : 
         {
+            "start":[3,3,95],
+            "block_size":[2,2,4],
+            "value":1
+        } 
+    },
+    {
+        "name":"biofilm",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
             "start":[0,0,0],
-            "block_size":[1,2,4],
+            "block_size":[10,10,70],
             "value":1
         } 
     }
@@ -32,7 +45,9 @@
             "time_step" : 0.01,
             "target_key":"substrate",
             "a" : 7.4,
-            "p" : 0.07
+            "p" : 0.07,
+            "biofilm_key" : "biofilm",
+            "biofilm_disruption" : 1
         }
         
     }
@@ -40,14 +55,14 @@
 
 "renderer":
 {
-    "key":"substrate",
+    "key":["substrate"],
     "window_size":[1200,800],
     "callback" :
     {
-        "name":"ReduceCallback",
+        "name":"MultiKeyCallback",
         "args":
         {
-            "step_stride":1
+            "step_stride":500
         }
     }
 }
