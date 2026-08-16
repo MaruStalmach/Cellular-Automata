@@ -70,16 +70,18 @@ def main() -> None:
         default=0,
         help="GIF loop count; 0 means loop forever",
     )
+    parser.add_argument("-s", "--stride", default=1)
 
     args = parser.parse_args()
 
     tracker = StateTracker.load(args.file)
     selected_keys = _parse_keys(args.keys, tracker.history.keys())
+    stride = int(args.stride)
 
     if not selected_keys:
         raise ValueError("no keys selected for replay")
 
-    playback = TrackedStatePlayback(tracker, step_no=0)
+    playback = TrackedStatePlayback(tracker, step_no=1, stride=stride)
     spatial_rank = len(playback.state.geometry.size)
     captured_frames: list[np.ndarray] = []
     should_capture_frame = False

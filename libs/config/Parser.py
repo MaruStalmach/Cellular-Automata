@@ -20,6 +20,7 @@ from libs.rules.BacteriaDecay import *
 from libs.rules.Utilization import *
 from libs.rules.Inoculation import *
 from libs.rules.CreateBiofilm import *
+from libs.rules.AntibioticEffect import *
 
 ### NEIGHBORHOODS #####################
 from libs.neighbourhoods.MooreNeighbourhood import *

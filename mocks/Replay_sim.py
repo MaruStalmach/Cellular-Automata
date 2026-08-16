@@ -50,16 +50,18 @@ def main() -> None:
         nargs="+",
         help="one or more keys to render, separated by spaces or commas",
     )
+    parser.add_argument("-s", "--stride", default=1)
 
     args = parser.parse_args()
 
     tracker = StateTracker.load(args.file)
     selected_keys = _parse_keys(args.keys, tracker.history.keys())
+    stride = int(args.stride)
 
     if not selected_keys:
         raise ValueError("no keys selected for replay")
 
-    playback = TrackedStatePlayback(tracker, step_no=0)
+    playback = TrackedStatePlayback(tracker, step_no=0, stride=stride)
     spatial_rank = len(playback.state.geometry.size)
 
     def update_callback(step: bool = True):

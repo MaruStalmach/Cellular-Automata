@@ -1,0 +1,313 @@
+{
+"sim":
+{
+    "size":[50,50,10],
+    "periodicity" : "",
+    "dtype":"uint8",
+    "render":false,
+    "max_steps":1152
+},
+
+"tracker": {
+  "name": "StateTracker",
+  "args": {},
+  "save_as": "full7-3"
+},
+
+"state_keys":[
+    {
+        "name":"substrate",
+        "layers":6,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func":"np.random.choice",
+        "random_args":
+        {
+            "a" : [0,1],
+            "p" : [0.99,0.01]
+        }
+    },
+    {
+        "name":"biofilm",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":false
+    },
+    {
+        "name":"Bacteroidaceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[36, 45, 0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    },
+    {
+        "name":"Lachnospiraceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[37,  6, 0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    },
+    {
+        "name":"Enterobacteriaceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[49,  2, 0],
+            "block_size":[1,2,4],
+            "value":1
+        }
+    },
+    {
+        "name":"Synergistaceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[2,  8,0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    },
+    {
+        "name":"Prevotellaceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[46, 18,0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    },
+    {
+        "name":"Ruminococcaceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[44, 22,0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    },
+    {
+        "name":"Muribaculaceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[36, 25,0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    },
+    {
+        "name":"Oscillospiraceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[45, 11,0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    },
+    {
+        "name":"Sutterellaceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[17, 49,0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    },
+    {
+        "name":"Tannerellaceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[26, 25,0],
+            "block_size":[1,2,4],
+            "value":1
+        }
+    },
+    {
+        "name":"Bifidobacteriaceae",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[14,  6,0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    },
+    {
+        "name":"Other_bacteria",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[8, 23,0],
+            "block_size":[2,2,2],
+            "value":1
+        }
+    }
+],
+
+"rules":[
+    {
+        "name":"Diffusion",
+        "args" : 
+        {
+            "time_step" : 0.01,
+            "target_key":"substrate",
+            "a" : 7.4,
+            "p" : 0.07
+        }
+        
+    },
+    {
+        "name" : "Utilization",
+        "args" : {
+            "time_step" : 0.01,
+            "bacteria_keys" : ["Bacteroidaceae","Lachnospiraceae","Enterobacteriaceae","Synergistaceae","Prevotellaceae","Ruminococcaceae","Muribaculaceae","Oscillospiraceae","Sutterellaceae","Tannerellaceae","Bifidobacteriaceae","Other_bacteria"],
+            "substrate_key" : "substrate",
+            "substitute_constant" : 0.37,
+            "Ks" : 10,
+            "Sb" : 15
+        }
+    },
+    {
+        "name" : "BacteriaGrowth",
+        "args" : {
+            "time_step" : 1800,
+            "time_scale" : 180000,
+            "bacteria_keys" : ["Bacteroidaceae","Lachnospiraceae","Enterobacteriaceae","Synergistaceae","Prevotellaceae","Ruminococcaceae","Muribaculaceae","Oscillospiraceae","Sutterellaceae","Tannerellaceae","Bifidobacteriaceae","Other_bacteria"],
+            "substrate_key" : "substrate",
+            "Yca" : 6.94e-6,
+            "base_prob" : 0.05 
+        }
+    },
+    {
+        "name" : "BacteriaDecay",
+        "args" : {
+            "time_step" : 1800,
+            "target_keys" : ["Bacteroidaceae","Lachnospiraceae","Enterobacteriaceae","Synergistaceae","Prevotellaceae","Ruminococcaceae","Muribaculaceae","Oscillospiraceae","Sutterellaceae","Tannerellaceae","Bifidobacteriaceae","Other_bacteria"],
+            "decay_probability" : 0.02
+        }
+    },
+    {
+        "name" : "SpeciesInteraction",
+        "args": 
+        {
+            "time_step": 1800,
+            "interactions": 
+            {
+                "Bacteroidaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : -0.2, "Synergistaceae" : 0.0,"Prevotellaceae" : -0.9,"Ruminococcaceae" : 0.0,"Muribaculaceae" : -0.9,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.5,"Other_bacteria" : 0.0},
+                "Lachnospiraceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.5,"Ruminococcaceae" : 0.5,"Muribaculaceae" : 0.5,"Oscillospiraceae" : 0.5,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.5,"Other_bacteria" : 0.0},
+                "Enterobacteriaceae" : {"Bacteroidaceae" : -0.2, "Lachnospiraceae" : -0.5, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : -0.5,"Muribaculaceae" : 0.0,"Oscillospiraceae" : -0.5,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Synergistaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Prevotellaceae" : {"Bacteroidaceae" : -0.9, "Lachnospiraceae" : -0.2, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Ruminococcaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.5, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Muribaculaceae" : {"Bacteroidaceae" : -0.2, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.52,"Other_bacteria" : 0.0},
+                "Oscillospiraceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.4, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Sutterellaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Tannerellaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Bifidobacteriaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.2, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.3,"Muribaculaceae" : 0.4,"Oscillospiraceae" : 0.5,"Sutterellaceae" : 0.0,"Tannerellaceae" : -0.5,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Other_bacteria" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0}
+            },
+            "spawn_claim_scale": 50.0
+        }
+    },
+    {
+        "name" : "Inoculation",
+        "args" : {
+            "time_step" : 30,
+            "target_key" : "substrate",
+            "location" : [25,25,9],
+            "size" : [5,5,1]
+        }
+    },
+    {
+        "name" : "CreateBiofilm",
+        "args" : {
+            "time_step" : 1800,
+            "bacteria_keys" : ["Bacteroidaceae","Lachnospiraceae","Enterobacteriaceae","Synergistaceae","Prevotellaceae","Ruminococcaceae","Muribaculaceae","Oscillospiraceae","Sutterellaceae","Tannerellaceae","Bifidobacteriaceae","Other_bacteria"],
+            "biofilm_key" : "biofilm"
+        }
+    },
+    {
+        "name" : "BiofilmDetachment",
+        "args" : {
+            "time_step" : 1800,
+            "biofilm_key" : "biofilm",
+            "detachment_rate" : 5e-8,
+            "scaling" : 180000
+        }
+    },
+    {
+        "name":"AntibioticEffect",
+        "args" : 
+        {
+            "time_step" : 1800,
+            "bacteria_keys" : ["Bacteroidaceae","Lachnospiraceae","Enterobacteriaceae","Synergistaceae","Prevotellaceae","Ruminococcaceae","Muribaculaceae","Oscillospiraceae","Sutterellaceae","Tannerellaceae","Bifidobacteriaceae","Other_bacteria"],
+            "biofilm_key" : "biofilm",
+            "effectiveness" : [0.8,0.7,0.15,0.8,0.8,0.35,-0.2,0.4,0.35,-0.2,0.30,1.0],
+            "base_prob" : 1.041e-06,
+            "inoculation_start" : 864
+        }
+        
+    }
+],
+
+"renderer":
+{
+    "key":"biofilm",
+    "window_size":[1200,800],
+    "callback" :
+    {
+        "name":"Callback",
+        "args":
+        {
+            "step_stride":1
+        }
+    }
+}
+}

@@ -62,6 +62,7 @@ class CellularAutomaton:
                 )  # TODO: comparing tuple to list will always thorw a mismacth
         else:
             self.state = State(geometry, random=True, cell_keys=keys)
+        self.state._get_sim_reference(self)
 
         self.step_no = 0
         if self.tracker:

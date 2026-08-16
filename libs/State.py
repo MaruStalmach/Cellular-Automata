@@ -32,6 +32,7 @@ class State:
     ) -> None:
 
         self.geometry = geometry
+        self.sim = None
 
         self.keys = tuple(cell_keys)
         self.key_to_index = {key: idx for idx, key in enumerate(self.keys)}
@@ -213,3 +214,6 @@ class State:
             arr = np.expand_dims(arr, axis=-1)
 
         target[...] = arr
+        
+    def _get_sim_reference(self,sim_obj):
+        self.sim = sim_obj

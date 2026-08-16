@@ -8,19 +8,19 @@ class BiofilmDetachment(Rule):
     moves detached cells from biofilm layer to detached bacteria layer"""
 
     def __init__(
-        self, geometry, time_step: float, detachment_rate: float, scaling: float
+        self, geometry, time_step: float, biofilm_key : str, detachment_rate: float, scaling: float
     ):
         super().__init__(geometry, time_step)
         self.detachment_probability = detachment_rate * scaling
 
-        self.target_keys = ["biofilm", "floating_bacteria"]
-        self.required_keys.extend(self.target_keys)
+        self.target_key = biofilm_key
+        self.required_keys.extend(self.target_key)
 
     def apply_state(self, state: State) -> State:
 
         assert self.geometry.ndim == 3  # only works for 3D
 
-        biofilm_grid, floating_bact_grid = state["biofilm"], state["floating_bacteria"]
+        biofilm_grid = state[self.target_key].copy()
         total_layers = biofilm_grid.shape[-1]
 
         z_indices = np.arange(total_layers)
@@ -34,13 +34,9 @@ class BiofilmDetachment(Rule):
 
         # checks for biofilm on square and checks the prob of detachment
         detached_mask = biofilm_grid & (chances < chance_detachment)
-        biofilm_grid[detached_mask] = False
+        biofilm_grid[detached_mask] = 0
 
-        floating_bact_grid |= (
-            detached_mask  # bitwise or adds detached cells to floating bact layer
-        )
 
         state["biofilm"] = biofilm_grid
-        state["floating_bacteria"] = floating_bact_grid
 
         return state

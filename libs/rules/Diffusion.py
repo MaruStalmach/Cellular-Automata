@@ -43,18 +43,7 @@ class Diffusion(Rule):
         
         
 
-    def _restore_random(self):
-        c1, c2, c3, c4 = np.nonzero(self.layers == 0)
-        selection = np.random.choice(
-            a=c1.shape[0], size=(self.RESTORE_THRESHOLD,), replace=False
-        )
-        c1 = c1[selection]
-        c2 = c2[selection]
-        c3 = c3[selection]
-        c4 = c4[selection]
-        sel = tuple([c1, c2, c3, c4])
-        self.layers[sel] = 1
-        self.lost_particles -= self.RESTORE_THRESHOLD
+    
     
     @staticmethod
     def _calc_a_prim(x,p,d):
@@ -203,17 +192,40 @@ class Diffusion(Rule):
         # restore lost particles
         if self.lost_particles >= self.RESTORE_THRESHOLD:
             # find 50 empty spots
-            self._restore_deterministic()
+            self._restore_random()
 
         state[self.target_key] = self.layers[...]
         return state
 
     def _restore_deterministic(self):
         c1, c2, c3, c4 = np.nonzero(self.layers == 0)
-        c1 = c1[-self.RESTORE_THRESHOLD:]
-        c2 = c2[-self.RESTORE_THRESHOLD:]
-        c3 = c3[-self.RESTORE_THRESHOLD:]
-        c4 = c4[-self.RESTORE_THRESHOLD:]
+        max_z = c3.max()
+        z_mask = c3 == max_z
+        c1 = c1[z_mask]
+        c2 = c2[z_mask]
+        c3 = c3[z_mask]
+        c4 = c4[z_mask]
+        order = np.lexsort((-c2, -c1))
+        order = order[:self.RESTORE_THRESHOLD]
+        sel = (c1[order], c2[order], c3[order], c4[order])
+        self.layers[sel] = 1
+        self.lost_particles -= self.RESTORE_THRESHOLD
+        
+    def _restore_random(self):
+        c1, c2, c3, c4 = np.nonzero(self.layers == 0)
+        max_z = c3.max()
+        z_mask = c3 == max_z
+        c1 = c1[z_mask]
+        c2 = c2[z_mask]
+        c3 = c3[z_mask]
+        c4 = c4[z_mask]
+        selection = np.random.choice(
+            a=c1.shape[0], size=(self.RESTORE_THRESHOLD,), replace=False
+        )
+        c1 = c1[selection]
+        c2 = c2[selection]
+        c3 = c3[selection]
+        c4 = c4[selection]
         sel = tuple([c1, c2, c3, c4])
         self.layers[sel] = 1
         self.lost_particles -= self.RESTORE_THRESHOLD

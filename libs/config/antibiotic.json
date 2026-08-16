@@ -1,0 +1,92 @@
+{
+"sim":
+{
+    "size":[10,10,100],
+    "periodicity" : "xy",
+    "dtype":"uint8",
+    "render":true,
+    "max_steps":10000
+},
+
+"state_keys":[
+    {
+        "name":"bacteria",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[0,0,0],
+            "block_size":[10,10,70],
+            "value":1
+        } 
+    },
+    {
+        "name":"biofilm",
+        "layers":1,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func" : "init_block",
+        "random_args" : 
+        {
+            "start":[0,0,0],
+            "block_size":[10,10,40],
+            "value":1
+        } 
+    },
+    {
+        "name":"substrate",
+        "layers":6,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func":"np.random.choice",
+        "random_args":
+        {
+            "a" : [0,1],
+            "p" : [0.92,0.08]
+        }
+    }
+],
+
+"rules":[
+    {
+        "name":"AntibioticEffect",
+        "args" : 
+        {
+            "time_step" : 1800,
+            "bacteria_keys" : ["bacteria"],
+            "biofilm_key" : "biofilm",
+            "effectiveness" : [0.5],
+            "base_prob" : 2.2e-06,
+            "inoculation_start" : 5
+        }
+        
+    },
+    {
+        "name" : "BacteriaGrowth",
+        "args" : {
+            "time_step" : 1800,
+            "time_scale" : 180000,
+            "bacteria_keys" : ["bacteria"],
+            "substrate_key" : "substrate",
+            "Yca" : 6.94e-6,
+            "base_prob" : 0.05 
+        }
+    }
+],
+
+"renderer":
+{
+    "key":["bacteria"],
+    "window_size":[1200,800],
+    "callback" :
+    {
+        "name":"MultiKeyCallback",
+        "args":
+        {
+            "step_stride":1
+        }
+    }
+}
+}
