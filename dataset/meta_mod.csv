@@ -1,0 +1,204 @@
+,Tube,Name,Sample_ID,Sequence_run,Bioreactor_run,Bioreactor,Inoculation,Sampling.date,timepoint,Day_Steady_state,Hour_Treated,Treatment,Gas,Extract,gDNA..ng.µl.,analysis
+1s1,1s1,1s1,E01_R1_D0,1,1,1,supernatant,,steady_state,0,NA,NA,NA,,NA,include
+1s2,1s2,1s2,E01_R1_D1,1,1,1,supernatant,,steady_state,1,NA,NA,CO2,,NA,include
+1s3,1s3,1s3,E01_R1_D2,1,1,1,supernatant,,steady_state,2,NA,NA,CO2,,NA,include
+1s4,1s4,1s4,E01_R1_D5,1,1,1,supernatant,,steady_state,5,NA,NA,CO2,,NA,include
+1s5,1s5,1s5,E01_R1_D6,1,1,1,supernatant,,steady_state,6,NA,NA,CO2,,NA,include
+1s7,1s7,1s7,E01_R1_D8,1,1,1,supernatant,,steady_state,8,NA,NA,CO2,,NA,include
+1s8,1s8,1s8,E01_R1_D9,1,1,1,supernatant,,steady_state,9,NA,NA,CO2,,NA,include
+1s9,1s9,1s9,E01_R1_D12,1,1,1,supernatant,,steady_state,12,NA,NA,N2,,NA,include
+1s11,1s11,1s11,E01_R1_D15,1,1,1,supernatant,,steady_state,15,NA,NA,N2,,NA,include
+1s12,1s12,1s12,E01_R1_D16,1,1,1,supernatant,,steady_state,16,NA,NA,N2,,NA,include
+1s13,1s13,1s13,E01_R1_D19,1,1,1,supernatant,,treated,19,-24,Metronidazole,N2,,NA,include
+2s1,2s1,2s1,E01_R2_D0,1,1,2,supernatant,,steady_state,0,NA,NA,NA,,NA,include
+2s2,2s2,2s2,E01_R2_D1,1,1,2,supernatant,,steady_state,1,NA,NA,CO2,,NA,include
+2s3,2s3,2s3,E01_R2_D2,1,1,2,supernatant,,steady_state,2,NA,NA,CO2,,NA,include
+2s4,2s4,2s4,E01_R2_D5,1,1,2,supernatant,,steady_state,5,NA,NA,CO2,,NA,include
+2s5,2s5,2s5,E01_R2_D6,1,1,2,supernatant,,steady_state,6,NA,NA,CO2,,NA,include
+2s7,2s7,2s7,E01_R2_D8,1,1,2,supernatant,,steady_state,8,NA,NA,CO2,,NA,include
+2s8,2s8,2s8,E01_R2_D9,1,1,2,supernatant,,steady_state,9,NA,NA,CO2,,NA,include
+2s9,2s9,2s9,E01_R2_D12,1,1,2,supernatant,,steady_state,12,NA,NA,N2,,NA,include
+2s11,2s11,2s11,E01_R2_D15,1,1,2,supernatant,,steady_state,15,NA,NA,N2,,NA,include
+2s12,2s12,2s12,E01_R2_D16,1,1,2,supernatant,,steady_state,16,NA,NA,N2,,NA,include
+2s13,2s13,2s13,E01_R2_D19,1,1,2,supernatant,,treated,19,-24,Metronidazole,N2,,NA,include
+3s1,3s1,3s1,E01_R3_D0,1,1,3,fecal slurry,,steady_state,0,NA,NA,NA,,NA,include
+3s2,3s2,3s2,E01_R3_D1,1,1,3,fecal slurry,,steady_state,1,NA,NA,CO2,,NA,include
+3s3,3s3,3s3,E01_R3_D2,1,1,3,fecal slurry,,steady_state,2,NA,NA,CO2,,NA,include
+3s4,3s4,3s4,E01_R3_D5,1,1,3,fecal slurry,,steady_state,5,NA,NA,CO2,,NA,include
+3s5,3s5,3s5,E01_R3_D6,1,1,3,fecal slurry,,steady_state,6,NA,NA,CO2,,NA,include
+3s7,3s7,3s7,E01_R3_D8,1,1,3,fecal slurry,,steady_state,8,NA,NA,CO2,,NA,include
+3s8,3s8,3s8,E01_R3_D9,1,1,3,fecal slurry,,steady_state,9,NA,NA,CO2,,NA,include
+3s9,3s9,3s9,E01_R3_D12,1,1,3,fecal slurry,,steady_state,12,NA,NA,N2,,NA,include
+3s11,3s11,3s11,E01_R3_D15,1,1,3,fecal slurry,,steady_state,15,NA,NA,N2,,NA,include
+3s12,3s12,3s12,E01_R3_D16,1,1,3,fecal slurry,,steady_state,16,NA,NA,N2,,NA,include
+3s13,3s13,3s13,E01_R3_D19,1,1,3,fecal slurry,,treated,19,-24,Metronidazole,N2,,NA,include
+4s1,4s1,4s1,E01_R4_D0,1,1,4,fecal slurry,,steady_state,0,NA,NA,NA,,NA,include
+4s2,4s2,4s2,E01_R4_D1,1,1,4,fecal slurry,,steady_state,1,NA,NA,CO2,,NA,include
+4s3,4s3,4s3,E01_R4_D2,1,1,4,fecal slurry,,steady_state,2,NA,NA,CO2,,NA,include
+4s4,4s4,4s4,E01_R4_D5,1,1,4,fecal slurry,,steady_state,5,NA,NA,CO2,,NA,include
+4s5,4s5,4s5,E01_R4_D6,1,1,4,fecal slurry,,steady_state,6,NA,NA,CO2,,NA,include
+4s7,4s7,4s7,E01_R4_D8,1,1,4,fecal slurry,,steady_state,8,NA,NA,CO2,,NA,include
+4s8,4s8,4s8,E01_R4_D9,1,1,4,fecal slurry,,steady_state,9,NA,NA,CO2,,NA,include
+4s9,4s9,4s9,E01_R4_D12,1,1,4,fecal slurry,,steady_state,12,NA,NA,N2,,NA,include
+4s11,4s11,4s11,E01_R4_D15,1,1,4,fecal slurry,,steady_state,15,NA,NA,N2,,NA,include
+4s12,4s12,4s12,E01_R4_D16,1,1,4,fecal slurry,,steady_state,16,NA,NA,N2,,NA,include
+4s13,4s13,4s13,E01_R4_D19,1,1,4,fecal slurry,,treated,19,-24,Control,N2,,NA,include
+C4,C4,Fecal Sample,Control_4,4,3,NA,,,steady_state,0,NA,NA,NA,,329,45,include
+C5,C5,Fecal Sample,Control_5,4,3,NA,,,steady_state,0,NA,NA,NA,,301,1,include
+C6,C6,Fecal Glycerol,Control_6,4,3,NA,,,steady_state,0,NA,NA,NA,,119,7,include
+C7,C7,Fecal Glycerol,Control_7,4,3,NA,,,steady_state,0,NA,NA,NA,,97,96,include
+D1-1,D1:1,D1r1,E03_R1_D1,3,3,1,,18.11.2014,steady_state,1,NA,NA,CO2,19.01.2021,185,4,include
+D1-2,D1:2,D1r2,E03_R2_D1,3,3,2,,18.11.2014,steady_state,1,NA,NA,CO2,19.01.2021,121,5,include
+D1-3,D1:3,D1r3,E03_R3_D1,3,3,3,,18.11.2014,steady_state,1,NA,NA,CO2,19.01.2021,143,6,include
+D1-4,D1:4,D1r4,E03_R4_D1,3,3,4,,18.11.2014,steady_state,1,NA,NA,CO2,19.01.2021,155,6,include
+D11-1,D11:1,D11r1,E03_R1_D11,3,3,1,,18.11.2024,steady_state,11,NA,NA,N2,19.01.2023,280,3,include
+D11-2,D11:2,D11r2,E03_R2_D11,3,3,2,,18.11.2024,steady_state,11,NA,NA,N2,19.01.2023,232,3,include
+D11-3,D11:3,D11r3,E03_R3_D11,3,3,3,,18.11.2024,steady_state,11,NA,NA,N2,19.01.2023,318,1,include
+D11-4,D11:4,D11r4,E03_R4_D11,3,3,4,,18.11.2024,steady_state,11,NA,NA,N2,19.01.2023,371,7,include
+D13-1,D13:1,D13r1,E03_R1_D13,3,3,1,,18.11.2026,steady_state,13,NA,NA,N2,19.01.2023,350,8,include
+D13-2,D13:2,D13r2,E03_R2_D13,3,3,2,,18.11.2026,steady_state,13,NA,NA,N2,19.01.2023,319,3,include
+D13-3,D13:3,D13r3,E03_R3_D13,3,3,3,,18.11.2026,steady_state,13,NA,NA,N2,19.01.2023,315,6,include
+D13-4,D13:4,D13r4,E03_R4_D13,3,3,4,,18.11.2026,steady_state,13,NA,NA,N2,19.01.2023,317,6,include
+D15-1,D15:1,D15r1,E03_R1_D15,3,3,1,,18.11.2028,steady_state,15,NA,NA,N2,19.01.2023,287,5,include
+D15-2,D15:2,D15r2,E03_R2_D15,3,3,2,,18.11.2028,steady_state,15,NA,NA,N2,19.01.2023,284,5,include
+D15-3,D15:3,D15r3,E03_R3_D15,3,3,3,,18.11.2028,steady_state,15,NA,NA,N2,19.01.2023,329,6,include
+D15-4,D15:4,D15r4,E03_R4_D15,3,3,4,,18.11.2028,steady_state,15,NA,NA,N2,19.01.2023,253,9,include
+D16-1,D16:1,D16r1,E03_R1_D16,3,3,1,,18.11.2029,steady_state,16,NA,NA,N2,19.01.2024,373,9,include
+D16-2,D16:2,D16r2,E03_R2_D16,3,3,2,,18.11.2029,steady_state,16,NA,NA,N2,19.01.2024,298,4,include
+D16-3,D16:3,D16r3,E03_R3_D16,3,3,3,,18.11.2029,steady_state,16,NA,NA,N2,19.01.2024,334,5,include
+D16-4,D16:4,D16r4,E03_R4_D16,3,3,4,,18.11.2029,steady_state,16,NA,NA,N2,19.01.2024,372,2,include
+D18-1,D18:1,D18r1,E03_R1_D18,3,3,1,,18.12.2001,steady_state,18,NA,NA,N2,19.01.2024,273,8,include
+D18-2,D18:2,D18r2,E03_R2_D18,3,3,2,,18.12.2001,steady_state,18,NA,NA,N2,19.01.2024,338,4,include
+D18-3,D18:3,D18r3,E03_R3_D18,3,3,3,,18.12.2001,steady_state,18,NA,NA,N2,19.01.2024,316,8,include
+D18-4,D18:4,D18r4,E03_R4_D18,3,3,4,,18.12.2001,steady_state,18,NA,NA,N2,19.01.2024,295,1,include
+D2-1,D2:1,D2r1,E03_R1_D2,3,3,1,,18.11.2015,steady_state,2,NA,NA,CO2,19.01.2021,147,include
+D2-2,D2:2,D2r2,E03_R2_D2,3,3,2,,18.11.2015,steady_state,2,NA,NA,CO2,19.01.2021,225,7,include
+D2-3,D2:3,D2r3,E03_R3_D2,3,3,3,,18.11.2015,steady_state,2,NA,NA,CO2,19.01.2021,222,7,include
+D2-4,D2:4,D2r4,E03_R4_D2,3,3,4,,18.11.2015,steady_state,2,NA,NA,CO2,19.01.2021,228,include
+D4-1,D4:1,D4r1,E03_R1_D4,3,3,1,,18.11.2017,steady_state,4,NA,NA,CO2,19.01.2021,462,9,include
+D4-2,D4:2,D4r2,E03_R2_D4,3,3,2,,18.11.2017,steady_state,4,NA,NA,CO2,19.01.2021,100,9,include
+D4-3,D4:3,D4r3,E03_R3_D4,3,3,3,,18.11.2017,steady_state,4,NA,NA,CO2,19.01.2021,782,3,include
+D4-4,D4:4,D4r4,E03_R4_D4,3,3,4,,18.11.2017,steady_state,4,NA,NA,CO2,19.01.2021,192,1,include
+D6-1,D6:1,D6r1,E03_R1_D6,3,3,1,,18.11.2019,steady_state,6,NA,NA,CO2,19.01.2022,247,2,include
+D6-2,D6:2,D6r2,E03_R2_D6,3,3,2,,18.11.2019,steady_state,6,NA,NA,CO2,19.01.2022,205,9,include
+D6-4,D6:4,D6r4,E03_R4_D6,3,3,4,,18.11.2019,steady_state,6,NA,NA,CO2,19.01.2022,278,1,include
+D8-1,D8:1,D8r1,E03_R1_D8,3,3,1,,18.11.2021,steady_state,8,NA,NA,CO2,19.01.2022,287,include
+D8-2,D8:2,D8r2,E03_R2_D8,3,3,2,,18.11.2021,steady_state,8,NA,NA,CO2,19.01.2022,217,5,include
+D8-3,D8:3,D8r3,E03_R3_D8,3,3,3,,18.11.2021,steady_state,8,NA,NA,CO2,19.01.2022,217,5,include
+D8-4,D8:4,D8r4,E03_R4_D8,3,3,4,,18.11.2021,steady_state,8,NA,NA,CO2,19.01.2022,217,5,include
+D9-1,D9:1,D9r1,E03_R1_D9,3,3,1,,18.11.2022,steady_state,9,NA,NA,CO2,19.01.2022,217,5,include
+D9-2,D9:2,D9r2,E03_R2_D9,3,3,2,,18.11.2022,steady_state,9,NA,NA,CO2,19.01.2022,217,5,include
+D9-3,D9:3,D9r3,E03_R3_D9,3,3,3,,18.11.2022,steady_state,9,NA,NA,CO2,19.01.2022,217,5,include
+T0-1,T0:1,T0r1,E03_R1_D21_T0,3,3,1,,18.12.2004,treated,21,0,Control,N2,19.01.2024,217,5,include
+T0-2,T0:2,T0r2,E03_R2_D21_T0,3,3,2,,18.12.2004,treated,21,0,Metronidazole,N2,19.01.2024,364,include
+T0-3,T0:3,T0r3,E03_R3_D21_T0,3,3,3,,18.12.2004,treated,21,0,Metronidazole,N2,19.01.2024,351,2,include
+T0-3-2,D6:3,D6r3,E03_R3_D6,3,3,3,,18.11.2019,steady_state,6,NA,NA,CO2,19.01.2022,340,4,include
+T0-4,T0:4,T0r4,E03_R4_D21_T0,3,3,4,,18.12.2004,treated,21,0,Metronidazole,N2,19.01.2024,294,4,include
+T0s1,T0s1,T0s1,E01_R1_D20_T0,1,1,1,NA,,treated,20,0,Metronidazole,N2,,NA,include
+T0s2,T0s2,T0s2,E01_R2_D20_T0,1,1,2,NA,,treated,20,0,Metronidazole,N2,,NA,include
+T0s3,T0s3,T0s3,E01_R3_D20_T0,1,1,3,NA,,treated,20,0,Metronidazole,N2,,NA,include
+T0s4,T0s4,T0s4,E01_R4_D20_T0,1,1,4,NA,,treated,20,0,Control,N2,,NA,include
+T1-1,T1:1,T1r1,E03_R1_D21_T1,3,3,1,,18.12.2004,treated,21,1,Metronidazole,N2,19.02.2001,190,6,include
+T1-2,T1:2,T1r2,E03_R2_D21_T1,3,3,2,,18.12.2004,treated,21,1,Metronidazole,N2,19.02.2001,210,6,include
+T1-3,T1:3,T1r3,E03_R3_D21_T1,3,3,3,,18.12.2004,treated,21,1,Metronidazole,N2,19.02.2001,223,3,include
+T1-4,T1:4,T1r4,E03_R4_D21_T1,3,3,4,,18.12.2004,treated,21,1,Control,N2,19.02.2001,175,7,include
+T12-1,T12:1,T12r1,E03_R1_D21_T12,3,3,1,,18.12.2004,treated,21,12,Metronidazole,N2,19.02.2014,181,7,include
+T12-2,T12:2,T12r2,E03_R2_D21_T12,3,3,2,,18.12.2004,treated,21,12,Metronidazole,N2,19.02.2014,211,include
+T12-3,T12:3,T12r3,E03_R3_D21_T12,3,3,3,,18.12.2004,treated,21,12,Metronidazole,N2,19.02.2014,201,8,include
+T12-4,T12:4,T12r4,E03_R4_D21_T12,3,3,4,,18.12.2004,treated,21,12,Control,N2,19.02.2014,220,9,include
+T120-1,T120:1,T120r1,E03_R1_D26_T120,3,3,1,,18.12.2009,treated,26,120,Metronidazole,N2,19.02.2018,205,6,include
+T120-2,T120:2,T120r2,E03_R2_D26_T120,3,3,2,,18.12.2009,treated,26,120,Metronidazole,N2,19.02.2018,245,2,include
+T120-3,T120:3,T120r3,E03_R3_D26_T120,3,3,3,,18.12.2009,treated,26,120,Metronidazole,N2,19.02.2018,289,9,include
+T120-4,T120:4,T120r4,E03_R4_D26_T120,4,3,4,,18.12.2009,treated,26,120,Control,N2,19.02.2018,208,1,include
+T120s1,T120s1,T120s1,E01_R1_D25_T120,2,1,1,NA,,treated,25,120,Metronidazole,N2,,NA,include
+T120s2,T120s2,T120s2,E01_R2_D25_T120,2,1,2,NA,,treated,25,120,Metronidazole,N2,,NA,include
+T120s3,T120s3,T120s3,E01_R3_D25_T120,2,1,3,NA,,treated,25,120,Metronidazole,N2,,NA,include
+T120s4,T120s4,T120s4,E01_R4_D25_T120,2,1,4,NA,,treated,25,120,Control,N2,,NA,include
+T12s1,T12s1,T12s1,E01_R1_D20_T12,2,1,1,NA,,treated,20,12,Metronidazole,N2,,NA,include
+T12s2,T12s2,T12s2,E01_R2_D20_T12,2,1,2,NA,,treated,20,12,Metronidazole,N2,,NA,include
+T12s3,T12s3,T12s3,E01_R3_D20_T12,2,1,3,NA,,treated,20,12,Metronidazole,N2,,NA,include
+T12s4,T12s4,T12s4,E01_R4_D20_T12,2,1,4,NA,,treated,20,12,Control,N2,,NA,include
+T144-1,T144:1,T144r1,E03_R1_D27_T144,4,3,1,,18.12.2010,treated,27,144,Metronidazole,N2,19.02.2018,210,3,include
+T144-2,T144:2,T144r2,E03_R2_D27_T144,4,3,2,,18.12.2010,treated,27,144,Metronidazole,N2,19.02.2018,184,6,include
+T144-3,T144:3,T144r3,E03_R3_D27_T144,4,3,3,,18.12.2010,treated,27,144,Metronidazole,N2,19.02.2018,257,4,include
+T144-4,T144:4,T144r4,E03_R4_D27_T144,4,3,4,,18.12.2010,treated,27,144,Control,N2,19.02.2018,199,4,include
+T144s1,T144s1,T144s1,E01_R1_D26_T144,2,1,1,NA,,treated,26,144,Metronidazole,N2,,NA,include
+T144s2,T144s2,T144s2,E01_R2_D26_T144,2,1,2,NA,,treated,26,144,Metronidazole,N2,,NA,include
+T144s3,T144s3,T144s3,E01_R3_D26_T144,2,1,3,NA,,treated,26,144,Metronidazole,N2,,NA,include
+T144s4,T144s4,T144s4,E01_R4_D26_T144,2,1,4,NA,,treated,26,144,Control,N2,,NA,include
+T1s1,T1s1,T1s1,E01_R1_D20_T1,1,1,1,NA,,treated,20,1,Metronidazole,N2,,NA,include
+T1s2,T1s2,T1s2,E01_R2_D20_T1,1,1,2,NA,,treated,20,1,Metronidazole,N2,,NA,include
+T1s3,T1s3,T1s3,E01_R3_D20_T1,2,1,3,NA,,treated,20,1,Metronidazole,N2,,NA,include
+T1s4,T1s4,T1s4,E01_R4_D20_T1,2,1,4,NA,,treated,20,1,Control,N2,,NA,include
+T2-1,T2:1,T2r1,E03_R1_D21_T2,3,3,1,,18.12.2004,treated,21,2,Metronidazole,N2,19.02.2001,219,9,include
+T2-2,T2:2,T2r2,E03_R2_D21_T2,3,3,2,,18.12.2004,treated,21,2,Metronidazole,N2,19.02.2001,172,5,include
+T2-3,T2:3,T2r3,E03_R3_D21_T2,3,3,3,,18.12.2004,treated,21,2,Metronidazole,N2,19.02.2001,260,3,include
+T2-4,T2:4,T2r4,E03_R4_D21_T2,3,3,4,,18.12.2004,treated,21,2,Control,N2,19.02.2001,223,9,include
+T24-1,T24:1,T24r1,E03_R1_D22_T24,3,3,1,,18.12.2005,treated,22,24,Metronidazole,N2,19.02.2014,219,7,include
+T24-2,T24:2,T24r2,E03_R2_D22_T24,3,3,2,,18.12.2005,treated,22,24,Metronidazole,N2,19.02.2014,202,6,include
+T24-3,T24:3,T24r3,E03_R3_D22_T24,3,3,3,,18.12.2005,treated,22,24,Metronidazole,N2,19.02.2014,278,4,include
+T24-4,T24:4,T24r4,E03_R4_D22_T24,3,3,4,,18.12.2005,treated,22,24,Control,N2,19.02.2014,243,3,include
+T24s1,T24s1,T24s1,E01_R1_D21_T24,2,1,1,NA,,treated,21,24,Metronidazole,N2,,NA,include
+T24s2,T24s2,T24s2,E01_R2_D21_T24,2,1,2,NA,,treated,21,24,Metronidazole,N2,,NA,include
+T24s3,T24s3,T24s3,E01_R3_D21_T24,2,1,3,NA,,treated,21,24,Metronidazole,N2,,NA,include
+T24s4,T24s4,T24s4,E01_R4_D21_T24,2,1,4,NA,,treated,21,24,Control,N2,,NA,include
+T2s1,T2s1,T2s1,E01_R1_D20_T2,2,1,1,NA,,treated,20,2,Metronidazole,N2,,NA,include
+T2s2,T2s2,T2s2,E01_R2_D20_T2,2,1,2,NA,,treated,20,2,Metronidazole,N2,,NA,include
+T2s3,T2s3,T2s3,E01_R3_D20_T2,2,1,3,NA,,treated,20,2,Metronidazole,N2,,NA,include
+T2s4,T2s4,T2s4,E01_R4_D20_T2,2,1,4,NA,,treated,20,2,Control,N2,,NA,include
+T3-1,T3:1,T3r1,E03_R1_D21_T3,3,3,1,,18.12.2004,treated,21,3,Metronidazole,N2,19.02.2001,198,6,include
+T3-2,T3:2,T3r2,E03_R2_D21_T3,3,3,2,,18.12.2004,treated,21,3,Metronidazole,N2,19.02.2001,187,4,include
+T3-3,T3:3,T3r3,E03_R3_D21_T3,3,3,3,,18.12.2004,treated,21,3,Metronidazole,N2,19.02.2001,255,1,include
+T3-4,T3:4,T3r4,E03_R4_D21_T3,3,3,4,,18.12.2004,treated,21,3,Control,N2,19.02.2001,196,4,include
+T3s1,T3s1,T3s1,E01_R1_D20_T3,2,1,1,NA,,treated,20,3,Metronidazole,N2,,NA,include
+T3s2,T3s2,T3s2,E01_R2_D20_T3,2,1,2,NA,,treated,20,3,Metronidazole,N2,,NA,include
+T3s3,T3s3,T3s3,E01_R3_D20_T3,2,1,3,NA,,treated,20,3,Metronidazole,N2,,NA,include
+T3s4,T3s4,T3s4,E01_R4_D20_T3,2,1,4,NA,,treated,20,3,Control,N2,,NA,include
+T4-1,T4:1,T4r1,E03_R1_D21_T4,3,3,1,,18.12.2004,treated,21,4,Metronidazole,N2,19.02.2004,230,1,include
+T4-2,T4:2,T4r2,E03_R2_D21_T4,3,3,2,,18.12.2004,treated,21,4,Metronidazole,N2,19.02.2004,291,2,include
+T4-3,T4:3,T4r3,E03_R3_D21_T4,3,3,3,,18.12.2004,treated,21,4,Metronidazole,N2,19.02.2004,327,5,include
+T4-4,T4:4,T4r4,E03_R4_D21_T4,3,3,4,,18.12.2004,treated,21,4,Control,N2,19.02.2004,222,8,include
+T48-1,T48:1,T48r1,E03_R1_D23_T48,3,3,1,,18.12.2006,treated,23,48,Metronidazole,N2,19.02.2014,198,7,include
+T48-2,T48:2,T48r2,E03_R2_D23_T48,3,3,2,,18.12.2006,treated,23,48,Metronidazole,N2,19.02.2014,197,9,include
+T48-3,T48:3,T48r3,E03_R3_D23_T48,3,3,3,,18.12.2006,treated,23,48,Metronidazole,N2,19.02.2014,238,include
+T48-4,T48:4,T48r4,E03_R4_D23_T48,3,3,4,,18.12.2006,treated,23,48,Control,N2,19.02.2014,209,3,include
+T48s1,T48s1,T48s1,E01_R1_D22_T48,2,1,1,NA,,treated,22,48,Metronidazole,N2,,NA,include
+T48s2,T48s2,T48s2,E01_R2_D22_T48,2,1,2,NA,,treated,22,48,Metronidazole,N2,,NA,include
+T48s3,T48s3,T48s3,E01_R3_D22_T48,2,1,3,NA,,treated,22,48,Metronidazole,N2,,NA,include
+T48s4,T48s4,T48s4,E01_R4_D22_T48,2,1,4,NA,,treated,22,48,Control,N2,,NA,include
+T4s1,T4s1,T4s1,E01_R1_D20_T4,2,1,1,NA,,treated,20,4,Metronidazole,N2,,NA,include
+T4s2,T4s2,T4s2,E01_R2_D20_T4,2,1,2,NA,,treated,20,4,Metronidazole,N2,,NA,include
+T4s3,T4s3,T4s3,E01_R3_D20_T4,2,1,3,NA,,treated,20,4,Metronidazole,N2,,NA,include
+T4s4,T4s4,T4s4,E01_R4_D20_T4,2,1,4,NA,,treated,20,4,Control,N2,,NA,include
+T5-1,T5:1,T5r1,E03_R1_D21_T5,3,3,1,,18.12.2004,treated,21,5,Metronidazole,N2,19.02.2004,310,2,include
+T5-2,T5:2,T5r2,E03_R2_D21_T5,3,3,2,,18.12.2004,treated,21,5,Metronidazole,N2,19.02.2004,256,7,include
+T5-3,T5:3,T5r3,E03_R3_D21_T5,3,3,3,,18.12.2004,treated,21,5,Metronidazole,N2,19.02.2004,252,3,include
+T5-4,T5:4,T5r4,E03_R4_D21_T5,3,3,4,,18.12.2004,treated,21,5,Control,N2,19.02.2004,288,5,include
+T5s1,T5s1,T5s1,E01_R1_D20_T5,2,1,1,NA,,treated,20,5,Metronidazole,N2,,NA,include
+T5s2,T5s2,T5s2,E01_R2_D20_T5,2,1,2,NA,,treated,20,5,Metronidazole,N2,,NA,include
+T5s3,T5s3,T5s3,E01_R3_D20_T5,2,1,3,NA,,treated,20,5,Metronidazole,N2,,NA,include
+T5s4,T5s4,T5s4,E01_R4_D20_T5,2,1,4,NA,,treated,20,5,Control,N2,,NA,include
+T6-1,T6:1,T6r1,E03_R1_D21_T6,3,3,1,,18.12.2004,treated,21,6,Metronidazole,N2,19.02.2004,305,include
+T6-2,T6:2,T6r2,E03_R2_D21_T6,3,3,2,,18.12.2004,treated,21,6,Metronidazole,N2,19.02.2004,264,include
+T6-3,T6:3,T6r3,E03_R3_D21_T6,3,3,3,,18.12.2004,treated,21,6,Metronidazole,N2,19.02.2004,265,8,include
+T6-4,T6:4,T6r4,E03_R4_D21_T6,4,3,4,,18.12.2004,treated,21,6,Control,N2,19.02.2004,241,2,include
+T6s1,T6s1,T6s1,E01_R1_D20_T6,2,1,1,NA,,treated,20,6,Metronidazole,N2,,NA,include
+T6s2,T6s2,T6s2,E01_R2_D20_T6,2,1,2,NA,,treated,20,6,Metronidazole,N2,,NA,include
+T6s3,T6s3,T6s3,E01_R3_D20_T6,2,1,3,NA,,treated,20,6,Metronidazole,N2,,NA,include
+T6s4,T6s4,T6s4,E01_R4_D20_T6,2,1,4,NA,,treated,20,6,Control,N2,,NA,include
+T72-1,T72:1,T72r1,E03_R1_D24_T72,3,3,1,,18.12.2007,treated,24,72,Metronidazole,N2,19.02.2014,301,6,include
+T72-2,T72:2,T72r2,E03_R2_D24_T72,3,3,2,,18.12.2007,treated,24,72,Metronidazole,N2,19.02.2014,220,6,include
+T72-3,T72:3,T72r3,E03_R3_D24_T72,3,3,3,,18.12.2007,treated,24,72,Metronidazole,N2,19.02.2014,339,2,include
+T72-4,T72:4,T72r4,E03_R4_D24_T72,3,3,4,,18.12.2007,treated,24,72,Control,N2,19.02.2014,194,8,include
+T72s1,T72s1,T72s1,E01_R1_D23_T72,2,1,1,NA,,treated,23,72,Metronidazole,N2,,NA,include
+T72s2,T72s2,T72s2,E01_R2_D23_T72,2,1,2,NA,,treated,23,72,Metronidazole,N2,,NA,include
+T72s3,T72s3,T72s3,E01_R3_D23_T72,2,1,3,NA,,treated,23,72,Metronidazole,N2,,NA,include
+T72s4,T72s4,T72s4,E01_R4_D23_T72,2,1,4,NA,,treated,23,72,Control,N2,,NA,include
+T96-1,T96:1,T96r1,E03_R1_D25_T96,3,3,1,,18.12.2008,treated,25,96,Metronidazole,N2,19.02.2018,295,3,include
+T96-2,T96:2,T96r2,E03_R2_D25_T96,3,3,2,,18.12.2008,treated,25,96,Metronidazole,N2,19.02.2018,268,include
+T96-3,T96:3,T96r3,E03_R3_D25_T96,3,3,3,,18.12.2008,treated,25,96,Metronidazole,N2,19.02.2018,227,3,include
+T96-4,T96:4,T96r4,E03_R4_D25_T96,3,3,4,,18.12.2008,treated,25,96,Control,N2,19.02.2018,220,1,include
+T96s1,T96s1,T96s1,E01_R1_D24_T96,2,1,1,NA,,treated,24,96,Metronidazole,N2,,NA,include
+T96s2,T96s2,T96s2,E01_R2_D24_T96,2,1,2,NA,,treated,24,96,Metronidazole,N2,,NA,include
+T96s3,T96s3,T96s3,E01_R3_D24_T96,2,1,3,NA,,treated,24,96,Metronidazole,N2,,NA,include
+T96s4,T96s4,T96s4,E01_R4_D24_T96,2,1,4,NA,,treated,24,96,Control,N2,,NA,include
