@@ -1,4 +1,5 @@
 from libs.config.Parser import parse_json
+from time import time
 
 import argparse
 
@@ -28,5 +29,6 @@ if __name__ == "__main__":
         print("Simulation stopped by user")
         quit()
 
-    while True:
-        ca_sim.step()
+    while ca_sim.step()==0:
+        print(f'sim at step {ca_sim.step_no}/{ca_sim.max_steps}, time elapsed={time()-ca_sim.start_time:.2f}s')
+    quit()

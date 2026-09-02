@@ -101,8 +101,7 @@ class CellularAutomaton:
         '''increments the timestep of the simulation and applies all '''
         if self.step_no>=self.max_steps:
             print(f'simulation ended. time={time()-self.start_time:.2f}s')
-            quit()
-            return
+            return -1
         if self.step_no==0:
             self.start_time = time()
         
@@ -123,3 +122,4 @@ class CellularAutomaton:
 
         if self.step_no >= self.max_steps and self.tracker and self.output_filename:
             self.tracker.save(self.output_filename)
+        return 0

@@ -117,7 +117,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         if "keys" not in tracker_args:
             tracker_args["keys"] = list(state.keys)
 
-        output_filename = tracker_data.get("save_as") or tracker_data.get("filename")
+        output_filename = tracker_data.get("save_as", None) or tracker_data.get("filename", None)
 
         tracker_class = globals().get(tracker_name)
         if tracker_class is None:
