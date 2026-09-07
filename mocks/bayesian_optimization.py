@@ -11,30 +11,26 @@ from libs.config.Parser import parse_json
 from mocks.screening import calc_rmse, get_real_data, get_relative_sim_data, save_screening_config
 
 
-BASE_CONFIG = 'full18'
+BIO_NUMBER=4
+BASE_CONFIG = 'bo'
 RESULTS_PATH = Path(__file__).resolve().parent.parent / 'optim_results' / 'bo_results.csv'
 INITIAL_RUNS = 5
 BO_RUNS = 10
 RANDOM_SEED = 20260903
-VALUE_RADIUS = 0.25
+VALUE_RADIUS = 0.5
 VALUE_BOUNDS = (-1.0, 1.0)
 
 SELECTED_PAIRS = [
-    ('Enterobacteriaceae', 'Tannerellaceae'),
-    ('Bacteroidaceae', 'Sutterellaceae'),
-    ('Bifidobacteriaceae', 'Oscillospiraceae'),
-    ('Sutterellaceae', 'Ruminococcaceae'),
-    ('Lachnospiraceae', 'Ruminococcaceae'),
-    ('Other_bacteria', 'Lachnospiraceae'),
-    ('Lachnospiraceae', 'Tannerellaceae'),
-    ('Bacteroidaceae', 'Oscillospiraceae'),
-    ('Tannerellaceae', 'Bacteroidaceae'),
-    ('Tannerellaceae', 'Sutterellaceae'),
-    ('Bacteroidaceae', 'Tannerellaceae'),
-    ('Bifidobacteriaceae', 'Lachnospiraceae'),
-    ('Bacteroidaceae', 'Enterobacteriaceae'),
-    ('Sutterellaceae', 'Tannerellaceae'),
-    ('Oscillospiraceae', 'Enterobacteriaceae'),
+    ('Oscillospiraceae','Other_bacteria'),
+    ('Bacteroidaceae','Lachnospiraceae'),
+    ('Enterobacteriaceae','Bifidobacteriaceae'),
+    ('Tannerellaceae','Bifidobacteriaceae'),
+    ('Bacteroidaceae','Oscillospiraceae'),
+    ('Sutterellaceae','Oscillospiraceae'),
+    ('Prevotellaceae','Enterobacteriaceae'),
+    ('Bifidobacteriaceae','Sutterellaceae'),
+    ('Prevotellaceae','Bifidobacteriaceae'),
+    ('Oscillospiraceae','Tannerellaceae'),
 ]
 
 
@@ -131,7 +127,7 @@ def run_trial(run_no: int, values: np.ndarray, base_interactions: dict, real_dat
 def main() -> None:
     base_interactions = load_interactions(BASE_CONFIG)
     baseline = vector_from_interactions(base_interactions)
-    real_data = get_real_data()
+    real_data = get_real_data(bio_number=BIO_NUMBER)
     rng = np.random.default_rng(RANDOM_SEED)
 
     results = load_results()

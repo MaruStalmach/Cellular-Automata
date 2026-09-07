@@ -7,8 +7,8 @@ import pandas as pd
 from libs.config.Parser import parse_json
 from time import time
 
-SAMPLE_RUNS = 3
-BIO_NUMBER = 3
+SAMPLE_RUNS = 12
+BIO_NUMBER = 4
 IDX_TO_NAME = {
     0: 'Bacteroidaceae',
     1: 'Lachnospiraceae',
@@ -42,10 +42,10 @@ BASE_INTERACTIONS = {
 }
 
 
-def get_real_data() -> pd.DataFrame:
+def get_real_data(bio_number=BIO_NUMBER) -> pd.DataFrame:
     df_meta = pd.read_csv('dataset/meta_final.csv', index_col=0)
     filtered_families = pd.read_csv('dataset/filtered_families_fixed.csv', index_col=0)
-    idx = df_meta[df_meta.Bioreactor == BIO_NUMBER].sort_values(by=['Bioreactor_run', 'Day_Steady_state', 'Hour_Treated']).index[:25]
+    idx = df_meta[df_meta.Bioreactor == bio_number].sort_values(by=['Bioreactor_run', 'Day_Steady_state', 'Hour_Treated']).index[:25]
     df_meta_nona = df_meta.fillna(0)
     time_df = (
         df_meta_nona.loc[idx, 'Day_Steady_state'] * 24 +
