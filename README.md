@@ -4,7 +4,6 @@ A three-dimensional cellular automaton simulator for modelling bacterial populat
 
 The simulator represents a spatial environment as a 3D grid. Each cell may contain bacterial species, biofilm attachment, floating bacteria, substrate concentrations, and other experiment-specific state variables. Configurable rules update the state over time, while an OpenGL renderer provides interactive visualization.
 
-> This is a research and experimentation codebase. The biological processes are simplified abstractions and should be calibrated against experimental or literature data before being used for quantitative predictions.
 
 ## Contents
 
