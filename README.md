@@ -31,7 +31,7 @@ The simulator represents a spatial environment as a 3D grid. Each cell may conta
 
 ## Architecture Overview
 
-![image](../Cellular-Automata/resources/architecture_CA.png)
+![image](./resources/architecture_CA.png)
 
 
 ### Geometry
