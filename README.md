@@ -122,7 +122,17 @@ It supports:
 - Order-independent transparency using framebuffer ping-pong.
 - Interactive camera controls.
 
-The renderer currently advances the simulation when the user presses **P** rather than continuously.
+Controls:
+
+- P: advance simulation.
+- W/S: Zoom in/out.
+- A/D: Rotate left/right.
+- Q/E: Rotate up/down.
+- C: Toggle cross section mode.
+- J/L: cycle cross section layers up/down.
+- X: cycle cross section axis.
+
+
 
 ## Repository Structure
 
