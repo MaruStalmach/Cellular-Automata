@@ -12,7 +12,6 @@ The simulator represents a spatial environment as a 3D grid. Each cell may conta
 - [Repository Structure](#repository-structure)
 - [Configuration](#configuration)
 - [Running Simulations](#running-simulations)
-- [Known Limitations](#known-limitations)
 - [Authors](#authors)
 
 ## Features
