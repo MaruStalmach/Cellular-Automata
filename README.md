@@ -132,7 +132,7 @@ Controls:
 - J/L: cycle cross section layers up/down.
 - X: cycle cross section axis.
 
-
+![gif](gifs/full5.gif)
 
 ## Repository Structure
 
