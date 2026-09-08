@@ -13,7 +13,7 @@
   "tracker": {
     "name": "StateTracker",
     "args": {},
-    "save_as" : "full18-bo-v2"
+    "save_as" : "bo2-r1"
   },
   "state_keys": [
     {
