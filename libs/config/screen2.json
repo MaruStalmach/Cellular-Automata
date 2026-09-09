@@ -10,7 +10,8 @@
 
 "tracker": {
   "name": "StateTracker",
-  "args": {}
+  "args": {},
+  "save_as":"precal-r1"
 },
 
 "state_keys":[
