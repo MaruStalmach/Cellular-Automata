@@ -45,8 +45,13 @@ def getnestedattr(module, name: str) -> object:
 
 
 def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
-
-    config_path = Path(__file__).resolve().parent / filename
+    config_path = Path(filename)
+    if not config_path.is_absolute() and not config_path.exists():
+        candidates = (
+            Path(__file__).resolve().parent / filename,
+            Path(__file__).resolve().parents[2] / "research" / "configs" / filename,
+        )
+        config_path = next((path for path in candidates if path.exists()), candidates[-1])
 
     with open(config_path, "r") as file:
         data = json.load(file)

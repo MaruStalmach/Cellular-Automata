@@ -8,12 +8,17 @@ from scipy.special import ndtr
 from scipy.stats import qmc
 
 from libs.config.Parser import parse_json
-from mocks.screening import calc_rmse, get_real_data, get_relative_sim_data, save_screening_config
+from research.screening.screening import (
+    calc_rmse,
+    get_real_data,
+    get_relative_sim_data,
+    save_screening_config,
+)
 
 
 BIO_NUMBER=4
 BASE_CONFIG = 'bo'
-RESULTS_PATH = Path(__file__).resolve().parent.parent / 'optim_results' / 'bo_results.csv'
+RESULTS_PATH = Path(__file__).resolve().parents[2] / "research" / "results" / "bo_results.csv"
 INITIAL_RUNS = 5
 BO_RUNS = 10
 RANDOM_SEED = 20260903
@@ -35,7 +40,7 @@ SELECTED_PAIRS = [
 
 
 def load_interactions(config_name: str) -> dict:
-    config_path = Path(__file__).resolve().parent.parent / 'libs' / 'config' / f'{config_name}.json'
+    config_path = Path(__file__).resolve().parents[2] / 'research' / 'configs' / f'{config_name}.json'
     with open(config_path, 'r', encoding='utf-8') as file:
         config = json.load(file)
     for rule in config['rules']:

@@ -19,6 +19,13 @@ dependencies = [
     "scipy>=1.17.1",
 ]
 
+[project.optional-dependencies]
+research = [
+    "imageio>=2.37.0",
+    "pandas>=2.2.3",
+    "psutil>=6.1.1",
+]
+
 [dependency-groups]
 dev = [
     "ruff>=0.15.21",

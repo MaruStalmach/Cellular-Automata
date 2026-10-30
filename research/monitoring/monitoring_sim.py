@@ -62,7 +62,10 @@ if __name__ == "__main__":
     mem_usage = []
 
     for size in sizes:
-        command = f"python -m sim_no_render -x {size[0]} -y {size[1]} -z {size[2]}"
+        command = (
+            f"python -m examples.sim_no_render -x {size[0]} "
+            f"-y {size[1]} -z {size[2]}"
+        )
         args = shlex.split(command)
         print("\nLAUNCHING NEW PROCESS")
         print("grid size =", size)

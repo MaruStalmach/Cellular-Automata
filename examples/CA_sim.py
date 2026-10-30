@@ -5,7 +5,7 @@ import argparse
 
 
 ### example usage:
-#   python -m CA_sim -f draft.json
+#   python -m examples.CA_sim -f research/configs/draft.json
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

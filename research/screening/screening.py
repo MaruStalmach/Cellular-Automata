@@ -7,6 +7,9 @@ import pandas as pd
 from libs.config.Parser import parse_json
 from time import time
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = PROJECT_ROOT / "research" / "data"
+
 SAMPLE_RUNS = 12
 BIO_NUMBER = 4
 IDX_TO_NAME = {
@@ -43,8 +46,8 @@ BASE_INTERACTIONS = {
 
 
 def get_real_data(bio_number=BIO_NUMBER) -> pd.DataFrame:
-    df_meta = pd.read_csv('dataset/meta_final.csv', index_col=0)
-    filtered_families = pd.read_csv('dataset/filtered_families_fixed.csv', index_col=0)
+    df_meta = pd.read_csv(DATA_DIR / "meta_final.csv", index_col=0)
+    filtered_families = pd.read_csv(DATA_DIR / "filtered_families_fixed.csv", index_col=0)
     idx = df_meta[df_meta.Bioreactor == bio_number].sort_values(by=['Bioreactor_run', 'Day_Steady_state', 'Hour_Treated']).index[:25]
     df_meta_nona = df_meta.fillna(0)
     time_df = (
@@ -142,7 +145,7 @@ def build_sparse_interactions(base_interactions, active_pairs: int = 18, value_s
 
 
 def save_screening_config(interactions, run_no: int, config_name: str = 'screen'):
-    base_dir = Path(__file__).resolve().parent.parent / 'libs' / 'config'
+    base_dir = PROJECT_ROOT / 'research' / 'configs'
     config_dir = base_dir / 'screening_runs'
     config_dir.mkdir(exist_ok=True)
 
@@ -201,7 +204,8 @@ if __name__ == '__main__':
             }
             for row in results
         ])
-        df_results.to_csv(Path(__file__).resolve().parent / 'screening_results.csv', index=False)
-        print('Saved screening results to', Path(__file__).resolve().parent / 'screening_results.csv')
+        output_path = PROJECT_ROOT / 'research' / 'results' / 'screening_results.csv'
+        df_results.to_csv(output_path, index=False)
+        print('Saved screening results to', output_path)
         
           

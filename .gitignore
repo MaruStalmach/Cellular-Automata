@@ -215,4 +215,5 @@ AGENTS.md
 
 # Generated simulation data
 output_files/tracked_simulations/*.npz
-mocks/output_files/tracked_simulations/*.npz
+experiments/
+*.profile

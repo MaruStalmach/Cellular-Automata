@@ -8,8 +8,8 @@ from libs.tracking.StateTracker import StateTracker, TrackedStatePlayback
 
 ##########################
 # EXAMPLE USAGE
-# python -m mocks.Replay_sim -f demo -k bacteria substrate
-# python -m mocks.Replay_sim -f output_files/tracked_simulations/demo.npz -k bacteria,substrate
+# python -m examples.Replay_sim -f demo -k bacteria substrate
+# python -m examples.Replay_sim -f output_files/tracked_simulations/demo.npz -k bacteria,substrate
 #############################
 
 

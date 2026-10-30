@@ -1,8 +1,8 @@
 ###############################
 # Example usage
-# python -m mocks.generate_gif -h
-# python -m mocks.generate_gif -f multispecies_experiment -k bact_red bact_green bact_blue --fps 12
-# python -m mocks.generate_gif -f demo -k alive --duration 8
+# python -m examples.generate_gif -h
+# python -m examples.generate_gif -f multispecies_experiment -k bact_red bact_green bact_blue --fps 12
+# python -m examples.generate_gif -f demo -k alive --duration 8
 ##############################################################
 
 import argparse

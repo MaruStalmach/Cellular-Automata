@@ -4,8 +4,9 @@ from pathlib import Path
 import pandas as pd
 
 
-DEFAULT_INPUT = Path(__file__).resolve().parent.parent / 'optim_results' / 'screening_result.csv'
-DEFAULT_OUTPUT = Path(__file__).resolve().parent.parent / 'optim_results' / 'screening_pair_analysis.csv'
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "research" / "results"
+DEFAULT_INPUT = RESULTS_DIR / "screening_result.csv"
+DEFAULT_OUTPUT = RESULTS_DIR / "screening_pair_analysis.csv"
 
 
 def load_screening_results(path: Path) -> pd.DataFrame:

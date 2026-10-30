@@ -1,0 +1,7 @@
+monitoring - run as module so for example 'python -m research.monitoring.monitoring_sim' from project root
+this shows cpu and ram usage
+
+profiling - first run cProfile e.g. 'python -m cProfile -o research/monitoring/out.profile -m examples.sim_no_render'
+then run 'python -m research.monitoring.profiling' which by default analyzes 'research/monitoring/out.profile'
+optionally run 'snakeviz research/monitoring/out.profile' to see visualization of the data in out.profile
+this shows time spent in each function called during execution.
