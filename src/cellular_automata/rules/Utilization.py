@@ -129,9 +129,7 @@ class Utilization(Rule):
             self.mask |= self._cell_mask(grid)
 
         # counts amt of substrate particles in each cell neighborhood
-        substrate_count = self.neighborhood_count(substrate_grid).astype(
-            np.int8, copy=False
-        )
+        substrate_count = self.neighborhood_count(substrate_grid)
         ###################################################################################################
         # equations based on 'QUANTITATIVE CELLULAR AUTOMATON MODEL FOR BIOFILMS' by pizarro
         # reusing the same array for calculations

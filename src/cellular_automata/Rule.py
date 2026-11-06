@@ -49,11 +49,12 @@ class Rule:
     def _layer_count(self, grid: np.ndarray) -> np.ndarray:
         if grid.ndim == self.geometry.ndim + 1:
             return (grid > 0).sum(axis=-1)
-        return grid.astype(np.int8, copy=False)
+        return grid.astype(np.int32, copy=False)
 
     def neighborhood_count(self, grid: np.ndarray):
         dim_count = self._layer_count(grid)
-        count = np.zeros_like(dim_count, dtype=np.int8)
+        # int32: a 3D Moore neighbourhood of a 6-layer key holds up to 156 particles
+        count = np.zeros_like(dim_count, dtype=np.int32)
         for offset in self.geometry._offsets:
             count += self._shift_for_offset(
                 dim_count, tuple(int(value) for value in offset)

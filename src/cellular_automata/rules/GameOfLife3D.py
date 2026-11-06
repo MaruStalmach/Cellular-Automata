@@ -33,10 +33,7 @@ class GameOfLife3D(Rule):
 
     def apply_state(self, state: State) -> State:
         # Use per-key accessors so reads/writes affect the underlying arrays
-        alive_grid = state[self.required_keys[0]].astype(np.int8, copy=False)
-
-        alive_counts = np.zeros_like(alive_grid, dtype=np.int8)
-        alive_counts += self.neighborhood_count(alive_grid)
+        alive_counts = self.neighborhood_count(state[self.required_keys[0]])
 
         current_alive = state["alive"] == 1
         survives = current_alive & (alive_counts >= self.eb) & (alive_counts <= self.eh)
