@@ -212,3 +212,11 @@ __marimo__/
 test.py
 .DS_Store
 AGENTS.md
+
+# Generated simulation output (tracked states, GIFs, profiles) - anywhere in the repo
+output_files/
+*.npz
+*.profile
+
+# Experiment results stay off the code branches; archive them on the orphan `results` branch
+research/*/results/

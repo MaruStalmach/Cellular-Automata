@@ -1,5 +1,5 @@
-from libs.Geometry import Geometry
-from libs.State import State
+from cellular_automata.Geometry import Geometry
+from cellular_automata.State import State
 import numpy as np
 
 import pytest

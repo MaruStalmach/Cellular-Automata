@@ -4,9 +4,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from libs.Geometry import Geometry
-from libs.rules.SpeciesInteraction import SpeciesInteraction
-from libs.State import State
+from cellular_automata.Geometry import Geometry
+from cellular_automata.rules.SpeciesInteraction import SpeciesInteraction
+from cellular_automata.State import State
 
 
 @pytest.fixture
