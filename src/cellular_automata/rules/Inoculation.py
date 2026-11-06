@@ -1,7 +1,8 @@
+
+from cellular_automata.Geometry import Geometry
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
-from cellular_automata.Geometry import Geometry
-import numpy as np
+
 
 class Inoculation(Rule):
     def __init__(self, geometry:Geometry, time_step : float, target_key, location, size):

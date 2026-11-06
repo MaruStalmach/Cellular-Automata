@@ -1,7 +1,8 @@
+import numpy as np
+
+from cellular_automata.Geometry import Geometry
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
-from cellular_automata.Geometry import Geometry
-import numpy as np
 
 
 class BacteriaDecay(Rule):

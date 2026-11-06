@@ -1,6 +1,7 @@
+import numpy as np
+
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
-import numpy as np
 
 
 class BioreactorBiofilmDetachment(Rule):

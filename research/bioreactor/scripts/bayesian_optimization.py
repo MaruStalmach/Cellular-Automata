@@ -1,4 +1,3 @@
-import ast
 import json
 from pathlib import Path
 
@@ -6,10 +5,15 @@ import numpy as np
 import pandas as pd
 from scipy.special import ndtr
 from scipy.stats import qmc
+from screening import (
+    CONFIGS_DIR,
+    calc_rmse,
+    get_real_data,
+    get_relative_sim_data,
+    save_screening_config,
+)
 
 from cellular_automata.config.Parser import parse_json
-from screening import CONFIGS_DIR, calc_rmse, get_real_data, get_relative_sim_data, save_screening_config
-
 
 BIO_NUMBER=4
 BASE_CONFIG = 'bo'
@@ -55,7 +59,7 @@ def interactions_from_vector(base_interactions: dict, values: np.ndarray) -> dic
     interactions = {
         source: dict(targets) for source, targets in base_interactions.items()
     }
-    for (source, target), value in zip(SELECTED_PAIRS, values):
+    for (source, target), value in zip(SELECTED_PAIRS, values, strict=True):
         interactions[source][target] = float(value)
     return interactions
 

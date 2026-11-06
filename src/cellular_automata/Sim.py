@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import warnings
+from time import time
 
 import numpy as np
-from cellular_automata.tracking.StateTracker import StateTracker
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
-from time import time
+from cellular_automata.tracking.StateTracker import StateTracker
 
 # upper bound on how often one rule runs per step, to keep a step's cost bounded
 MAX_RUNS_PER_STEP = 500

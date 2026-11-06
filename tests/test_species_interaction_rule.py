@@ -52,7 +52,11 @@ def test_get_interaction(geometry: Geometry):
     # assert rule.get_interaction("B", "A") == 0.0
 
 
-@pytest.mark.xfail(reason="D1 in docs/code-quality-plan.md: kill/spawn semantics undecided", strict=True)
+@pytest.mark.xfail(
+    reason="D1 in docs/code-quality-plan.md: kill/spawn semantics undecided; "
+    "unseeded, so it can pass by chance",
+    strict=False,
+)
 def test_destructive_interaction(geometry: Geometry, base_state: State):
     """
     interaction coeff < 0.
@@ -74,7 +78,11 @@ def test_destructive_interaction(geometry: Geometry, base_state: State):
     assert new_state["B"][0, 0] == 1
 
 
-@pytest.mark.xfail(reason="D1 in docs/code-quality-plan.md: kill/spawn semantics undecided", strict=True)
+@pytest.mark.xfail(
+    reason="D1 in docs/code-quality-plan.md: kill/spawn semantics undecided; "
+    "unseeded, so it can pass by chance",
+    strict=False,
+)
 def test_symbiotic_interaction(geometry: Geometry, base_state: State):
     """
     interaction coeff > 0.

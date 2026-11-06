@@ -1,11 +1,11 @@
-import psutil
+import logging
 import subprocess
 import sys
-import logging
 import time
+
 import matplotlib.pyplot as plt
 import numpy as np
-
+import psutil
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
