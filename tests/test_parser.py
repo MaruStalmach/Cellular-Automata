@@ -70,3 +70,26 @@ def test_render_false_returns_no_renderer(tmp_path: Path):
     _, renderer = Parser.parse_json(path)
 
     assert renderer is None
+
+
+def _headless_config(tmp_path: Path, **sim_overrides) -> Path:
+    path = _write_config(tmp_path, {})
+    data = json.loads(path.read_text())
+    data["sim"].update(render=False, **sim_overrides)
+    path.write_text(json.dumps(data))
+    return path
+
+
+def test_known_neighbourhood_is_used(tmp_path: Path):
+    path = _headless_config(tmp_path, neighbourhood="VonNeumannNeighbourhood")
+
+    ca_sim, _ = Parser.parse_json(path)
+
+    assert len(ca_sim.geometry._offsets) == 6
+
+
+def test_unknown_neighbourhood_raises(tmp_path: Path):
+    path = _headless_config(tmp_path, neighbourhood="MoorNeighbourhood")
+
+    with pytest.raises(ValueError, match="Unknown neighbourhood 'MoorNeighbourhood'"):
+        Parser.parse_json(path)
