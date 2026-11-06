@@ -9,21 +9,23 @@ from libs.Sim import CellularAutomaton
 from libs.State import State
 from libs.util.helper_functions import *
 from libs.tracking.StateTracker import *
+### RULES ########################
+from libs.rules.BacteriaGrowth import *
+from libs.rules.GameOfLife3D import *
+from libs.rules.GutDrift import *
+from libs.rules.Diffusion import *
+from libs.rules.BiofilmDetachment import *
+from libs.rules.SpeciesInteraction import *
+from libs.rules.BacteriaDecay import *
+from libs.rules.Utilization import *
+from libs.rules.Inoculation import *
+from libs.rules.CreateBiofilm import *
 
 ### NEIGHBORHOODS #####################
 from libs.neighbourhoods.MooreNeighbourhood import *
 from libs.neighbourhoods.VonNeumannNeighbourhood import *
 from libs.rendering.Renderer import CARenderer
 from libs.rules.BacteriaDecay import *
-
-### RULES ########################
-from libs.rules.BacteriaGrowth import *
-from libs.rules.BiofilmDetachment import *
-from libs.rules.Diffusion import *
-from libs.rules.GameOfLife3D import *
-from libs.rules.GutDrift import *
-from libs.rules.SpeciesInteraction import *
-from libs.rules.Utilization import *
 
 
 
@@ -81,8 +83,8 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     for sk in state_keys:
         cell_keys.append(sk["name"])
         key_layers.append(sk.get("layers", 1))
-        random.append(sk.get("random", True))
-        random_args.append(sk["random_args"])
+        random.append(sk.get("random", False))
+        random_args.append(sk.get("random_args",None))
         key_dtypes[sk["name"]] = getnestedattr(
             np, sk.get("dtype", sim_data.get("dtype", "np.uint8"))
         )

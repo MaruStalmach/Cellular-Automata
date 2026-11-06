@@ -1,76 +1,137 @@
-from libs.rules import GameOfLife3D
-from libs.Geometry import Geometry
-from libs.Sim import CellularAutomaton
-from libs.Rendering import CARenderer
+###############################
+# Example usage
+# python -m mocks.generate_gif -h
+# python -m mocks.generate_gif -f multispecies_experiment -k bact_red bact_green bact_blue --fps 12
+# python -m mocks.generate_gif -f demo -k alive --duration 8
+##############################################################
+
+import argparse
+from pathlib import Path
 
 import numpy as np
+import imageio.v2 as imageio
+
+from libs.rendering.Renderer import CARenderer
+from libs.tracking.StateTracker import StateTracker, TrackedStatePlayback
+
+
+def _parse_keys(raw_keys: list[str] | None, available_keys: tuple[str, ...]) -> list[str]:
+    if not raw_keys:
+        return list(available_keys)
+
+    parsed_keys: list[str] = []
+    for item in raw_keys:
+        parsed_keys.extend([key for key in item.split(",") if key])
+
+    return parsed_keys
+
+
+def _frame_for_keys(state, keys: list[str], spatial_rank: int) -> np.ndarray:
+    frames = []
+    for key in keys:
+        values = state[key]
+        if values.ndim == spatial_rank + 1:
+            values = values.max(axis=-1)
+        frames.append(values)
+
+    if len(frames) == 1:
+        return frames[0]
+
+    return np.stack(frames, axis=0)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="generate_gif",
+        description="Replay a tracked simulation in the renderer",
+    )
+    parser.add_argument("-f", "--file", required=True, help="tracked .npz file name")
+    parser.add_argument(
+        "-k",
+        "--keys",
+        nargs="+",
+        help="one or more keys to render, separated by spaces or commas",
+    )
+    parser.add_argument(
+        "--fps",
+        type=float,
+        default=10.0,
+        help="GIF frame rate when duration is not set",
+    )
+    parser.add_argument(
+        "--duration",
+        type=float,
+        default=None,
+        help="total GIF duration in seconds; overrides fps when set",
+    )
+    parser.add_argument(
+        "--loop",
+        type=int,
+        default=0,
+        help="GIF loop count; 0 means loop forever",
+    )
+
+    args = parser.parse_args()
+
+    tracker = StateTracker.load(args.file)
+    selected_keys = _parse_keys(args.keys, tracker.history.keys())
+
+    if not selected_keys:
+        raise ValueError("no keys selected for replay")
+
+    playback = TrackedStatePlayback(tracker, step_no=0)
+    spatial_rank = len(playback.state.geometry.size)
+    captured_frames: list[np.ndarray] = []
+    should_capture_frame = False
+
+    def update_callback(step: bool = True):
+        nonlocal should_capture_frame
+        if step:
+            should_capture_frame = True
+            playback(step=True)
+        return _frame_for_keys(playback.state, selected_keys, spatial_rank)
+
+    def frame_callback(frame: np.ndarray) -> None:
+        nonlocal should_capture_frame
+        if should_capture_frame:
+            captured_frames.append(frame)
+            should_capture_frame = False
+
+    def save_gif() -> None:
+        if not captured_frames:
+            print("No frames captured yet; press P to record frames before saving a GIF.")
+            return
+
+        output_dir = Path("gifs")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / f"{Path(args.file).stem}.gif"
+
+        if args.duration is not None:
+            frame_duration = args.duration / len(captured_frames)
+        else:
+            frame_duration = 1.0 / args.fps
+
+        imageio.mimsave(
+            output_path,
+            captured_frames,
+            duration=frame_duration,
+            loop=args.loop,
+        )
+        print(f"Saved GIF to {output_path}")
+
+    first_frame = _frame_for_keys(playback.state, selected_keys, spatial_rank)
+
+    renderer = CARenderer(
+        init_state=first_frame,
+        width=1200,
+        height=800,
+        update_callback=update_callback,
+        frame_callback=frame_callback,
+        gif_callback=save_gif,
+        keys_to_render=len(selected_keys),
+    )
+    renderer.run()
 
 
 if __name__ == "__main__":
-    # TODO parse args
-
-    size = (10, 10, 10)
-    axes = "xyz"
-    p = "xyz"
-    geometry = Geometry(size, axes, p)
-
-    rules = [GameOfLife3D(geometry)]
-
-    ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
-
-    # Initialize renderer
-    renderer = CARenderer(width=1200, height=800, make_gif=True)
-
-    # Store simulation state
-    sim_state = {"running": True, "step_count": 0, "max_steps": 500}
-
-    init_state = np.zeros(size)
-    init_state[2:4, 1:4, 1:4] = np.array(
-        [[[0, 1, 0], [0, 0, 1], [1, 1, 1]], [[0, 1, 0], [0, 0, 1], [1, 1, 1]]]
-    )
-
-    def gol_state_from_array(array: np.ndarray):
-        assert array.shape == size
-        state = np.empty(size, dtype=object)
-        d_a = {"alive": 1}
-        d_d = {"alive": 0}
-        state = state.flatten()
-        for i, val in enumerate(array.flatten()):
-            if val == 1:
-                state[i] = Cell.from_dict(d_a)
-            else:
-                state[i] = Cell.from_dict(d_d)
-        state = state.reshape(size)
-        return state
-
-    init_state = gol_state_from_array(init_state)
-    # breakpoint()
-    ca_sim.state.data = init_state
-
-    def update_callback():
-        """Called each frame to get the latest CA state"""
-        if sim_state["running"] and sim_state["step_count"] < sim_state["max_steps"]:
-            if sim_state["step_count"] > 0:
-                ca_sim.step()
-            sim_state["step_count"] += 1
-            print(f"Step {sim_state['step_count']}/{sim_state['max_steps']}")
-
-        # Convert CA state to numpy array for rendering
-        # Assuming the CA state is stored in ca_sim.grid or similar
-        # This will need to be adjusted based on your actual data structures
-        try:
-            cell_array = np.array(
-                [cell["alive"] for cell in ca_sim.state.data.flatten()]
-            )
-            cell_array = cell_array.reshape(size)
-            return cell_array
-        except:
-            # Fallback if structure is different
-            print("update_callback fallback triggered")
-            return None
-
-    # Run renderer with CA updates
-    try:
-        renderer.run(update_callback=update_callback)
-    except KeyboardInterrupt:
-        print("Simulation stopped by user")
+    main()
