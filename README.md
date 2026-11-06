@@ -153,7 +153,7 @@ Controls:
 ├── examples/                  # runnable scripts (rendered / headless runs, replay, GIF export)
 │   └── notebooks/
 ├── research/                  # study-specific work, one folder per study
-│   ├── bioreactor/            # configs/, data/, notebooks/, scripts/, results/
+│   ├── bioreactor/            # configs/, data/, notebooks/, scripts/
 │   └── gut/                   # gut microbiome study
 ├── tools/profiling/           # CPU / RAM monitoring and cProfile helpers
 ├── tests/
@@ -163,10 +163,12 @@ Controls:
 
 Generated output (tracked simulations, GIFs, profiles) is written to `output_files/`, which is git-ignored.
 
+Experiment results are not kept on the code branches. Scripts write them to `research/<study>/results/`, which is git-ignored. Results worth keeping are archived on the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch, together with the commit and config that produced them.
+
 ### Adding new things
 
 - **A new rule** - add a module to `src/cellular_automata/rules/` with a `Rule` subclass, export it from `src/cellular_automata/rules/__init__.py` and import it in `src/cellular_automata/config/Parser.py`; configs then refer to it by class name.
-- **A new study** - create `research/<study>/` with the same `configs/`, `data/`, `notebooks/`, `scripts/`, `results/` layout as `research/bioreactor/`.
+- **A new study** - create `research/<study>/` with the same `configs/`, `data/`, `notebooks/`, `scripts/` layout as `research/bioreactor/`. Archive its results on the `results` branch.
 - **A new example config** - add it to `configs/examples/`.
 
 ## Configuration
