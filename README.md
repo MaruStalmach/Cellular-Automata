@@ -11,7 +11,9 @@ The simulator represents a spatial environment as a 3D grid. Each cell may conta
 - [Architecture Overview](#architecture-overview)
 - [Repository Structure](#repository-structure)
 - [Configuration](#configuration)
+- [Installation](#installation)
 - [Running Simulations](#running-simulations)
+- [Running Tests](#running-tests)
 - [Authors](#authors)
 
 ## Features
@@ -30,7 +32,7 @@ The simulator represents a spatial environment as a 3D grid. Each cell may conta
 
 ## Architecture Overview
 
-![image](./resources/architecture_CA.png)
+![image](docs/assets/architecture_CA.png)
 
 
 ### Geometry
@@ -131,31 +133,39 @@ Controls:
 - J/L: cycle cross section layers up/down.
 - X: cycle cross section axis.
 
-![gif](gifs/full5.gif)
+![gif](docs/assets/full5.gif)
 
 ## Repository Structure
 
 ```text
 .
-├── CA_sim.py
-├── sim_no_render.py
-├── CA_*.py
-├── libs/
-│   ├── Geometry.py
-│   ├── State.py
-│   ├── Rules.py
-│   ├── Sim.py
-│   ├── Callbacks.py
-│   ├── Rendering/
-│   │   └── shaders/
-│   └── config/
-│       └── Parser.py
-├── experiments/
+├── src/cellular_automata/     # the simulation library (installable package)
+│   ├── Geometry.py, State.py, Sim.py, Rule.py, Callback.py, Neighbourhood.py
+│   ├── neighbourhoods/        # Moore / von Neumann neighbourhoods
+│   ├── rules/                 # one file per rule (BacteriaGrowth, Diffusion, GutDrift, ...)
+│   ├── rendering/             # OpenGL renderer, camera, shaders/
+│   ├── tracking/              # StateTracker: saves simulation state to .npz
+│   ├── config/Parser.py       # builds a simulation from a JSON config
+│   └── util/
+├── configs/examples/          # small, ready-to-run example configs
+├── examples/                  # runnable scripts (rendered / headless runs, replay, GIF export)
+│   └── notebooks/
+├── research/                  # study-specific work, one folder per study
+│   ├── bioreactor/            # configs/, data/, notebooks/, scripts/, results/
+│   └── gut/                   # gut microbiome study
+├── tools/profiling/           # CPU / RAM monitoring and cProfile helpers
 ├── tests/
-├── `pyproject.toml`
-├── `AGENTS.md`
-└── `README.md`
+├── docs/assets/               # images used in this README
+└── pyproject.toml
 ```
+
+Generated output (tracked simulations, GIFs, profiles) is written to `output_files/`, which is git-ignored.
+
+### Adding new things
+
+- **A new rule** - add a module to `src/cellular_automata/rules/` with a `Rule` subclass and import it in `src/cellular_automata/config/Parser.py`; configs then refer to it by class name.
+- **A new study** - create `research/<study>/` with the same `configs/`, `data/`, `notebooks/`, `scripts/`, `results/` layout as `research/bioreactor/`.
+- **A new example config** - add it to `configs/examples/`.
 
 ## Configuration
 
@@ -231,32 +241,46 @@ Example configuration:
 ### Requirements
 
 - Python 3.12.
-- NumPy and project dependencies from `pyproject.toml`.
-- An OpenGL-compatible display for rendered simulations.
-- GLFW-compatible graphics support for the renderer.
+- An OpenGL-compatible display and GLFW-compatible graphics support for rendered simulations.
+
+### Setup
+
+With [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv sync                      # library + dev tools (pytest, ruff)
+uv sync --extra research     # also install pandas, imageio, psutil for examples/research/tools
+```
+
+Or with pip:
+
+```bash
+pip install -e ".[research]"
+```
 
 ## Running Simulations
 
-Run commands from the repository root.
+Run commands from the repository root (prefix them with `uv run` when using uv).
 
 ### Rendered Simulation
 
 ```bash
-python CA_sim.py -f `sim_config.json`
+python examples/CA_sim.py -f configs/examples/draft.json
 ```
 
 The renderer opens an interactive window. Press **P** to advance the simulation.
+Configs with `"render": false` in their `sim` section run headless with the same command.
 
-The equivalent command without `uv` is:
+Config paths are resolved relative to the current directory, so research configs work the same way:
 
 ```bash
-python CA_sim.py -f `sim_config.json`
+python examples/CA_sim.py -f research/bioreactor/configs/full18.json
 ```
 
 ### Headless Simulation
 
 ```bash
-python sim_no_render.py -x 20 -y 20 -z 20 -s 100
+python examples/sim_no_render.py -x 20 -y 20 -z 20 -s 100
 ```
 
 Arguments:
@@ -275,6 +299,22 @@ Headless mode is useful for:
 - Performance testing.
 - Remote machines.
 - Systems without a graphical display.
+
+### Replaying and Exporting
+
+Configs with a `tracker` section save their state to `output_files/tracked_simulations/<save_as>.npz`, which can be replayed or exported:
+
+```bash
+python examples/CA_sim.py -f configs/examples/demo.json          # writes output_files/tracked_simulations/demo.npz
+python examples/Replay_sim.py -f demo -k bacteria substrate
+python examples/generate_gif.py -f demo -k bacteria --duration 8  # writes output_files/gifs/demo.gif
+```
+
+## Running Tests
+
+```bash
+uv run pytest        # or: python -m pytest
+```
 
 ## Authors
 
