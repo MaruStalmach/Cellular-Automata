@@ -14,7 +14,7 @@ class BioreactorBiofilmDetachment(Rule):
         self.detachment_probability = detachment_rate * scaling
 
         self.target_key = biofilm_key
-        self.required_keys.extend(self.target_key)
+        self.required_keys.append(self.target_key)
 
     def apply_state(self, state: State) -> State:
 
@@ -33,10 +33,11 @@ class BioreactorBiofilmDetachment(Rule):
         chances = np.random.random(biofilm_grid.shape)
 
         # checks for biofilm on square and checks the prob of detachment
-        detached_mask = biofilm_grid & (chances < chance_detachment)
+        # must be a boolean mask: an integer array would index whole slabs along x
+        detached_mask = (biofilm_grid > 0) & (chances < chance_detachment)
         biofilm_grid[detached_mask] = 0
 
 
-        state["biofilm"] = biofilm_grid
+        state[self.target_key] = biofilm_grid
 
         return state
