@@ -1,8 +1,8 @@
 import pytest
 from itertools import product
 import numpy as np
-from libs.neighbourhoods.MooreNeighbourhood import MooreNeighbourhood
-from libs.neighbourhoods.VonNeumannNeighbourhood import VonNeumannNeighbourhood
+from cellular_automata.neighbourhoods.MooreNeighbourhood import MooreNeighbourhood
+from cellular_automata.neighbourhoods.VonNeumannNeighbourhood import VonNeumannNeighbourhood
 
 
 @pytest.fixture

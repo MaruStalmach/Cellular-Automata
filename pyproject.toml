@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cellular-automata"
 version = "0.1.0"
-description = "Add your description here"
+description = "Configurable 3D cellular automaton for simulating microbial communities and biofilms, with OpenGL rendering."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -19,11 +19,26 @@ dependencies = [
     "scipy>=1.17.1",
 ]
 
+[project.optional-dependencies]
+# extra packages used by examples/, research/ and tools/ (not needed by the library itself)
+research = [
+    "imageio>=2.34",
+    "pandas>=2.2",
+    "psutil>=5.9",
+]
+
 [dependency-groups]
 dev = [
+    "pytest>=8.0",
     "ruff>=0.15.21",
 ]
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["*"]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cellular_automata = ["rendering/shaders/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
