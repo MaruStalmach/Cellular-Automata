@@ -42,3 +42,19 @@ cellular_automata = ["rendering/shaders/*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+# long lines are left to `ruff format`
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# wildcard imports go away with the rule registry (ARCH-1 in docs/code-quality-plan.md)
+"src/cellular_automata/config/Parser.py" = ["F403", "F405"]
+# `from OpenGL.GL import *` is the usual PyOpenGL idiom
+"src/cellular_automata/rendering/*.py" = ["F403", "F405"]
