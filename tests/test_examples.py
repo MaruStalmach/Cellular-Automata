@@ -35,3 +35,12 @@ def test_example_builds_simulation(name: str):
     assert isinstance(ca_sim, CellularAutomaton)
     ca_sim.step()
     assert ca_sim.step_no == 1
+
+
+def test_ca_sim_headless_loop_stops_at_max_steps():
+    ca_sim_script = _load(EXAMPLES_DIR / "CA_sim.py")
+    ca_sim = _load(EXAMPLES_DIR / "sim_no_render.py").build_sim(TINY_SIZE, max_steps=3)
+
+    ca_sim_script.run_headless(ca_sim)
+
+    assert ca_sim.step_no == 3
