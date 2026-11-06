@@ -1,8 +1,8 @@
 # Code Quality Review & Improvement Plan
 
 Branch: `refactor/code-quality-plan` (based on `refactor/repo-structure`, PR #33)
-Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch.
-Date: 2026-11-06
+Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch (reviewed at `e3d7313`).
+Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`)
 
 ---
 
@@ -31,7 +31,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 | 4 | [REPRO-1](#repro-1) | Critical | No RNG seeding anywhere in the library, so runs can't be reproduced; parallel MC search likely reuses identical random streams |
 | 5 | [ARCH-1](#arch-1) | High | Rules are looked up through `globals()` + wildcard imports, which has no validation and hides typos |
 | 6 | [ARCH-2](#arch-2) | High | State keys (`"biofilm"`, `"floating_bacteria"`, `"alive"`) and the "wall" axis are hard-coded inside rules, and gut and bioreactor rules disagree on which axis is the wall |
-| 7 | [ARCH-4](#arch-4) | High | Two incompatible config formats (Parser vs `gut-experiments`), and the README documents the wrong one |
+| 7 | [ARCH-4](#arch-4) / [RES-1](#res-1) | High | Two incompatible config formats (Parser vs `gut-experiments`), and the README documents the wrong one. `gut-experiments` no longer merges cleanly (12 conflicts) |
 | 8 | [TEST-1](#test-1) | High ✅ | 4 tests fail because they are out of sync with the code (2 need a modelling decision) |
 | 9 | [HYG-1](#hyg-1) | High | No `LICENSE`, so nobody else may legally use the code |
 | 10 | [ARCH-3](#arch-3) | High | Rendering (OpenGL/GLFW) is a hard dependency of the config parser, and the renderer calls `quit()` |
@@ -47,6 +47,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
   - `examples/sim_no_render.py:1`
   - `examples/CA_diffusion.py:1`
   - `examples/CA_interaction.py:1`
+  - `gut-experiments: mocks/CA_neighbourhoods.py:20`, `:95` (new in `e3d7313`): `super().__init__(geometry)` without `time_step`, and `renderer.run(update_callback=...)`
 - **What:** `from cellular_automata.rules import GameOfLife3D` gives the *module* `GameOfLife3D.py`, because `rules/` has no `__init__.py` exporting classes. Calling it raises `TypeError: 'module' object is not callable` (verified).
 - **More breakage in the same files:**
   - `renderer.run(update_callback=...)`: `CARenderer.run()` takes no arguments.
@@ -195,7 +196,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="repro-1"></a>
 ### REPRO-1 - No seeding; global `np.random` everywhere (Critical)
 
-- **Where:** every rule; `State.py:69`; `gut-experiments: experiments/data_preparation.py:264`
+- **Where:** every rule (including the new `SpontaneousSpawn`, which uses `np.random.shuffle` / `np.random.random`); `State.py:69`; `gut-experiments: experiments/data_preparation.py:264`
 - **What:**
   - There is no `seed` in configs, and the library uses the global legacy RNG. Two runs of the same config give different results and can't be reproduced, which matters for a scientific tool and for calibration.
   - `data_preparation.py` runs simulations in a `ProcessPoolExecutor`. With the Linux `fork` start method, every worker inherits the *same* global RNG state, so parallel "independent" simulations likely reuse the same random streams.
@@ -402,15 +403,33 @@ There are 28 test functions. **No tests** exist for:
 
 ## 8. Research scripts & `gut-experiments`
 
-### RES-1 - What `gut-experiments` contains (and what to do with it)
+<a id="res-1"></a>
+### RES-1 - What `gut-experiments` contains (and what to do with it) (High)
 
-The branch's 3 unique commits add:
+As of `e3d7313` the branch has 4 commits not on the restructure branch.
+
+**`ddae2e8` and earlier:**
 - `experiments/data_preparation.py`, a parallel Monte Carlo search for interaction coefficients against before/after abundances
 - `experiments/mc_config.json`
 - `experiments/output.json` (a result)
 - a one-line `Geometry` change: `generate_offsets(ndim=self.ndim)`, already compatible
 
-It merges into `refactor/repo-structure` without conflicts, but uses `libs.` imports. The commit message "first iteration of tests" is misleading: there are no tests.
+The commit message "first iteration of tests" is misleading: that commit adds no tests.
+
+**`e3d7313` "chore: preserve Python branch changes"** (17 files, +1114 / −101). This commit **copied** files from `main` instead of merging `main`, so a plain `git merge` now gives **12 conflicts**, mostly add/add and file-location conflicts caused by the `libs/` → `src/` and `mocks/` → `examples/` moves. Comparing each file against the restructure branch (with `libs.` mapped to `cellular_automata.`):
+
+| File on `gut-experiments` | Compared with the restructure branch | Action |
+|---|---|---|
+| `libs/rules/CreateBiofilm.py`, `libs/rules/Inoculation.py`, `libs/rules/BiofilmDetachment.py`, `libs/tracking/StateTracker.py`, `tests/test_create_biofilm.py`, `tests/test_state_tracker.py`, `libs/rendering/Renderer.py` | **Identical** | Nothing to bring over |
+| `libs/Sim.py` | **Older:** `step()` still calls `quit()` at `max_steps`, so any script calling `step()` in a loop kills the process; no `state.sim` back-reference | Keep the restructure version |
+| `libs/config/Parser.py` | **Older:** no `AntibioticEffect` / `BioreactorBiofilmDetachment` imports, old package-relative config path, **and no `SpontaneousSpawn` import** | Keep the restructure version, then register `SpontaneousSpawn` ([RES-3](#res-3)) |
+| `mocks/Replay_sim.py`, `mocks/generate_gif.py` | **Older:** no `--stride`, old paths | Keep the restructure version |
+| `libs/State.py` | **Older:** no `sim` back-reference | Keep the restructure version |
+| `libs/rules/SpontaneousSpawn.py` | **New** | Port → [RES-3](#res-3) |
+| `experiments/scripts/{check_occupancy,compare_to_reference,print_ratios}.py` | **New** | Port → [RES-4](#res-4) |
+| `mocks/CA_neighbourhoods.py` | **New** (Moore vs von Neumann demo) | Port to `examples/`, fix → [BROKEN-1](#broken-1) |
+
+**Merge strategy:** don't merge the branch as-is. Port the *new* files into the new layout (`git checkout origin/gut-experiments -- <file>` + `git mv` + an import rewrite), take the restructure version for every shared file, and then retire the branch. A full `git merge` would mean resolving 12 conflicts that are all "ours", with a real risk of reintroducing the `quit()` in `Sim.step()`.
 
 **What to adopt:**
 - the explicit `RULE_REGISTRY` → [ARCH-1](#arch-1)
@@ -433,6 +452,42 @@ It merges into `refactor/repo-structure` without conflicts, but uses `libs.` imp
 - `bayesian_optimization.py`: the hand-rolled GP/EI has a fixed length scale of 0.35, no hyperparameter fitting, and assumes RMSE is noiseless ([REPRO-1](#repro-1)). That's acceptable for exploration, but document it or use `scikit-optimize` / `optuna`.
 - `bayesian_optimization.py:16` and `screening.py:10`: both define `STUDY_DIR`. Put shared helpers in `research/bioreactor/scripts/common.py`.
 - Constants (`SAMPLE_RUNS`, `BIO_NUMBER`, `SELECTED_PAIRS`, bounds) are hard-coded. Move them to CLI arguments or an experiment config.
+
+<a id="res-3"></a>
+### RES-3 - New `SpontaneousSpawn` rule (gut) (Medium)
+
+- **Where:** `gut-experiments: libs/rules/SpontaneousSpawn.py`
+- **What it does:** lets species with zero or locally absent abundance appear in empty cells (an independent Bernoulli draw per species per step, in shuffled species order). The design is sound and the docstring is good.
+- **Problems:**
+  - It is **not registered in the Parser** (no import), so configs can't use it. This is exactly the friction [ARCH-1](#arch-1) removes.
+  - It uses the global RNG ([REPRO-1](#repro-1)).
+  - It assumes single-layer species (`spawn_mask.reshape(state[sp].shape)` fails for layered keys).
+  - It has no tests.
+  - Like the symbiotic spawn in `SpeciesInteraction`, it can only place into empty cells. `check_occupancy.py` exists because the grid saturates and both spawn mechanisms then "freeze". That is a modelling issue: there is no turnover once the grid is full. It feeds into **D1** and the new **D7**.
+- **Fix:** port to `src/cellular_automata/rules/`, register it, add `rng`, tests (empty-only placement, no double occupancy, probability 0 never spawns, seeded determinism), and an example config.
+
+<a id="res-4"></a>
+### RES-4 - Gut analysis scripts depend on things that aren't in the repo (High)
+
+- **Where:** `gut-experiments: experiments/scripts/check_occupancy.py`, `compare_to_reference.py`, `print_ratios.py`
+- **What:**
+  - **Missing producer:** `check_occupancy.py` and `compare_to_reference.py` read a `ratios.csv` with `step`, per-family columns, `occupied_cells` and `total_cells`, "from the patched `experiment.py`". **No `experiment.py` exists on any branch**, so the pipeline that produced the gut results isn't committed.
+  - **Format mismatch:** `print_ratios.py` expects one `step_XXXX.npz` per step. `StateTracker` writes one `.npz` with stacked history plus a `__state_tracker_metadata__` entry, so running `print_ratios.py` on tracker output would average over all steps and treat the metadata as a species.
+  - **External data:** `compare_to_reference.py` defaults to `./dynamo_data/male_taxonomy_for_plot.csv` (the "dynamo repo" male donor dataset), which isn't in the repo. The old `cleanup/repository-structure` branch had LFS rules for `experiments/dynamo_data/**`.
+  - **Three species naming schemes for the gut:**
+    - `mc_config.json` uses codes (`BBBBB`, `BFCLL`, …)
+    - `compare_to_reference.py` uses 8 family names (`Bacteroidaceae`, `Oscillospiraceae_88309`, `Peptoniphilaceae`, …)
+    - the bioreactor uses 12 different families with `Other_bacteria`/`Rest`
+  - **Three separate error metrics:** `screening.calc_rmse` (RMSE over aligned times), `data_preparation.evaluate_guess` (sum of squared errors of the *final* proportions), and `compare_to_reference` (per-family MSE, `--steps-per-day` collapsed).
+  - **Unknown time mapping:** the step-to-real-time mapping is "not yet confirmed" (`--steps-per-day`). This is the same hidden coupling as `time * 2` in [RES-2](#res-2---bioreactor-scripts-medium).
+  - `print_ratios.py` uses `np.load(..., allow_pickle=True)` (unnecessary; it runs arbitrary code from untrusted files) and wraps every error in a generic `RuntimeError`.
+  - Outputs (`*_occupancy.png`, `*_mse_by_family.png`) are written next to the input CSV.
+- **Fix:**
+  - Commit `experiment.py` (or have it produce its output through `StateTracker`).
+  - Add one `analysis` module that turns tracker output into an abundance table (`step, time, <species…>, occupied_cells, total_cells`) and one metric module (RMSE/MSE per species and over time), used by both studies.
+  - Keep a species-name mapping file per dataset in `research/<study>/data/`.
+  - Document where `dynamo_data` comes from and its licence (**D6**). Fetch it with a script rather than committing it.
+  - Drop `allow_pickle`.
 
 ---
 
@@ -482,7 +537,9 @@ These are modelling or product choices, not code questions.
 | **D3** | Should the two `BiofilmDetachment` rules be merged now that the keys and axis are parameters? | One rule with `floating_key=None` (just remove) and `attachment_probability=0`, *or* keep two |
 | **D4** | Diffusion boundary: what should happen to particles lost in collisions? | Reflecting walls + exact conservation, explicit inflow boundary, or keep the stochastic refill (documented) |
 | **D5** | Do the old `fullN` configs need to stay runnable, or are they an archive of past runs? | Archive (freeze + README), *or* migrate to `extends` + overrides |
-| **D6** | Licence choice and data redistribution rights ([HYG-1](#hyg-1)) | - |
+| **D6** | Licence choice and data redistribution rights ([HYG-1](#hyg-1)), including the external `dynamo_data` reference set ([RES-4](#res-4)) | - |
+| **D7** | Grid saturation in the gut model: once every cell is occupied, `SpontaneousSpawn` and the symbiotic spawn can't place anything and the community freezes ([RES-3](#res-3)). Is that intended? | Add turnover (death/decay or washout via `GutDrift`) so cells free up, allow displacement/overwrite (ties to D1), or cap density below 1 |
+| **D8** | Where is the `experiment.py` that produces `ratios.csv` for the gut runs, and which species naming is canonical for the gut dataset? ([RES-4](#res-4)) | Commit it as `research/gut/scripts/`; choose one name mapping |
 
 ---
 
@@ -522,15 +579,24 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 
 ### Phase 4 - Bring in `gut-experiments`
 
-19. Merge `origin/gut-experiments` into a branch. Move its files to `research/gut/{scripts,configs,results}/`. Rewrite `data_preparation.py` → `mc_search.py` on the registry + unified config. Fix the RNG under multiprocessing with `SeedSequence.spawn` ([RES-1](#res-1---what-gut-experiments-contains-and-what-to-do-with-it)). Move `build_species_grid` into the library as an initialiser.
-20. Shared calibration helpers (`calc_rmse`, abundance extraction, checkpointing) go into `cellular_automata.analysis` or `research/common/`, used by both studies ([RES-2](#res-2---bioreactor-scripts-medium)).
+19. **Port, don't merge** ([RES-1](#res-1)). Take only the new files from `origin/gut-experiments`:
+    - `SpontaneousSpawn.py` → `src/cellular_automata/rules/`
+    - `CA_neighbourhoods.py` → `examples/`
+    - `experiments/scripts/*`, `data_preparation.py` → `research/gut/scripts/`
+    - `mc_config.json` → `research/gut/configs/`
+    - `output.json` → `research/gut/results/`
+
+    Rewrite imports to `cellular_automata.` and keep the restructure version of every shared file. Commit `experiment.py` (**D8**). *Done when:* the branch can be deleted with nothing lost.
+20. **`SpontaneousSpawn` in the library** ([RES-3](#res-3)): register it, add the injected `rng`, tests and an example gut config. Fix `CA_neighbourhoods.py` with the other examples.
+21. **Gut search on the shared stack:** rewrite `data_preparation.py` → `mc_search.py` on the registry + unified config. Fix the RNG under multiprocessing with `SeedSequence.spawn`. Move `build_species_grid` into the library as an initialiser.
+22. **Shared analysis + metrics** ([RES-2](#res-2---bioreactor-scripts-medium), [RES-4](#res-4)): one tracker → abundance-table function, one metrics module (RMSE/MSE per species and over time, explicit step→time mapping from the config `dt`), and per-dataset species-name mapping files. Port `check_occupancy`, `compare_to_reference` and `print_ratios` onto it, and the bioreactor `screening.py` / `bayesian_optimization.py` too. Decide **D7** before calibrating against `dynamo_data`.
 
 ### Phase 5 - Naming, performance, polish
 
-21. **[HYG-3](#hyg-3---naming--layout-medium):** snake_case modules, public `__init__` exports, a `ca-sim` CLI entry point. One breaking release; note it in a CHANGELOG.
-22. **[PERF-1](#perf-1):** vectorise `BacteriaGrowth` / `Utilization` conflict resolution; profile before and after with `tools/profiling`.
-23. **[PERF-2](#perf-2---smaller-items), [BUG-7](#bug-7), [BUG-8](#bug-8)** (after **D4**): Diffusion buffers and boundary model; antibiotic maths and constants.
-24. **[HYG-4](#hyg-4---logging-typing-docs-low)** and the dead-code table in [section 6](#6-duplication--dead-code-medium): logging, type hints, `mypy`, make `ruff` blocking in CI.
+23. **[HYG-3](#hyg-3---naming--layout-medium):** snake_case modules, public `__init__` exports, a `ca-sim` CLI entry point. One breaking release; note it in a CHANGELOG.
+24. **[PERF-1](#perf-1):** vectorise `BacteriaGrowth` / `Utilization` conflict resolution; profile before and after with `tools/profiling`.
+25. **[PERF-2](#perf-2---smaller-items), [BUG-7](#bug-7), [BUG-8](#bug-8)** (after **D4**): Diffusion buffers and boundary model; antibiotic maths and constants.
+26. **[HYG-4](#hyg-4---logging-typing-docs-low)** and the dead-code table in [section 6](#6-duplication--dead-code-medium): logging, type hints, `mypy`, make `ruff` blocking in CI.
 
 ### Suggested branch / PR sequence
 
@@ -546,3 +612,5 @@ main
 ```
 
 Gut-feature work can start **after step 15**. From then on, a new rule is one file with configurable keys and wall axis, and the explicit registry picks it up automatically.
+
+Step 19 (porting the new `gut-experiments` files) doesn't depend on Phases 1-3 and can be done **right away**, so the branch stops drifting further from `main`. Until step 13 lands, `SpontaneousSpawn` just needs one extra import line in `Parser.py` to be usable from configs.
