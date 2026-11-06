@@ -214,6 +214,7 @@ class TrackedStatePlayback:
         geometry: Geometry | None = None,
         axes: str | None = None,
         periodicity: str = "",
+        stride : int = 1
     ) -> None:
         self.tracker = tracker
         self.step_no = step_no
@@ -221,11 +222,12 @@ class TrackedStatePlayback:
         self.axes = axes
         self.periodicity = periodicity
         self.state = tracker.to_state(step_no, geometry, axes, periodicity)
+        self.stride = stride
 
     def __call__(self, step: bool = True) -> np.ndarray:
         if step:
             self.step_no = min(
-                self.step_no + 1, len(next(iter(self.tracker.history.values()))) - 1
+                self.step_no + self.stride, len(next(iter(self.tracker.history.values()))) - 1
             )
 
         self.state = self.tracker.to_state(

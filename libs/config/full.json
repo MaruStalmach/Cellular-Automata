@@ -4,8 +4,8 @@
     "size":[100,100,10],
     "periodicity" : "",
     "dtype":"uint8",
-    "render":true,
-    "max_steps":10
+    "render":false,
+    "max_steps":200
 },
 
 "tracker": {
@@ -212,7 +212,7 @@
         "name" : "BacteriaGrowth",
         "args" : {
             "time_step" : 43200,
-            "time_scale" : 4319999,
+            "time_scale" : 4320000,
             "bacteria_keys" : ["Bacteroidaceae","Lachnospiraceae","Enterobacteriaceae","Synergistaceae","Prevotellaceae","Ruminococcaceae","Muribaculaceae","Oscillospiraceae","Sutterellaceae","Tannerellaceae","Bifidobacteriaceae","Other_bacteria"],
             "substrate_key" : "substrate",
             "Yca" : 6.94e-6,
@@ -224,13 +224,39 @@
         "args" : {
             "time_step" : 43200,
             "target_keys" : ["Bacteroidaceae","Lachnospiraceae","Enterobacteriaceae","Synergistaceae","Prevotellaceae","Ruminococcaceae","Muribaculaceae","Oscillospiraceae","Sutterellaceae","Tannerellaceae","Bifidobacteriaceae","Other_bacteria"],
-            "decay_probability" : 0.05
+            "decay_probability" : 0.02
         }
     },
     {
         "name" : "SpeciesInteraction",
+        "args": 
+        {
+            "time_step": 43200,
+            "interactions": 
+            {
+                "Bacteroidaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : -0.2, "Synergistaceae" : 0.0,"Prevotellaceae" : -0.9,"Ruminococcaceae" : 0.0,"Muribaculaceae" : -0.9,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.5,"Other_bacteria" : 0.0},
+                "Lachnospiraceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.5,"Ruminococcaceae" : 0.5,"Muribaculaceae" : 0.5,"Oscillospiraceae" : 0.5,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.5,"Other_bacteria" : 0.0},
+                "Enterobacteriaceae" : {"Bacteroidaceae" : -0.2, "Lachnospiraceae" : -0.5, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : -0.5,"Muribaculaceae" : 0.0,"Oscillospiraceae" : -0.5,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Synergistaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Prevotellaceae" : {"Bacteroidaceae" : -0.9, "Lachnospiraceae" : -0.2, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Ruminococcaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.5, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Muribaculaceae" : {"Bacteroidaceae" : -0.2, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.52,"Other_bacteria" : 0.0},
+                "Oscillospiraceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.4, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Sutterellaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Tannerellaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Bifidobacteriaceae" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.2, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.3,"Muribaculaceae" : 0.4,"Oscillospiraceae" : 0.5,"Sutterellaceae" : 0.0,"Tannerellaceae" : -0.5,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0},
+                "Other_bacteria" : {"Bacteroidaceae" : 0.0, "Lachnospiraceae" : 0.0, "Enterobacteriaceae" : 0.0, "Synergistaceae" : 0.0,"Prevotellaceae" : 0.0,"Ruminococcaceae" : 0.0,"Muribaculaceae" : 0.0,"Oscillospiraceae" : 0.0,"Sutterellaceae" : 0.0,"Tannerellaceae" : 0.0,"Bifidobacteriaceae" : 0.0,"Other_bacteria" : 0.0}
+            },
+            "spawn_claim_scale": 1.0
+        }
+    },
+    {
+        "name" : "Inoculation",
         "args" : {
-            
+            "time_step" : 20000,
+            "target_key" : "substrate",
+            "location" : [50,50,9],
+            "size" : [10,10,1]
         }
     }
 ],

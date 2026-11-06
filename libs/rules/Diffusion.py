@@ -20,35 +20,47 @@ class Diffusion(Rule):
         a: float,
         p: float,
         target_key: str = "substrate",
+        biofilm_key: str = None,
+        biofilm_disruption: float = 0.8
     ):
         super().__init__(geometry, time_step)
 
         self.target_key = target_key
+        self.biofilm_key = biofilm_key
         p3 = (1 - 4 * p) / (a + 1)
         self.p = [a * p3, p, p, p3, p, p]
+        if self.biofilm_key is not None:
+            # calculate new a for when diffusion is in biofilm
+            ap = self._calc_a_prim(a,p,biofilm_disruption)
+            p3 = (1 - 4 * p) / (ap + 1)
+            self.p_bio = [ap * p3, p, p, p3, p, p]
         self.rolls = np.zeros(shape=geometry.size + (6,))
         self.layers = np.zeros(shape=geometry.size + (6,))
         self.shift_buffer = np.zeros(shape=geometry.size)
         self.lost_particles: int = 0
 
-        self.RESTORE_THRESHOLD = 1000
+        self.RESTORE_THRESHOLD = 100
+        
+        
 
-    def _restore_random(self):
-        c1, c2, c3, c4 = np.nonzero(self.layers == 0)
-        selection = np.random.choice(
-            a=c1.shape[0], size=(self.RESTORE_THRESHOLD,), replace=False
-        )
-        c1 = c1[selection]
-        c2 = c2[selection]
-        c3 = c3[selection]
-        c4 = c4[selection]
-        sel = tuple([c1, c2, c3, c4])
-        self.layers[sel] = 1
-        self.lost_particles -= self.RESTORE_THRESHOLD
+    
+    
+    @staticmethod
+    def _calc_a_prim(x,p,d):
+        a=12*p
+        b=-12*p+6
+        e=-1/2/p+2
+        f=(1-2*p)/12/p
+        g=f+e/(a*x+b)
+        xp=e/a/(d*g-f)-b/a
+        return xp
 
     def apply_state(self, state) -> State:
 
         source = state[self.target_key]
+        
+        if self.biofilm_key is not None:
+            biofilm_source = state[self.biofilm_key]
 
         # each layer corresponds to the dircetion a particle is moving, list p contains probablities of the next direction
         # p0 - no change, p3 - 180 deg turn, p1,p2,p4,p5 - 90 degree turns
@@ -59,10 +71,28 @@ class Diffusion(Rule):
         # l3      - -z
         # l4      - -y
         # l5      - -x
-
-        self.rolls = np.random.choice(
-            [0, 1, 2, 3, 4, 5], size=state.shape + (6,), p=self.p
-        ).astype(np.uint8)
+        self.rolls.fill(0)
+        if self.biofilm_key is not None:
+            particle_mask = source==1
+            bio_mask = biofilm_source==1
+            #broadcast to 4d shape
+            bio_mask = bio_mask[...,None]
+            particle_in_bio = particle_mask&bio_mask
+            particle_out_bio = particle_mask&(~bio_mask)
+            pib_amt=particle_in_bio.sum()
+            pob_amt=particle_out_bio.sum()
+            self.rolls[particle_out_bio] = np.random.choice(
+            [0, 1, 2, 3, 4, 5], size=(pob_amt,), p=self.p
+            ).astype(np.uint8)
+            self.rolls[particle_in_bio] = np.random.choice(
+                        [0, 1, 2, 3, 4, 5], size=(pib_amt,), p=self.p_bio
+                        ).astype(np.uint8)
+        else:
+            roll_amt = source[source==1].sum()
+            self.rolls[source==1] = np.random.choice(
+                [0, 1, 2, 3, 4, 5], size=(roll_amt,), p=self.p
+            ).astype(np.uint8)
+        
         self.rolls = (self.rolls + np.arange(6, dtype=self.rolls.dtype)) % 6
         # set empty cells as invalid value
         np.copyto(self.rolls, 6, where=(source == 0))
@@ -169,10 +199,33 @@ class Diffusion(Rule):
 
     def _restore_deterministic(self):
         c1, c2, c3, c4 = np.nonzero(self.layers == 0)
-        c1 = c1[: self.RESTORE_THRESHOLD]
-        c2 = c2[: self.RESTORE_THRESHOLD]
-        c3 = c3[: self.RESTORE_THRESHOLD]
-        c4 = c4[: self.RESTORE_THRESHOLD]
+        max_z = c3.max()
+        z_mask = c3 == max_z
+        c1 = c1[z_mask]
+        c2 = c2[z_mask]
+        c3 = c3[z_mask]
+        c4 = c4[z_mask]
+        order = np.lexsort((-c2, -c1))
+        order = order[:self.RESTORE_THRESHOLD]
+        sel = (c1[order], c2[order], c3[order], c4[order])
+        self.layers[sel] = 1
+        self.lost_particles -= self.RESTORE_THRESHOLD
+        
+    def _restore_random(self):
+        c1, c2, c3, c4 = np.nonzero(self.layers == 0)
+        max_z = c3.max()
+        z_mask = c3 == max_z
+        c1 = c1[z_mask]
+        c2 = c2[z_mask]
+        c3 = c3[z_mask]
+        c4 = c4[z_mask]
+        selection = np.random.choice(
+            a=c1.shape[0], size=(self.RESTORE_THRESHOLD,), replace=False
+        )
+        c1 = c1[selection]
+        c2 = c2[selection]
+        c3 = c3[selection]
+        c4 = c4[selection]
         sel = tuple([c1, c2, c3, c4])
         self.layers[sel] = 1
         self.lost_particles -= self.RESTORE_THRESHOLD

@@ -15,11 +15,13 @@ from libs.rules.GameOfLife3D import *
 from libs.rules.GutDrift import *
 from libs.rules.Diffusion import *
 from libs.rules.BiofilmDetachment import *
+from libs.rules.BioreactorBiofilmDetachment import *
 from libs.rules.SpeciesInteraction import *
 from libs.rules.BacteriaDecay import *
 from libs.rules.Utilization import *
 from libs.rules.Inoculation import *
 from libs.rules.CreateBiofilm import *
+from libs.rules.AntibioticEffect import *
 
 ### NEIGHBORHOODS #####################
 from libs.neighbourhoods.MooreNeighbourhood import *
@@ -116,7 +118,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         if "keys" not in tracker_args:
             tracker_args["keys"] = list(state.keys)
 
-        output_filename = tracker_data.get("save_as") or tracker_data.get("filename")
+        output_filename = tracker_data.get("save_as", None) or tracker_data.get("filename", None)
 
         tracker_class = globals().get(tracker_name)
         if tracker_class is None:

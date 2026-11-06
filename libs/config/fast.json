@@ -1,0 +1,51 @@
+{
+"sim":
+{
+    "size":[10,10,10],
+    "periodicity" : "",
+    "dtype":"uint8",
+    "render":false,
+    "max_steps":100
+},
+
+"state_keys":[
+    {
+        "name" : "bacteria",
+        "layers":1,
+        "dtype" : "uint8",
+        "random" : true,
+        "random_func" : "np.random.choice",
+        "random_args" : 
+        {
+            "a" : [0,1],
+            "p" : [0.9,0.1]
+        } 
+    },
+    {
+        "name":"substrate",
+        "layers":6,
+        "dtype":"np.uint8",
+        "random":true,
+        "random_func":"np.random.choice",
+        "random_args":
+        {
+            "a" : [0,1],
+            "p" : [0.3,0.7]
+        }
+    }
+],
+
+"rules":[
+    {
+        "name" : "Utilization",
+        "args" : {
+            "time_step" : 1,
+            "bacteria_keys" : ["bacteria"],
+            "substrate_key" : "substrate",
+            "substitute_constant" : 0.37,
+            "Ks" : 10,
+            "Sb" : 15
+        }
+    }
+]
+}
