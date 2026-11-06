@@ -125,13 +125,15 @@ It supports:
 
 Controls:
 
-- P: advance simulation.
-- W/S: Zoom in/out.
-- A/D: Rotate left/right.
-- Q/E: Rotate up/down.
-- C: Toggle cross section mode.
-- J/L: cycle cross section layers up/down.
-- X: cycle cross section axis.
+- P: advance the simulation.
+- W/S: move the camera towards/away from the centre of the grid (zoom).
+- A/D: move the camera left/right around the centre (orbit).
+- Q/E: move the camera up/down around the centre (orbit).
+- C: toggle cross-section mode.
+- J/L: move the cross-section layer down/up.
+- X: cycle the cross-section axis.
+- G: save the frames captured so far as a GIF (only in `examples/generate_gif.py`).
+- Esc: close the window.
 
 ![gif](docs/assets/full5.gif)
 
@@ -163,78 +165,79 @@ Generated output (tracked simulations, GIFs, profiles) is written to `output_fil
 
 ### Adding new things
 
-- **A new rule** - add a module to `src/cellular_automata/rules/` with a `Rule` subclass and import it in `src/cellular_automata/config/Parser.py`; configs then refer to it by class name.
+- **A new rule** - add a module to `src/cellular_automata/rules/` with a `Rule` subclass, export it from `src/cellular_automata/rules/__init__.py` and import it in `src/cellular_automata/config/Parser.py`; configs then refer to it by class name.
 - **A new study** - create `research/<study>/` with the same `configs/`, `data/`, `notebooks/`, `scripts/`, `results/` layout as `research/bioreactor/`.
 - **A new example config** - add it to `configs/examples/`.
 
 ## Configuration
 
-Simulations are configured with JSON files. A configuration typically contains:
+Simulations are configured with JSON files and built by `cellular_automata.config.Parser.parse_json`. A configuration has these sections:
 
-- Simulation dimensions and timing.
-- Boundary conditions.
-- Wall-seed initialization.
-- Rules and parameters.
-- Additional state keys.
-- Initial species abundances.
+| Section | Required | Contents |
+|---|---|---|
+| `sim` | yes | `size`, `periodicity` (axes that wrap around, e.g. `"xy"`), `max_steps`, `render`; optional `neighbourhood` (`MooreNeighbourhood` by default) and `dtype` |
+| `state_keys` | yes | One entry per state variable: `name`, `layers`, `dtype`, and optional random initialisation (`random`, `random_func`, `random_args`) |
+| `rules` | yes | One entry per rule: `name` (the rule class) and `args` (constructor arguments; every rule needs `time_step`) |
+| `tracker` | no | Records the state each step and saves it to `output_files/tracked_simulations/<save_as>.npz` at `max_steps` |
+| `renderer` | when `render` is true | `key` to display, `window_size`, and an optional `callback` (`Callback`, `ReduceCallback`, `MultiKeyCallback`) with `args` |
 
 Example configuration:
 
 ```json
 {
   "sim": {
-    "size": [50, 50, 50],
-    "periodicity": "xyz",
-    "density": 0.2,
-    "default_time_step": 1.0,
-    "max_steps": 500
+    "size": [50, 50, 20],
+    "periodicity": "xy",
+    "render": false,
+    "max_steps": 50
   },
-  "wall_seed": {
-    "enabled": false,
-    "density": 0.0,
-    "decay_length": 1.0
-  },
+  "state_keys": [
+    {
+      "name": "substrate",
+      "layers": 6,
+      "dtype": "np.uint8",
+      "random": true,
+      "random_func": "np.random.choice",
+      "random_args": {"a": [0, 1], "p": [0.999, 0.001]}
+    },
+    {
+      "name": "bacteria",
+      "layers": 1,
+      "dtype": "np.uint8",
+      "random": true,
+      "random_func": "init_block",
+      "random_args": {"start": [25, 25, 0], "block_size": [3, 3, 3], "value": 1}
+    }
+  ],
   "rules": [
     {
-      "name": "species_interaction",
-      "time_step": 1.0,
-      "params": {
-        "spawn_claim_scale": 10.0
-      }
+      "name": "Diffusion",
+      "args": {"time_step": 0.01, "target_key": "substrate", "a": 7.4, "p": 0.07}
     },
     {
-      "name": "spontaneous_spawn",
-      "time_step": 1.0,
-      "params": {
-        "spawn_probabilities": {
-          "Bacteroidaceae": 0.002,
-          "Lachnospiraceae": 0.002,
-          "other": 0.001
-        }
-      }
+      "name": "Utilization",
+      "args": {"time_step": 0.01, "bacteria_keys": ["bacteria"], "substrate_key": "substrate"}
     },
     {
-      "name": "gut_drift",
-      "time_step": 1.0,
-      "params": {
-        "drift_speed": 2
-      }
+      "name": "BacteriaGrowth",
+      "args": {"time_step": 43200, "bacteria_keys": ["bacteria"], "substrate_key": "substrate"}
     }
   ],
-  "additional_keys": [
-    "biofilm",
-    "floating_bacteria",
-    "substrate_glucose"
-  ],
-  "abundances": {
-    "before": {
-      "Bacteroidaceae": 0.5,
-      "Lachnospiraceae": 0.3,
-      "other": 0.2
-    }
-  }
+  "tracker": {"name": "StateTracker", "args": {}, "save_as": "readme_example"},
+  "renderer": {"key": "bacteria", "window_size": [1200, 800]}
 }
 ```
+
+More examples are in `configs/examples/` and `research/bioreactor/configs/`.
+
+### Time model
+
+Each rule has its own `time_step` (`dt`), and one simulation step lasts as long as the **largest** `dt` among the rules:
+
+- During one step, each rule runs `floor(max_dt / dt)` times, **clipped to the range 1 to 500**.
+- The runs are interleaved round-robin in the order the rules appear in the config, so rule order matters.
+
+For example, with `Diffusion` at `dt = 0.01` and `BacteriaGrowth` at `dt = 43200`, the ratio would be 4,320,000, but diffusion runs only 500 times per step. The cap is not reported, so keep it in mind when choosing time steps (tracked as BUG-5 in `docs/code-quality-plan.md`).
 
 ## Installation
 

@@ -1,12 +1,13 @@
 """Every JSON config in the repo must build a simulation (rendering forced off)."""
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 
-from cellular_automata.Sim import CellularAutomaton
 from cellular_automata.config.Parser import parse_json
+from cellular_automata.Sim import CellularAutomaton
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_DIRS = [REPO_ROOT / "configs", REPO_ROOT / "research"]
@@ -36,3 +37,16 @@ def test_config_builds_simulation(config_path: Path, tmp_path: Path):
     assert isinstance(ca_sim, CellularAutomaton)
     assert renderer is None
     assert ca_sim.state.shape[: ca_sim.geometry.ndim] == tuple(data["sim"]["size"])
+
+
+def test_readme_example_config_builds_simulation(tmp_path: Path):
+    readme = (REPO_ROOT / "README.md").read_text()
+    blocks = re.findall(r"```json\n(.*?)```", readme, flags=re.DOTALL)
+    assert len(blocks) == 1, "expected exactly one JSON example in README.md"
+    config_path = tmp_path / "readme_example.json"
+    config_path.write_text(blocks[0])
+
+    ca_sim, renderer = parse_json(config_path)
+
+    assert isinstance(ca_sim, CellularAutomaton)
+    assert renderer is None
