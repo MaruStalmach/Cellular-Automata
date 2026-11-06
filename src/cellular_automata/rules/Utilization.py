@@ -85,9 +85,6 @@ class Utilization(Rule):
 
         substrate_grid[coords[:-1]] = 0
 
-    def apply(self, neighbors, cell, coords=None):
-        return super().apply(neighbors, cell, coords)
-
     def apply_state(self, state):
         # get data from simulation
         substrate_grid = state[self.sub_key].copy()

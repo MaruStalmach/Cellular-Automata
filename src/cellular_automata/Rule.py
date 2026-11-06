@@ -67,9 +67,6 @@ class Rule:
             )
         return count
 
-    def apply(self, neighbors, cell, coords=None):
-        return cell
-
     def apply_state(self, state: State) -> State:
-        """if state is applayed to a whole array, not per cell"""
+        """Apply the rule to the whole state and return it. Every rule must implement this."""
         raise NotImplementedError()
