@@ -17,11 +17,16 @@ class Rule:
     def _shift_for_offset(
         self, grid: np.ndarray, offset: tuple[int, ...]
     ) -> np.ndarray:
+        """Return `result` with `result[i] == grid[i + offset]` (the neighbour at `offset`).
+
+        Periodic axes wrap around; on non-periodic axes cells past the edge read as 0.
+        """
         shifted = grid
 
         for axis, shift in enumerate(offset):
             if shift != 0 and axis in self.geometry.periodic_dims:
-                shifted = np.roll(shifted, shift=shift, axis=axis)
+                # np.roll moves data forward, so roll by -shift to read grid[i + shift]
+                shifted = np.roll(shifted, shift=-shift, axis=axis)
 
         non_periodic_axes = [
             axis

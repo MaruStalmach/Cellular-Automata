@@ -26,36 +26,6 @@ class Utilization(Rule):
 
         self.mask = np.zeros(shape=geometry.size, dtype=bool)
 
-    def _shift_spatial(self, grid: np.ndarray, offset: tuple[int, ...]) -> np.ndarray:
-        shifted = grid
-
-        for axis, shift in enumerate(offset):
-            if shift != 0 and axis in self.geometry.periodic_dims:
-                shifted = np.roll(shifted, shift=shift, axis=axis)
-
-        non_periodic_axes = [
-            axis
-            for axis in range(self.geometry.ndim)
-            if axis not in self.geometry.periodic_dims
-        ]
-        if non_periodic_axes:
-            pad_width = [(0, 0)] * shifted.ndim
-            for axis in non_periodic_axes:
-                pad_width[axis] = (1, 1)
-            shifted = np.pad(shifted, pad_width, mode="constant")
-
-            slices = []
-            for axis, shift in enumerate(offset):
-                if axis in self.geometry.periodic_dims:
-                    slices.append(slice(None))
-                else:
-                    start = 1 + shift
-                    stop = start + grid.shape[axis]
-                    slices.append(slice(start, stop))
-            shifted = shifted[tuple(slices)]
-
-        return shifted
-
     def _neighbour_candidates(self, coords: tuple[int, ...]) -> list[tuple[int, ...]]:
         candidates: list[tuple[int, ...]] = []
         for offset in self.geometry._offsets:
