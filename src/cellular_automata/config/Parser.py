@@ -175,9 +175,9 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     callback_data = renderer_data.get("callback", None)
 
     if callback_data is None:
-        callback = Callback()
+        callback = Callback(key, ca_sim)
     else:
-        cb_args = {} or callback_data.get("args", None)
+        cb_args = callback_data.get("args") or {}
         callback = globals()[callback_data["name"]](key, ca_sim, **cb_args)
 
     if isinstance(key, list):
