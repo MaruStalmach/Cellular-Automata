@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 DEFAULT_INPUT = Path(__file__).resolve().parents[1] / 'results' / 'screening_result.csv'
 DEFAULT_OUTPUT = Path(__file__).resolve().parents[1] / 'results' / 'screening_pair_analysis.csv'
 

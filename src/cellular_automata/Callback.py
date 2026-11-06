@@ -1,5 +1,6 @@
-from cellular_automata.Sim import CellularAutomaton
 import numpy as np
+
+from cellular_automata.Sim import CellularAutomaton
 
 
 class Callback:

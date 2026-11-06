@@ -1,5 +1,5 @@
-from datetime import datetime
 import json
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -43,7 +43,7 @@ class StateTracker:
         for frame in frames[1:]:
             candidate_shape = frame.shape
             prefix_length = 0
-            for left_dim, right_dim in zip(spatial_shape, candidate_shape):
+            for left_dim, right_dim in zip(spatial_shape, candidate_shape, strict=False):
                 if left_dim != right_dim:
                     break
                 prefix_length += 1
@@ -122,7 +122,9 @@ class StateTracker:
 
             tracker.key_layers = {
                 key: int(layer_count)
-                for key, layer_count in zip(metadata.get("keys", []), metadata.get("key_layers", []))
+                for key, layer_count in zip(
+                    metadata.get("keys", []), metadata.get("key_layers", []), strict=False
+                )
             }
 
         return tracker
