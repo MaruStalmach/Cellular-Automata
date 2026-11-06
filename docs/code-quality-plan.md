@@ -3,7 +3,7 @@
 Branch: `refactor/code-quality-plan` (based on `refactor/repo-structure`, PR #33)
 Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch (reviewed at `e3d7313`).
 Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`)
-Status: updated 2026-11-06 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). Both PRs are open, stacked on #33.
+Status: updated 2026-11-06 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). Both PRs are open, stacked on #33. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
 
 ---
 
@@ -111,7 +111,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
   - `BacteriaGrowth.py:58`, `Utilization.py:132`: `.astype(np.int8)`
 - **What:** with multi-layer keys (substrate has 6 layers) a 3D Moore neighbourhood can hold 26 × 6 = 156 particles. `int8` wraps: a fully surrounded cell reports **-100** (verified). Growth and uptake probabilities are then clipped to 0, so bacteria in the *richest* regions stop growing or eating. Single-layer keys overflow above 127 too, e.g. with a radius > 1 neighbourhood.
 - **Fix:** count in `np.int32` (or `np.uint16`), and remove the `int8` casts in the rules. Add a regression test using the 3×3×3×6 all-ones case.
-- **Note:** results produced with dense substrate may be affected. Worth re-checking key bioreactor runs after the fix.
+- **Note:** results produced with dense substrate may be affected. Worth re-checking key bioreactor runs after the fix. All archived bioreactor results predate this fix and are flagged as such on the `results` branch ([HYG-5](#hyg-5)).
 
 <a id="bug-2"></a>
 ### ~~BUG-2 - `_shift_for_offset` shifts in opposite directions on periodic vs non-periodic axes (Medium ✅)~~
@@ -474,7 +474,7 @@ The commit message "first iteration of tests" is misleading: that commit adds no
 - RNG under `fork` ([REPRO-1](#repro-1))
 - wall axis: `seed_biofilm` uses z while `BiofilmDetachment` uses y ([ARCH-2](#arch-2))
 - `build_species_grid` assigns the rounding remainder to the largest species (fine, but document it)
-- `output.json` and the checkpoint should go in `research/gut/results/`
+- `output.json` is archived on the `results` branch (`gut/mc-search/`), so it isn't ported. The checkpoint (`best_coeffs_checkpoint.json`, written to the CWD today) should be written to `research/gut/results/`, which is git-ignored
 
 **Plan:** move it to `research/gut/scripts/mc_search.py` and `research/gut/configs/`, rewrite it on top of the unified config + registry, and delete the parallel `build_rules`.
 
@@ -485,6 +485,7 @@ The commit message "first iteration of tests" is misleading: that commit adds no
 - `bayesian_optimization.py`: the hand-rolled GP/EI has a fixed length scale of 0.35, no hyperparameter fitting, and assumes RMSE is noiseless ([REPRO-1](#repro-1)). That's acceptable for exploration, but document it or use `scikit-optimize` / `optuna`.
 - `bayesian_optimization.py:16` and `screening.py:10`: both define `STUDY_DIR`. Put shared helpers in `research/bioreactor/scripts/common.py`.
 - Constants (`SAMPLE_RUNS`, `BIO_NUMBER`, `SELECTED_PAIRS`, bounds) are hard-coded. Move them to CLI arguments or an experiment config.
+- ~~`analyze_screening.py` read `screening_result.csv`, but `screening.py` writes `screening_results.csv`, so the two scripts didn't connect. `screening.py` also crashed if `results/` didn't exist.~~ Fixed in #33: `analyze_screening.py` takes `--input`/`--output` and defaults to what `screening.py` writes, and both scripts create `results/`.
 
 <a id="res-3"></a>
 ### RES-3 - New `SpontaneousSpawn` rule (gut) (Medium)
@@ -521,6 +522,7 @@ The commit message "first iteration of tests" is misleading: that commit adds no
   - Keep a species-name mapping file per dataset in `research/<study>/data/`.
   - Document where `dynamo_data` comes from and its licence (**D6**). Fetch it with a script rather than committing it.
   - Drop `allow_pickle`.
+  - Write outputs to `research/gut/results/` (git-ignored), and archive the ones worth keeping on the `results` branch ([HYG-5](#hyg-5)).
 
 ---
 
@@ -548,6 +550,25 @@ There is no `.github/workflows`. `ruff` is a dev dependency but has no config, a
 **Fix:** rename modules (`sim.py`, `state.py`, `rules/gut_drift.py`, …), add `__init__.py` files that re-export the public classes (`from cellular_automata import CellularAutomaton, Geometry, State`), and add a CLI entry point `ca-sim = cellular_automata.cli:main` to replace `examples/CA_sim.py`.
 
 This is a breaking import change, so do it once, together with ARCH-1.
+
+<a id="hyg-5"></a>
+### ~~HYG-5 - Experiment results committed next to the code (High)~~
+
+> **Status:** Fixed in #33. Results now live only on the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch, and `research/*/results/` is git-ignored.
+
+- **What:**
+  - `research/bioreactor/results/` (screening and BO CSVs) was committed with the code. It had no record of which code or config produced each file, and every file predates [BUG-1](#bug-1) and [BUG-6](#bug-6).
+  - Tracked simulations (`.npz`, about 70 MB) were committed on `main` and `bioreactor`. #33 had already removed them from the tree and ignores `*.npz`.
+  - The gut MC search output (`experiments/output.json`) was only on `gut-experiments`.
+- **Fix (done):**
+  - An orphan `results` branch shares no history with `main` and holds only outputs: 8 bioreactor CSVs, 17 bioreactor `.npz` runs, the gut `output.json` and `mc_search_run.npz`.
+  - Its README records the producing commit, date, author and config for each file, and flags that all of them predate the #37 fixes and were unseeded ([REPRO-1](#repro-1)).
+  - The copies are byte-identical to the committed files. History isn't rewritten, so the originals stay reachable on the old branches.
+- **Found while archiving:**
+  - **`mc_search_run.npz` (gut) is corrupted in git**, and only one version was ever committed. 7 of its 9 arrays fail to decompress; only `biofilm` and `floating_bacteria` can be read. If the original is still on someone's disk, replace it on the `results` branch.
+  - **`output.json` was not produced by `mc_config.json`.** The config was added later (`ddae2e8`). `output.json` came from settings hard-coded in `data_preparation.py` at `1250f5f`: a 100×100×50 grid, 50 steps, 1000 iterations.
+  - Several bioreactor runs can't be matched to an exact config, because `save_as` was edited by hand between runs.
+- **Rule from now on:** scripts write to `research/<study>/results/` (ignored). Results worth keeping go on the `results` branch, with a provenance row: commit, config, seed and date.
 
 ### HYG-4 - Logging, typing, docs (Low)
 
@@ -621,7 +642,7 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
     - `CA_neighbourhoods.py` → `examples/`
     - `experiments/scripts/*`, `data_preparation.py` → `research/gut/scripts/`
     - `mc_config.json` → `research/gut/configs/`
-    - `output.json` → `research/gut/results/`
+    - `output.json`: not ported, already archived on the `results` branch ([HYG-5](#hyg-5))
 
     Rewrite imports to `cellular_automata.` and keep the restructure version of every shared file. Commit `experiment.py` (**D8**). *Done when:* the branch can be deleted with nothing lost.
 20. **`SpontaneousSpawn` in the library** ([RES-3](#res-3)): register it, add the injected `rng`, tests and an example gut config. Fix `CA_neighbourhoods.py` with the other examples.
