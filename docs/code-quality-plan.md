@@ -103,7 +103,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="bug-1"></a>
 ### ~~BUG-1 - `int8` overflow in neighbour counting (Critical ✅)~~
 
-> **Status:** Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37), with a regression test. Still to do: re-check key bioreactor runs (step 8).
+> **Status:** Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37), with a regression test. All earlier results are treated as invalid and will be redone (no comparison run needed).
 
 - **Where:**
   - `Rule.py:52`: `astype(np.int8)`
@@ -111,7 +111,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
   - `BacteriaGrowth.py:58`, `Utilization.py:132`: `.astype(np.int8)`
 - **What:** with multi-layer keys (substrate has 6 layers) a 3D Moore neighbourhood can hold 26 × 6 = 156 particles. `int8` wraps: a fully surrounded cell reports **-100** (verified). Growth and uptake probabilities are then clipped to 0, so bacteria in the *richest* regions stop growing or eating. Single-layer keys overflow above 127 too, e.g. with a radius > 1 neighbourhood.
 - **Fix:** count in `np.int32` (or `np.uint16`), and remove the `int8` casts in the rules. Add a regression test using the 3×3×3×6 all-ones case.
-- **Note:** results produced with dense substrate may be affected. Worth re-checking key bioreactor runs after the fix. All archived bioreactor results predate this fix and are flagged as such on the `results` branch ([HYG-5](#hyg-5)).
+- **Note:** results produced with dense substrate may be affected. **Decision (2026-11-06):** all earlier results are treated as invalid and will be redone rather than re-checked. All archived bioreactor results predate this fix and are flagged as such on the `results` branch ([HYG-5](#hyg-5)).
 
 <a id="bug-2"></a>
 ### ~~BUG-2 - `_shift_for_offset` shifts in opposite directions on periodic vs non-periodic axes (Medium ✅)~~
@@ -156,7 +156,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="bug-6"></a>
 ### ~~BUG-6 - `BioreactorBiofilmDetachment` key handling (Medium)~~
 
-> **Status:** Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37), with tests. The fix also covers a worse bug found while fixing this one: `biofilm_grid & (chances < p)` is a `uint8` array, so `biofilm_grid[mask] = 0` used integer indexing and cleared the whole x=0 slab every step (and x=1 whenever anything detached), even at a detachment rate of 0. 18 bioreactor configs use this rule, so biofilm results should be re-checked. This should have been rated **Critical**.
+> **Status:** Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37), with tests. The fix also covers a worse bug found while fixing this one: `biofilm_grid & (chances < p)` is a `uint8` array, so `biofilm_grid[mask] = 0` used integer indexing and cleared the whole x=0 slab every step (and x=1 whenever anything detached), even at a detachment rate of 0. 18 bioreactor configs use this rule; their earlier results are treated as invalid and will be redone. This should have been rated **Critical**.
 
 - **Where:** `rules/BioreactorBiofilmDetachment.py:17`, `:40`
 - **What:**
@@ -620,7 +620,7 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 
 ### Phase 2 - Correctness and reproducibility
 
-8. **[BUG-1](#bug-1):** `int32` neighbour counts + regression test. **Re-run one key bioreactor calibration** and compare. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37); re-running a calibration is still open.*
+8. **[BUG-1](#bug-1):** `int32` neighbour counts + regression test. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37). No comparison run: all earlier results are treated as invalid and will be redone after REPRO-1 and D10.*
 9. **[REPRO-1](#repro-1):** `sim.seed` in the config, a `Generator` in `CellularAutomaton`, `rule.rng` in every rule, and tests switched to an injected rng ([TEST-3](#test-3)). *Done when:* two runs with the same seed produce identical tracker output (tiny grid test).
 10. **[BUG-2](#bug-2), [BUG-3](#bug-3), [BUG-6](#bug-6):** shift convention, Moore radius, bioreactor detachment keys, each with a test. *Status: BUG-2 and BUG-6 fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37); BUG-3 partly fixed (needs D9).*
 11. **[BUG-4](#bug-4) / [BUG-5](#bug-5):** remove the cell-wise path; abstract `apply_state`; warn when the 500 cap is hit; validate `dt` ratios. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37).*
