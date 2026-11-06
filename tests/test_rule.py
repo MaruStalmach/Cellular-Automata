@@ -53,3 +53,8 @@ def test_shift_wraps_only_on_periodic_axis():
 
     rule = _rule(size=(3, 1, 1), periodicity="")
     assert rule._shift_for_offset(grid, (1, 0, 0))[:, 0, 0].tolist() == [0, 0, 0]
+
+
+def test_shift_handles_offsets_larger_than_one_on_non_periodic_axis():
+    assert _shift_of_single_cell("", (2, 0, 0)).tolist() == [1, 0, 0, 0, 0]
+    assert _shift_of_single_cell("", (-2, 0, 0)).tolist() == [0, 0, 0, 0, 1]

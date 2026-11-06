@@ -36,7 +36,8 @@ class Rule:
         if non_periodic_axes:
             pad_width = [(0, 0)] * shifted.ndim
             for axis in non_periodic_axes:
-                pad_width[axis] = (1, 1)
+                pad = abs(offset[axis])
+                pad_width[axis] = (pad, pad)
             shifted = np.pad(shifted, pad_width, mode="constant")
 
             slices = []
@@ -44,7 +45,7 @@ class Rule:
                 if axis in self.geometry.periodic_dims:
                     slices.append(slice(None))
                 else:
-                    start = 1 + shift
+                    start = abs(shift) + shift
                     stop = start + grid.shape[axis]
                     slices.append(slice(start, stop))
             shifted = shifted[tuple(slices)]
