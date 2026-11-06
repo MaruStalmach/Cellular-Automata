@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 RESULTS_DIR = Path(__file__).resolve().parents[1] / 'results'
 # screening.py writes here; archived screening runs are on the `results` branch
 DEFAULT_INPUT = RESULTS_DIR / 'screening_results.csv'

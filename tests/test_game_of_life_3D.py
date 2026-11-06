@@ -1,8 +1,8 @@
-from cellular_automata.rules.GameOfLife3D import GameOfLife3D
-from cellular_automata.Geometry import Geometry
-from cellular_automata.State import State
-
 import pytest
+
+from cellular_automata.Geometry import Geometry
+from cellular_automata.rules.GameOfLife3D import GameOfLife3D
+from cellular_automata.State import State
 
 
 def setup_gol_test(

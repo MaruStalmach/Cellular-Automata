@@ -1,8 +1,8 @@
 import numpy as np
 
 from cellular_automata.Geometry import Geometry
-from cellular_automata.State import State
 from cellular_automata.rules.CreateBiofilm import CreateBiofilm
+from cellular_automata.State import State
 
 
 def test_create_biofilm_unions_bacteria_presence_into_biofilm():

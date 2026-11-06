@@ -1,11 +1,11 @@
-import psutil
-import shlex
-import subprocess
 import logging
+import subprocess
+import sys
 import time
+
 import matplotlib.pyplot as plt
 import numpy as np
-
+import psutil
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -62,8 +62,12 @@ if __name__ == "__main__":
     mem_usage = []
 
     for size in sizes:
-        command = f"python examples/sim_no_render.py -x {size[0]} -y {size[1]} -z {size[2]}"
-        args = shlex.split(command)
+        # enough steps to outlast the monitoring window; the process is killed after it
+        args = [
+            sys.executable, "examples/sim_no_render.py",
+            "-x", str(size[0]), "-y", str(size[1]), "-z", str(size[2]),
+            "-s", "1000000",
+        ]
         print("\nLAUNCHING NEW PROCESS")
         print("grid size =", size)
         subproc = subprocess.Popen(args)

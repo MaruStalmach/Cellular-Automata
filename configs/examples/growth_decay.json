@@ -42,6 +42,7 @@
         "name":"Diffusion",
         "args" : 
         {
+            "time_step": 0.01,
             "target_key":"substrate",
             "a" : 6,
             "p" : 0.08
@@ -52,6 +53,7 @@
         "name" : "BacteriaGrowth",
         "args" :
             {
+                "time_step": 43200,
                 "bacteria_keys":["bacteria"],
                 "substrate_key":"substrate"
             }
@@ -59,6 +61,7 @@
     {
         "name" : "BacteriaDecay",
         "args" :{
+            "time_step": 43200,
             "target_keys" : ["bacteria"],
             "decay_probability" : 0.001
         }

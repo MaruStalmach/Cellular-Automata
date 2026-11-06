@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from time import time
+
 import numpy as np
-from cellular_automata.tracking.StateTracker import StateTracker
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
-from time import time
+from cellular_automata.tracking.StateTracker import StateTracker
 
 
 class CellularAutomaton:

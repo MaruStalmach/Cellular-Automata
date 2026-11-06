@@ -3,6 +3,7 @@ import numpy as np
 from cellular_automata.Geometry import Geometry
 from cellular_automata.rules.BacteriaGrowth import BacteriaGrowth
 from cellular_automata.rules.GameOfLife3D import GameOfLife3D
+from cellular_automata.rules.Utilization import Utilization
 from cellular_automata.Sim import CellularAutomaton
 from cellular_automata.State import State
 
@@ -32,7 +33,7 @@ def test_step_incrementation():
 def test_gol_correctness():
     size = (1, 5, 5)
     g = Geometry(size=size, axes="xyz", periodicity="")
-    ca = CellularAutomaton(g, [GameOfLife3D(g, 2, 3, 3, 3)])
+    ca = CellularAutomaton(g, [GameOfLife3D(g, time_step=1, eb=2, eh=3, fb=3, fh=3)])
 
     def gol_state_from_array(array: np.ndarray):
         return array
@@ -151,35 +152,34 @@ def test_gol_correctness():
         assert np.array_equal(ca_state_arr, states[i])
 
 
-def test_bacteria_growth_consumes_only_one_substrate_particle_per_cell(monkeypatch):
+def _utilization_sim(key_layers):
     geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
-    rule = BacteriaGrowth(
+    rule = Utilization(
         geometry=geometry,
+        time_step=1000,
         bacteria_keys=["alive"],
         substrate_key="substrate",
-        time_step=1000,
     )
     ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
     ca.state = State(
-        geometry, random=None, cell_keys=["alive", "substrate"], key_layers=[1, 6]
+        geometry, random=None, cell_keys=["alive", "substrate"], key_layers=key_layers
+    )
+    return ca
+
+
+def _always_consume(monkeypatch):
+    monkeypatch.setattr(
+        np.random,
+        "random",
+        lambda *args, **kwargs: np.zeros(args[0], dtype=float) if args else 0.0,
     )
 
+
+def test_utilization_consumes_only_one_substrate_particle_per_cell(monkeypatch):
+    ca = _utilization_sim(key_layers=[1, 6])
     ca.state["alive"][1, 1, 1] = 1
     ca.state["substrate"][1, 1, 2] = np.array([1, 1, 0, 0, 0, 0], dtype=np.uint8)
-
-    class MockRandom:
-        def __init__(self):
-            self.calls = 0
-
-        def __call__(self, *args, **kwargs):
-            self.calls += 1
-            if self.calls == 3:
-                return np.ones(args[0], dtype=float) if args else 1.0
-
-            return np.zeros(args[0], dtype=float) if args else 0.0
-
-    monkeypatch.setattr(np.random, "random", MockRandom())
-    monkeypatch.setattr(np.random, "choice", lambda values: int(values[0]))
+    _always_consume(monkeypatch)
 
     ca.step()
 
