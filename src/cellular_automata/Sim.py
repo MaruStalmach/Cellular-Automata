@@ -37,6 +37,7 @@ class CellularAutomaton:
         self.tracker = tracker
         self.output_filename = output_filename
         self.start_time = 0.0
+        self._saved_at_step: int | None = None
         self.max_dt = 0
 
         # collect the keys the rules need; one step lasts as long as the largest rule dt
@@ -107,6 +108,19 @@ class CellularAutomaton:
         if self.tracker:
             self.tracker.record_step(self.state, self.step_no)
 
-        if self.step_no >= self.max_steps and self.tracker and self.output_filename:
-            self.tracker.save(self.output_filename)
+        if self.step_no >= self.max_steps:
+            self.save_tracker()
         return 0
+
+    def save_tracker(self) -> None:
+        """Save the tracked history so far, e.g. when a run is interrupted.
+
+        Called automatically once max_steps is reached; does nothing without a
+        tracker and output filename, or if this step was already saved.
+        """
+        if not (self.tracker and self.output_filename):
+            return
+        if self._saved_at_step == self.step_no:
+            return
+        self.tracker.save(self.output_filename)
+        self._saved_at_step = self.step_no
