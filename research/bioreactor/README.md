@@ -8,17 +8,30 @@ Calibration of the cellular automaton against bioreactor community data: species
 | `data/` | Input community data (OTU / ASV tables, metadata, filtered families). |
 | `notebooks/` | Data exploration and result visualisation. |
 | `scripts/` | `screening.py`, `bayesian_optimization.py`, `analyze_screening.py`. |
-| `results/` | Screening and BO result tables (CSV). |
+| `results/` | Created by the scripts; git-ignored. `screening.py` writes `screening_results.csv`, `bayesian_optimization.py` writes (and resumes from) `bo_results.csv`, `analyze_screening.py` writes `screening_pair_analysis.csv`. |
 
 Run scripts from the repository root, e.g.:
 
 ```bash
 python research/bioreactor/scripts/screening.py
 python research/bioreactor/scripts/bayesian_optimization.py
-python research/bioreactor/scripts/analyze_screening.py
+python research/bioreactor/scripts/analyze_screening.py            # or: --input <csv> --output <csv>
 python examples/CA_sim.py -f research/bioreactor/configs/full18.json
 ```
 
 The scripts need the optional research dependencies (`uv sync --extra research` or `pip install -e ".[research]"`).
 
 Biofilm detachment in these configs uses the `BioreactorBiofilmDetachment` rule.
+
+## Past results
+
+Earlier screening and BO tables and the tracked simulations (`full*`, `bo2*`, `precal*`) are archived on the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch, under `bioreactor/`. Its README lists the commit and config behind each file.
+
+To analyse an archived screening run:
+
+```bash
+git show origin/results:bioreactor/screening/screening_result.csv > /tmp/screening_result.csv
+python research/bioreactor/scripts/analyze_screening.py --input /tmp/screening_result.csv
+```
+
+Don't copy an archived `bo_results.csv` into `results/` to resume a search: the archived scores come from code before the neighbour-count and detachment fixes, so they aren't comparable with new runs.

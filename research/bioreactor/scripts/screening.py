@@ -204,7 +204,9 @@ if __name__ == '__main__':
             }
             for row in results
         ])
-        df_results.to_csv(STUDY_DIR / 'results' / 'screening_results.csv', index=False)
-        print('Saved screening results to', STUDY_DIR / 'results' / 'screening_results.csv')
+        results_path = STUDY_DIR / 'results' / 'screening_results.csv'
+        results_path.parent.mkdir(parents=True, exist_ok=True)
+        df_results.to_csv(results_path, index=False)
+        print('Saved screening results to', results_path)
         
           
