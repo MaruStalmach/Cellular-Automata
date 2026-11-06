@@ -1,11 +1,15 @@
+import argparse
 import ast
+import sys
 from pathlib import Path
 
 import pandas as pd
 
 
-DEFAULT_INPUT = Path(__file__).resolve().parents[1] / 'results' / 'screening_result.csv'
-DEFAULT_OUTPUT = Path(__file__).resolve().parents[1] / 'results' / 'screening_pair_analysis.csv'
+RESULTS_DIR = Path(__file__).resolve().parents[1] / 'results'
+# screening.py writes here; archived screening runs are on the `results` branch
+DEFAULT_INPUT = RESULTS_DIR / 'screening_results.csv'
+DEFAULT_OUTPUT = RESULTS_DIR / 'screening_pair_analysis.csv'
 
 
 def load_screening_results(path: Path) -> pd.DataFrame:
@@ -70,9 +74,23 @@ def analyze_pairs(results: pd.DataFrame, top_fraction: float = 0.25) -> pd.DataF
 
 
 def main() -> None:
-    results = load_screening_results(DEFAULT_INPUT)
+    parser = argparse.ArgumentParser(description='Find interaction pairs enriched in the best screening runs.')
+    parser.add_argument('-i', '--input', type=Path, default=DEFAULT_INPUT,
+                        help=f'screening results CSV (default: {DEFAULT_INPUT})')
+    parser.add_argument('-o', '--output', type=Path, default=DEFAULT_OUTPUT,
+                        help=f'where to write the pair analysis CSV (default: {DEFAULT_OUTPUT})')
+    args = parser.parse_args()
+
+    if not args.input.exists():
+        sys.exit(
+            f'{args.input} not found. Run screening.py first, or pass --input '
+            f'(archived screening results are on the `results` branch).'
+        )
+
+    results = load_screening_results(args.input)
     pair_analysis = analyze_pairs(results)
-    pair_analysis.to_csv(DEFAULT_OUTPUT, index=False)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    pair_analysis.to_csv(args.output, index=False)
 
     top_count = max(1, int(round(len(results) * 0.25)))
     print(f'runs: {len(results)}')
@@ -83,7 +101,7 @@ def main() -> None:
     print(results[['rmse']].head(top_count).to_string(index=True))
     print('\nPairs enriched in the best group:')
     print(pair_analysis.head(15).to_string(index=False))
-    print(f'\nSaved pair analysis to {DEFAULT_OUTPUT}')
+    print(f'\nSaved pair analysis to {args.output}')
 
 
 if __name__ == '__main__':
