@@ -119,7 +119,9 @@ def propose(values: np.ndarray, scores: np.ndarray, lower: np.ndarray, upper: np
 
 def run_trial(run_no: int, values: np.ndarray, base_interactions: dict, real_data: pd.DataFrame) -> float:
     interactions = interactions_from_vector(base_interactions, values)
-    config_path = save_screening_config(interactions, run_no, config_name=BASE_CONFIG)
+    # every trial uses the same seed (common random numbers), so RMSE differences come from the interactions
+    config_path = save_screening_config(interactions, run_no, config_name=BASE_CONFIG, seed=RANDOM_SEED)
+    # built-in rules still draw from np.random; drop this once they use self.rng (REPRO-1 part 2)
     np.random.seed(RANDOM_SEED)
     ca_sim, _ = parse_json(config_path)
     relative_sim = get_relative_sim_data(ca_sim)

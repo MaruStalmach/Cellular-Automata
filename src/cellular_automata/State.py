@@ -17,6 +17,7 @@ class State:
         random_func (Iterable[Callable], optional): Per-key random generation functions. Defaults to None
         random_args (Iterable[dict], optional): Kwargs mapped to `random_func`. Defaults to None
         dtype (np.dtype | type, optional): Global default array data type. Defaults to np.uint8
+        rng (np.random.Generator, optional): Generator for the default random fill. Defaults to an unseeded one
     """
 
     def __init__(
@@ -29,7 +30,10 @@ class State:
         random_func: Optional[Iterable[Callable[..., object]]] = None,
         random_args: Optional[Iterable[dict]] = None,
         dtype: np.dtype | type = np.uint8,
+        rng: Optional[np.random.Generator] = None,
     ) -> None:
+        if rng is None:
+            rng = np.random.default_rng()
 
         self.geometry = geometry
         self.sim = None
@@ -66,7 +70,7 @@ class State:
                 for i, key in enumerate(self.keys):
                     kd = self.key_dtypes.get(key, self.dtype)
 
-                    self._data[key][...] = np.random.randint(
+                    self._data[key][...] = rng.integers(
                         0, 2, size=grid_dims + (self.key_layers[i],)
                     ).astype(kd)
             else:
