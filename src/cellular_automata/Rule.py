@@ -9,6 +9,8 @@ class Rule:
         self.geometry = geometry
         self.dt = time_step
         self.required_keys: list[str] = []
+        # replaced by a seeded generator when the rule joins a CellularAutomaton
+        self.rng = np.random.default_rng()
 
     def _cell_mask(self, grid: np.ndarray) -> np.ndarray:
         if grid.ndim == self.geometry.ndim + 1:

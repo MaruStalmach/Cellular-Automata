@@ -14,12 +14,31 @@ from cellular_automata.tracking.StateTracker import StateTracker
 MAX_RUNS_PER_STEP = 500
 
 
+def resolve_seed(seed: int | None) -> int:
+    """Return `seed`, or a fresh random seed if it is None (so every run has one)."""
+    if seed is None:
+        return int(np.random.SeedSequence().entropy)
+    return int(seed)
+
+
+def state_rng(seed: int) -> np.random.Generator:
+    """Generator for the initial state of a simulation seeded with `seed`."""
+    return np.random.default_rng(np.random.SeedSequence(seed, spawn_key=(0,)))
+
+
+def rule_rng(seed: int, index: int) -> np.random.Generator:
+    """Generator for the rule at `index`; independent of the other rules' streams."""
+    return np.random.default_rng(np.random.SeedSequence(seed, spawn_key=(1, index)))
+
+
 class CellularAutomaton:
     """Simulation engine
 
     args:
     - geometry - Geometry object
     - rules - list of Rule objects used within the siimulation
+    - seed - fixes every random draw of the run; if None a random seed is
+      picked and stored in `self.seed` so the run can be repeated
     """
 
     def __init__(
@@ -30,7 +49,9 @@ class CellularAutomaton:
         max_steps: int = 100,
         tracker: StateTracker | None = None,
         output_filename: str | None = None,
+        seed: int | None = None,
     ):
+        self.seed = resolve_seed(seed)
         self.rules = rules
         self.geometry = geometry
         self.max_steps = max_steps
@@ -49,6 +70,9 @@ class CellularAutomaton:
                 if key not in keys:
                     keys.append(key)
 
+        for index, rule in enumerate(rules):
+            rule.rng = rule_rng(self.seed, index)
+
         self.rule_exec_n_times = [self._runs_per_step(rule) for rule in self.rules]
 
         if state is not None:
@@ -61,11 +85,14 @@ class CellularAutomaton:
                     "key mismatch between rules and state arrays (soft error)"
                 )  # TODO: comparing tuple to list will always thorw a mismacth
         else:
-            self.state = State(geometry, random=True, cell_keys=keys)
+            self.state = State(
+                geometry, random=True, cell_keys=keys, rng=state_rng(self.seed)
+            )
         self.state._get_sim_reference(self)
 
         self.step_no = 0
         if self.tracker:
+            self.tracker.seed = self.seed
             self.tracker.record_step(self.state, self.step_no)
 
     def _runs_per_step(self, rule: Rule) -> int:

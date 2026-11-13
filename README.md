@@ -177,7 +177,7 @@ Simulations are configured with JSON files and built by `cellular_automata.confi
 
 | Section | Required | Contents |
 |---|---|---|
-| `sim` | yes | `size`, `periodicity` (axes that wrap around, e.g. `"xy"`), `max_steps`, `render`; optional `neighbourhood` (`MooreNeighbourhood` by default) and `dtype` |
+| `sim` | yes | `size`, `periodicity` (axes that wrap around, e.g. `"xy"`), `max_steps`, `render`; optional `neighbourhood` (`MooreNeighbourhood` by default), `dtype` and `seed` (see [Reproducibility](#reproducibility)) |
 | `state_keys` | yes | One entry per state variable: `name`, `layers`, `dtype`, and optional random initialisation (`random`, `random_func`, `random_args`) |
 | `rules` | yes | One entry per rule: `name` (the rule class) and `args` (constructor arguments; every rule needs `time_step`) |
 | `tracker` | no | Records the state each step and saves it to `output_files/tracked_simulations/<save_as>.npz` at `max_steps` |
@@ -240,6 +240,13 @@ Each rule has its own `time_step` (`dt`), and one simulation step lasts as long 
 - The runs are interleaved round-robin in the order the rules appear in the config, so rule order matters.
 
 For example, with `Diffusion` at `dt = 0.01` and `BacteriaGrowth` at `dt = 43200`, the ratio would be 4,320,000, but diffusion runs only 500 times per step. The cap is not reported, so keep it in mind when choosing time steps (tracked as BUG-5 in `docs/code-quality-plan.md`).
+
+### Reproducibility
+
+Set `sim.seed` to an integer to make a run repeatable: the same config and seed give the same initial state and the same random draws in every rule. Without a seed, the parser picks one, prints it, and the tracker stores it in the saved `.npz` metadata, so any run can be repeated afterwards.
+
+- Initial state: `random_func: "np.random.<method>"` draws from the seeded generator, so the method must exist on `np.random.Generator` (use `np.random.integers`, not `np.random.randint`). Helper functions such as `random_seeds` get the generator through their `rng` argument.
+- Rules: each rule gets its own generator, `self.rng`, derived from the seed and the rule's position in the config. Adding a rule at the end doesn't change the earlier rules' random streams. Draw from `self.rng` in new rules, never from `np.random`. (Not all built-in rules do this yet: REPRO-1 in `docs/code-quality-plan.md`.)
 
 ## Installation
 

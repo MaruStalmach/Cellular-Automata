@@ -13,6 +13,8 @@ class StateTracker:
         self.history: dict[str, list[np.ndarray]] = {key: [] for key in keys}
         self.geometry: Geometry | None = None
         self.key_layers: dict[str, int] = {}
+        # set by CellularAutomaton so saved runs record the seed that produced them
+        self.seed: int | None = None
 
     @staticmethod
     def _default_axes(ndim: int) -> str:
@@ -80,6 +82,7 @@ class StateTracker:
             "geometry_periodicity": self.geometry.periodicity if self.geometry else "",
             "keys": list(self.history.keys()),
             "key_layers": [self.key_layers.get(key, 1) for key in self.history],
+            "seed": self.seed,
         }
         
         file_path.parent.mkdir(parents=True, exist_ok=True)
