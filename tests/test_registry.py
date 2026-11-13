@@ -7,6 +7,7 @@ import pkgutil
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -41,11 +42,11 @@ def test_registering_a_name_twice_is_rejected():
 
 def test_reloading_a_module_replaces_its_registration(tmp_path: Path, monkeypatch):
     registry = Registry("widget")
-    monkeypatch.setattr(sys.modules[__name__], "RELOAD_REGISTRY", registry, raising=False)
+    monkeypatch.setitem(sys.modules, "_reload_registry_holder", SimpleNamespace(registry=registry))
     (tmp_path / "reloadable_widget.py").write_text(
-        "import tests.test_registry as t\n"
+        "import _reload_registry_holder as holder\n"
         "class Gadget:\n    pass\n"
-        "t.RELOAD_REGISTRY.register(Gadget)\n"
+        "holder.registry.register(Gadget)\n"
     )
     monkeypatch.syspath_prepend(str(tmp_path))
     module = importlib.import_module("reloadable_widget")
