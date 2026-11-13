@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+import cellular_automata.neighbourhoods as neighbourhoods_package
 import cellular_automata.rules as rules_package
 from cellular_automata.config.Parser import parse_json
 from cellular_automata.registry import (
@@ -36,6 +37,23 @@ def test_registering_a_name_twice_is_rejected():
 
     with pytest.raises(ValueError, match="already registered"):
         registry.register(list, name="Thing")
+
+
+def test_reloading_a_module_replaces_its_registration(tmp_path: Path, monkeypatch):
+    registry = Registry("widget")
+    monkeypatch.setattr(sys.modules[__name__], "RELOAD_REGISTRY", registry, raising=False)
+    (tmp_path / "reloadable_widget.py").write_text(
+        "import tests.test_registry as t\n"
+        "class Gadget:\n    pass\n"
+        "t.RELOAD_REGISTRY.register(Gadget)\n"
+    )
+    monkeypatch.syspath_prepend(str(tmp_path))
+    module = importlib.import_module("reloadable_widget")
+    first = registry.get("Gadget")
+
+    importlib.reload(module)
+
+    assert registry.get("Gadget") is module.Gadget is not first
 
 
 def test_register_defaults_to_the_class_name_and_returns_the_class():
@@ -91,8 +109,16 @@ def test_importing_the_rules_package_imports_every_rule_module():
     assert result.stdout.strip() == "True"
 
 
-def test_built_in_neighbourhoods_are_registered():
-    assert NEIGHBOURHOODS.names() == ["MooreNeighbourhood", "VonNeumannNeighbourhood"]
+def test_every_built_in_neighbourhood_is_registered():
+    defined = {}
+    for module_info in pkgutil.iter_modules(neighbourhoods_package.__path__):
+        module = importlib.import_module(f"{neighbourhoods_package.__name__}.{module_info.name}")
+        for name, obj in vars(module).items():
+            if inspect.isclass(obj) and obj.__module__ == module.__name__:
+                defined[name] = obj
+
+    assert {"MooreNeighbourhood", "VonNeumannNeighbourhood"} <= set(defined)
+    assert {name: NEIGHBOURHOODS.get(name) for name in defined} == defined
 
 
 def _config(tmp_path: Path, rule_name: str) -> Path:
