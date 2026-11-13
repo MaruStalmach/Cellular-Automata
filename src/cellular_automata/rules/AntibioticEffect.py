@@ -38,7 +38,7 @@ class AntibioticEffect(Rule):
         for i,b_k in enumerate(self.bacteria_keys):
             bacteria_source = state[b_k].copy()
             bacteria_mask = self._cell_mask(state[b_k])
-            rolls = np.random.random(bacteria_source.shape).astype(np.float16)
+            rolls = self.rng.random(bacteria_source.shape).astype(np.float16)
             rolls = rolls/(1+self.effectiveness[i])
             died = bacteria_mask & (rolls<probs)
             bacteria_source[died]=0
