@@ -5,9 +5,11 @@ from pathlib import Path
 import numpy as np
 
 from cellular_automata.Geometry import Geometry
+from cellular_automata.registry import register_tracker
 from cellular_automata.State import State
 
 
+@register_tracker
 class StateTracker:
     def __init__(self, keys: list[str]) -> None:
         self.history: dict[str, list[np.ndarray]] = {key: [] for key in keys}
