@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from time import time
 
 import numpy as np
@@ -8,6 +9,9 @@ from cellular_automata.Geometry import Geometry
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
 from cellular_automata.tracking.StateTracker import StateTracker
+
+# upper bound on how often one rule runs per step, to keep a step's cost bounded
+MAX_RUNS_PER_STEP = 500
 
 
 class CellularAutomaton:
@@ -29,15 +33,14 @@ class CellularAutomaton:
     ):
         self.rules = rules
         self.geometry = geometry
-        self.neighbours = None
-        self._neighbours_idx = None
         self.max_steps = max_steps
         self.tracker = tracker
         self.output_filename = output_filename
         self.start_time = 0.0
+        self._saved_at_step: int | None = None
         self.max_dt = 0
 
-        # collect necessary keys for rules and find the smallest dt in rules
+        # collect the keys the rules need; one step lasts as long as the largest rule dt
         keys: list[str] = []
         for rule in rules:
             if rule.dt > self.max_dt:
@@ -46,11 +49,7 @@ class CellularAutomaton:
                 if key not in keys:
                     keys.append(key)
 
-        self.rule_exec_n_times = []
-        # calculate amount execution times for each rule
-        for rule in self.rules:
-            times_to_execute = int(np.clip(self.max_dt // rule.dt, 1, 500))
-            self.rule_exec_n_times.append(times_to_execute)
+        self.rule_exec_n_times = [self._runs_per_step(rule) for rule in self.rules]
 
         if state is not None:
             self.state = state
@@ -69,34 +68,25 @@ class CellularAutomaton:
         if self.tracker:
             self.tracker.record_step(self.state, self.step_no)
 
-    def _apply_cellwise(self, rule: Rule):
-
-        # builds neighbourhood index list
-        if self._neighbours_idx is None:
-            self.neighbours = self.geometry.generate_neighbourhood_matrix()
-            self._neighbours_idx = [
-                self.neighbours.indices[
-                    self.neighbours.indptr[i] : self.neighbours.indptr[i + 1]
-                ]
-                for i in range(self.geometry.num_cells)
-            ]
-
-        source = self.state.data.copy()
-        target = np.empty_like(source)
-        # flatten to 2D
-        flat_source = source.reshape(-1, source.shape[-1])
-        flat_target = target.reshape(-1, target.shape[-1])
-
-        # per-cell apply
-        for cell_idx, neighbours_idx in enumerate(self._neighbours_idx):
-            neighbours = flat_source[neighbours_idx]
-            cell = flat_source[cell_idx].copy()
-            coords = tuple(
-                int(coord) for coord in np.unravel_index(cell_idx, self.geometry.size)
+    def _runs_per_step(self, rule: Rule) -> int:
+        """How many times `rule` runs during one step, which lasts `max_dt`."""
+        ratio = self.max_dt / rule.dt
+        runs = round(ratio)
+        if not np.isclose(ratio, runs, rtol=1e-9, atol=0.0):
+            runs = int(np.floor(ratio))
+            warnings.warn(
+                f"{type(rule).__name__}: the step length {self.max_dt} is not a whole "
+                f"multiple of its time_step {rule.dt}; it runs {runs} times per step",
+                stacklevel=3,
             )
-            flat_target[cell_idx] = rule.apply(neighbours, cell, coords)
-
-        self.state.data = target
+        if runs > MAX_RUNS_PER_STEP:
+            warnings.warn(
+                f"{type(rule).__name__}: would run {runs} times per step "
+                f"(step length {self.max_dt} / time_step {rule.dt}) but is capped at "
+                f"{MAX_RUNS_PER_STEP}, so it advances slower than its time_step implies",
+                stacklevel=3,
+            )
+        return int(np.clip(runs, 1, MAX_RUNS_PER_STEP))
 
     def step(self):
         '''increments the timestep of the simulation and applies all '''
@@ -111,16 +101,26 @@ class CellularAutomaton:
             for i, rule in enumerate(self.rules):
                 if times_to_execute[i] <= 0:
                     continue
-                if hasattr(rule, "apply_state"):
-                    self.state = rule.apply_state(self.state)
-                else:
-                    self._apply_cellwise(rule)
+                self.state = rule.apply_state(self.state)
                 times_to_execute[i] -= 1
 
         self.step_no += 1
         if self.tracker:
             self.tracker.record_step(self.state, self.step_no)
 
-        if self.step_no >= self.max_steps and self.tracker and self.output_filename:
-            self.tracker.save(self.output_filename)
+        if self.step_no >= self.max_steps:
+            self.save_tracker()
         return 0
+
+    def save_tracker(self) -> None:
+        """Save the tracked history so far, e.g. when a run is interrupted.
+
+        Called automatically once max_steps is reached; does nothing without a
+        tracker and output filename, or if this step was already saved.
+        """
+        if not (self.tracker and self.output_filename):
+            return
+        if self._saved_at_step == self.step_no:
+            return
+        self.tracker.save(self.output_filename)
+        self._saved_at_step = self.step_no
