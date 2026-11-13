@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      # the parser imports the renderer, and PyOpenGL loads libGL on import
+      # (drop once rendering is optional: ARCH-3 in docs/code-quality-plan.md)
+      - name: Install OpenGL runtime
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgl1 libglu1-mesa
+
+      - name: Install dependencies
+        run: uv sync --locked --all-extras
+
+      - name: Tests
+        run: uv run pytest -q
+
+  lint:
+    runs-on: ubuntu-latest
+    # `ruff format --check` is not enforced yet: adopting it reformats ~30 files,
+    # which is best done in its own PR (docs/code-quality-plan.md, HYG-2)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Ruff check
+        run: uv run ruff check .

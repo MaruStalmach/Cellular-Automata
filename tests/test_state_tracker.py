@@ -1,8 +1,8 @@
+import numpy as np
+
 from cellular_automata.Geometry import Geometry
 from cellular_automata.State import State
 from cellular_automata.tracking.StateTracker import StateTracker, TrackedStatePlayback
-
-import numpy as np
 
 
 def test_state_tracker_round_trip_and_playback(tmp_path, monkeypatch):

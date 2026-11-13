@@ -1,6 +1,8 @@
-from cellular_automata.Rule import Rule
-import numpy as np
 from operator import itemgetter
+
+import numpy as np
+
+from cellular_automata.Rule import Rule
 
 
 class BacteriaGrowth(Rule):

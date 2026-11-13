@@ -40,6 +40,7 @@
         "name":"Diffusion",
         "args" : 
         {
+            "time_step": 0.01,
             "target_key":"substrate",
             "a" : 7.4,
             "p" : 0.07
@@ -49,6 +50,7 @@
     {
         "name" : "Utilization",
         "args" : {
+            "time_step": 0.01,
             "bacteria_keys" : ["bacteria"],
             "substrate_key" : "substrate",
             "substitute_constant" : 0.37,

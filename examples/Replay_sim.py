@@ -5,7 +5,6 @@ import numpy as np
 from cellular_automata.rendering.Renderer import CARenderer
 from cellular_automata.tracking.StateTracker import StateTracker, TrackedStatePlayback
 
-
 ##########################
 # EXAMPLE USAGE
 # python examples/Replay_sim.py -f demo -k bacteria substrate
