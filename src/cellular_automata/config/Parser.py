@@ -26,11 +26,16 @@ from cellular_automata.State import State
 
 
 def parse_dtype(name: str) -> np.dtype:
-    """Turn a config dtype such as "np.uint8" or "float32" into a numpy dtype."""
+    """Turn a config dtype such as "np.uint8" or "float32" into a numeric numpy dtype."""
+    if not isinstance(name, str):
+        raise ValueError(f"Unknown dtype {name!r}")
     try:
-        return np.dtype(name.removeprefix("np."))
+        dtype = np.dtype(name.removeprefix("np."))
     except TypeError as error:
         raise ValueError(f"Unknown dtype '{name}'") from error
+    if not (dtype == np.bool_ or np.issubdtype(dtype, np.number)):
+        raise ValueError(f"Unknown dtype '{name}': state arrays must be numeric or bool")
+    return dtype
 
 
 def resolve_random_func(name: str, rng: np.random.Generator) -> Callable:
