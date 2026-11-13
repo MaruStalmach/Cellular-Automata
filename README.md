@@ -167,7 +167,8 @@ Experiment results are not kept on the code branches. Scripts write them to `res
 
 ### Adding new things
 
-- **A new rule** - add a module to `src/cellular_automata/rules/` with a `Rule` subclass, export it from `src/cellular_automata/rules/__init__.py` and import it in `src/cellular_automata/config/Parser.py`; configs then refer to it by class name.
+- **A new rule** - add a module to `src/cellular_automata/rules/` with a `Rule` subclass decorated with `@register_rule` (from `cellular_automata.registry`). Every module in that folder is imported automatically, so configs can refer to the rule by class name; no other file needs editing. A config naming an unregistered rule fails with `Unknown rule '<name>'` and the list of known rules.
+- **A new neighbourhood** - the same, in `src/cellular_automata/neighbourhoods/` with `@register_neighbourhood`.
 - **A new study** - create `research/<study>/` with the same `configs/`, `data/`, `notebooks/`, `scripts/` layout as `research/bioreactor/`. Archive its results on the `results` branch.
 - **A new example config** - add it to `configs/examples/`.
 

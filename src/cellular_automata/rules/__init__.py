@@ -1,9 +1,14 @@
 """Simulation rules.
 
-Each rule lives in its own module; the classes are re-exported here so that
+Each rule lives in its own module and registers itself with ``@register_rule``.
+Every module in this package is imported below, so a new rule needs only a new
+file to be usable from configs. The built-in classes are also re-exported, so
 ``from cellular_automata.rules import GameOfLife3D`` gives the class.
 """
 
+import sys
+
+from cellular_automata.registry import import_submodules
 from cellular_automata.rules.AntibioticEffect import AntibioticEffect
 from cellular_automata.rules.BacteriaDecay import BacteriaDecay
 from cellular_automata.rules.BacteriaGrowth import BacteriaGrowth
@@ -33,3 +38,5 @@ __all__ = [
     "SpeciesInteraction",
     "Utilization",
 ]
+
+import_submodules(sys.modules[__name__])
