@@ -1,12 +1,14 @@
 import numpy as np
 
 from cellular_automata.Geometry import Geometry
+from cellular_automata.registry import register_rule
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
 
 DIFFUSION_TIME_STEP=0.01
 
 
+@register_rule
 class AntibioticEffect(Rule):
     def __init__(
         self, geometry: Geometry, time_step: float, bacteria_keys : list[str], biofilm_key : str,  effectiveness : list[float], base_prob : float = 0.01, inoculation_start:int=0, inoculation_end:int=None
