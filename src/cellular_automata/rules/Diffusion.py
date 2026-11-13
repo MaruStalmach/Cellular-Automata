@@ -82,15 +82,15 @@ class Diffusion(Rule):
             particle_out_bio = particle_mask&(~bio_mask)
             pib_amt=particle_in_bio.sum()
             pob_amt=particle_out_bio.sum()
-            self.rolls[particle_out_bio] = np.random.choice(
+            self.rolls[particle_out_bio] = self.rng.choice(
             [0, 1, 2, 3, 4, 5], size=(pob_amt,), p=self.p
             ).astype(np.uint8)
-            self.rolls[particle_in_bio] = np.random.choice(
+            self.rolls[particle_in_bio] = self.rng.choice(
                         [0, 1, 2, 3, 4, 5], size=(pib_amt,), p=self.p_bio
                         ).astype(np.uint8)
         else:
             roll_amt = source[source==1].sum()
-            self.rolls[source==1] = np.random.choice(
+            self.rolls[source==1] = self.rng.choice(
                 [0, 1, 2, 3, 4, 5], size=(roll_amt,), p=self.p
             ).astype(np.uint8)
         
@@ -219,7 +219,7 @@ class Diffusion(Rule):
         c2 = c2[z_mask]
         c3 = c3[z_mask]
         c4 = c4[z_mask]
-        selection = np.random.choice(
+        selection = self.rng.choice(
             a=c1.shape[0], size=(self.RESTORE_THRESHOLD,), replace=False
         )
         c1 = c1[selection]

@@ -51,7 +51,7 @@ class BiofilmDetachment(Rule):
             active_y_indices = active_coords[1]
             active_probs = self.y_probabilities[active_y_indices]
  
-            randoms = np.random.random(num_active)
+            randoms = self.rng.random(num_active)
             detach_mask = randoms < active_probs
  
             detached_coords = (
@@ -83,7 +83,7 @@ class BiofilmDetachment(Rule):
                     attach_mask = np.ones(num_cand, dtype=bool)
                 else:
                     attach_mask = (
-                        np.random.random(num_cand) < self.attachment_probability
+                        self.rng.random(num_cand) < self.attachment_probability
                     )
  
                 attached_coords = tuple(c[attach_mask] for c in cand_coords)

@@ -19,7 +19,7 @@ class BacteriaDecay(Rule):
         for key in self.target_keys:
             grid = state[key].copy()
 
-            self.buff = np.random.random(size=grid.shape)
+            self.buff = self.rng.random(size=grid.shape)
 
             self.buff = grid.astype(np.bool) & (self.buff < self.decay_probability)
 
