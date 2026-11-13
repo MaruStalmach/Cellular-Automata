@@ -49,6 +49,8 @@ def test_bayesian_optimization_seeds_every_trial_through_the_config(monkeypatch,
     monkeypatch.setattr(bo, "save_screening_config", record_config)
     monkeypatch.setattr(bo, "parse_json", stop)
     monkeypatch.setattr(bo, "interactions_from_vector", lambda base, values: {})
+    # keep run_trial from reseeding the global RNG for the rest of the session
+    monkeypatch.setattr(bo.np.random, "seed", lambda _seed: None)
 
     for run_no in (1, 2):
         try:
