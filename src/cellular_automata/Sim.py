@@ -50,8 +50,7 @@ class CellularAutomaton:
     - rules - list of Rule objects used within the siimulation
     - seed - seeds each rule's `rng` (and the state, if the simulation creates
       it; a `state` passed in keeps its own values). If None a random seed is
-      picked and stored in `self.seed`. Built-in rules don't use `rng` yet
-      (REPRO-1), so a seed does not yet fix a whole run
+      picked and stored in `self.seed`
     """
 
     def __init__(
