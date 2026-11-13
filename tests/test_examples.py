@@ -9,7 +9,6 @@ from cellular_automata.Sim import CellularAutomaton
 
 EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "examples"
 EXAMPLES = sorted(EXAMPLES_DIR.glob("*.py"))
-# examples that build a simulation in code expose build_sim(size)
 BUILDABLE = ["sim_no_render", "CA_diffusion", "CA_interaction", "CA_drift_sim"]
 TINY_SIZE = (4, 4, 4)
 
