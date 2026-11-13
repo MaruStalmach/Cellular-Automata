@@ -243,10 +243,12 @@ For example, with `Diffusion` at `dt = 0.01` and `BacteriaGrowth` at `dt = 43200
 
 ### Reproducibility
 
-Set `sim.seed` to an integer to make a run repeatable: the same config and seed give the same initial state and the same random draws in every rule. Without a seed, the parser picks one, prints it, and the tracker stores it in the saved `.npz` metadata, so any run can be repeated afterwards.
+Set `sim.seed` to a non-negative integer to make a run repeatable. Without a seed, the parser picks one, reports it in a warning, and the tracker stores it in the saved `.npz` metadata.
+
+> **Not yet complete (REPRO-1 in `docs/code-quality-plan.md`):** the seed fixes the initial state and each rule's `self.rng`, but the built-in rules still draw from `np.random`, so whole runs are not reproducible yet.
 
 - Initial state: `random_func: "np.random.<method>"` draws from the seeded generator, so the method must exist on `np.random.Generator` (use `np.random.integers`, not `np.random.randint`). Helper functions such as `random_seeds` get the generator through their `rng` argument.
-- Rules: each rule gets its own generator, `self.rng`, derived from the seed and the rule's position in the config. Adding a rule at the end doesn't change the earlier rules' random streams. Draw from `self.rng` in new rules, never from `np.random`. (Not all built-in rules do this yet: REPRO-1 in `docs/code-quality-plan.md`.)
+- Rules: each rule gets its own generator, `self.rng`, derived from the seed and the rule's position in the config. Adding a rule at the end doesn't change the earlier rules' streams; inserting or reordering rules changes the streams of the rules after that point. A rule built outside a simulation has an unseeded `self.rng`. Draw from `self.rng` in new rules, never from `np.random`.
 
 ## Installation
 

@@ -1,5 +1,6 @@
 import inspect
 import json
+import warnings
 from collections.abc import Callable
 from functools import partial
 from pathlib import Path
@@ -51,11 +52,12 @@ def getnestedattr(module, name: str) -> object:
 def resolve_random_func(name: str, rng: np.random.Generator) -> Callable:
     """Look up a state `random_func` and make it draw from `rng`.
 
-    `np.random.<method>` names map to that method of `rng`; helper functions
-    that take an `rng` argument (e.g. `random_seeds`) get it bound.
+    `np.random.<method>` (or `random.<method>`) names map to that method of
+    `rng`; helper functions that take an `rng` argument (e.g. `random_seeds`)
+    get it bound.
     """
-    if name.startswith("np.random."):
-        method = name.removeprefix("np.random.")
+    if name.startswith(("np.random.", "random.")):
+        method = name.split("random.", 1)[1]
         if not hasattr(np.random.Generator, method):
             raise ValueError(
                 f"random_func '{name}' is not a method of np.random.Generator, so it "
@@ -66,7 +68,11 @@ def resolve_random_func(name: str, rng: np.random.Generator) -> Callable:
     func = getnestedattr(np, name)
     if func is None:
         raise ValueError(f"Unknown random_func '{name}'")
-    if "rng" in inspect.signature(func).parameters:
+    try:
+        takes_rng = "rng" in inspect.signature(func).parameters
+    except (TypeError, ValueError):
+        takes_rng = False
+    if takes_rng:
         return partial(func, rng=rng)
     return func
 
@@ -95,7 +101,10 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     max_steps = sim_data["max_steps"]
     seed = resolve_seed(sim_data.get("seed"))
     if "seed" not in sim_data:
-        print(f'no sim.seed in config; using seed {seed} (add "seed": {seed} to repeat this run)')
+        warnings.warn(
+            f'no sim.seed in config; using seed {seed} (add "seed": {seed} to repeat this run)',
+            stacklevel=2,
+        )
     init_rng = state_rng(seed)
     neighbourhood_name = sim_data.get("neighbourhood", None)
     neighborhood_name = sim_data.get("neighborhood", None)

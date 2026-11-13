@@ -112,6 +112,8 @@ class StateTracker:
 
         tracker = cls(list(history.keys()))
         tracker.history = history
+        if metadata:
+            tracker.seed = metadata.get("seed")
 
         if metadata and metadata.get("geometry_size"):
             tracker.geometry = Geometry(

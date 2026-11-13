@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import secrets
 import warnings
 from time import time
 
@@ -15,10 +16,15 @@ MAX_RUNS_PER_STEP = 500
 
 
 def resolve_seed(seed: int | None) -> int:
-    """Return `seed`, or a fresh random seed if it is None (so every run has one)."""
+    """Return `seed`, or a fresh random seed if it is None (so every run has one).
+
+    Fresh seeds are 63-bit so they survive a round trip through JSON tools.
+    """
     if seed is None:
-        return int(np.random.SeedSequence().entropy)
-    return int(seed)
+        return secrets.randbits(63)
+    if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+        raise ValueError(f"sim.seed must be a non-negative integer, got {seed!r}")
+    return seed
 
 
 def state_rng(seed: int) -> np.random.Generator:
@@ -37,8 +43,10 @@ class CellularAutomaton:
     args:
     - geometry - Geometry object
     - rules - list of Rule objects used within the siimulation
-    - seed - fixes every random draw of the run; if None a random seed is
-      picked and stored in `self.seed` so the run can be repeated
+    - seed - seeds each rule's `rng` (and the state, if the simulation creates
+      it; a `state` passed in keeps its own values). If None a random seed is
+      picked and stored in `self.seed`. Built-in rules don't use `rng` yet
+      (REPRO-1), so a seed does not yet fix a whole run
     """
 
     def __init__(
