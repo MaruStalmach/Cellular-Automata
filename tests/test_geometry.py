@@ -1,4 +1,4 @@
-from libs.Geometry import Geometry
+from cellular_automata.Geometry import Geometry
 import pytest
 import numpy as np
 from scipy.sparse import csr_matrix

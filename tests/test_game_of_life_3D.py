@@ -1,6 +1,6 @@
-from libs.rules.GameOfLife3D import GameOfLife3D
-from libs.Geometry import Geometry
-from libs.State import State
+from cellular_automata.rules.GameOfLife3D import GameOfLife3D
+from cellular_automata.Geometry import Geometry
+from cellular_automata.State import State
 
 import pytest
 

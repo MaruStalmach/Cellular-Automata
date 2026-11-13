@@ -1,10 +1,10 @@
 import numpy as np
 
-from libs.Geometry import Geometry
-from libs.rules.BacteriaGrowth import BacteriaGrowth
-from libs.rules.GameOfLife3D import GameOfLife3D
-from libs.Sim import CellularAutomaton
-from libs.State import State
+from cellular_automata.Geometry import Geometry
+from cellular_automata.rules.BacteriaGrowth import BacteriaGrowth
+from cellular_automata.rules.GameOfLife3D import GameOfLife3D
+from cellular_automata.Sim import CellularAutomaton
+from cellular_automata.State import State
 
 
 def test_cellular_automaton_initialisation():

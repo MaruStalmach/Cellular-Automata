@@ -1,6 +1,6 @@
-from libs.Geometry import Geometry
-from libs.State import State
-from libs.tracking.StateTracker import StateTracker, TrackedStatePlayback
+from cellular_automata.Geometry import Geometry
+from cellular_automata.State import State
+from cellular_automata.tracking.StateTracker import StateTracker, TrackedStatePlayback
 
 import numpy as np
 

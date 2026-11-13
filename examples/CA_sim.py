@@ -1,0 +1,34 @@
+from cellular_automata.config.Parser import parse_json
+from time import time
+
+import argparse
+
+
+### example usage:
+#   python examples/CA_sim.py -f configs/examples/draft.json
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog="CA_sim",
+        description="""simulate microbial growth (including biofilms) via a Cellular Automaton
+                                     with customizable rules""",
+    )
+
+    parser.add_argument("--filename", "-f", required=True)
+
+    args = parser.parse_args()
+
+    ca_sim, renderer = parse_json(args.filename)
+
+    # Run renderer with CA updates
+    try:
+        renderer.run()
+    except AttributeError as err:
+        print("Attribute error in CA_SIM", err)
+    except KeyboardInterrupt:
+        print("Simulation stopped by user")
+        quit()
+
+    while ca_sim.step()==0:
+        print(f'sim at step {ca_sim.step_no}/{ca_sim.max_steps}, time elapsed={time()-ca_sim.start_time:.2f}s')
+    quit()
