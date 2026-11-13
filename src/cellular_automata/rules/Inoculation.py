@@ -1,9 +1,11 @@
 
 from cellular_automata.Geometry import Geometry
+from cellular_automata.registry import register_rule
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
 
 
+@register_rule
 class Inoculation(Rule):
     def __init__(self, geometry:Geometry, time_step : float, target_key, location, size):
         super().__init__(geometry, time_step)

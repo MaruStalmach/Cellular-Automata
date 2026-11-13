@@ -1,9 +1,11 @@
 import numpy as np
 
+from cellular_automata.registry import register_rule
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
 
 
+@register_rule
 class BiofilmDetachment(Rule):
     """the closer the biofilm is to the wall of the gut, the harder it is for it to get detached
     moves detached cells from biofilm layer to detached bacteria layer"""

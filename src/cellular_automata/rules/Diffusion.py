@@ -1,10 +1,12 @@
 import numpy as np
 
 from cellular_automata.Geometry import Geometry
+from cellular_automata.registry import register_rule
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
 
 
+@register_rule
 class Diffusion(Rule):
     """Random walk diffusion based on "Quantitative Cellular Automaton Model For Biofilms" by Pizarro G.
 

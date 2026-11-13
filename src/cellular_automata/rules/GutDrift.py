@@ -1,9 +1,11 @@
 import numpy as np
 
+from cellular_automata.registry import register_rule
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
 
 
+@register_rule
 class GutDrift(Rule):
     """periodically moves floating bacteria down the z-axis and flushes some of the biofilm down the z-axis"""
 

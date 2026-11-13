@@ -5,12 +5,14 @@ from typing import Dict
 import numpy as np
 
 from cellular_automata.Geometry import Geometry
+from cellular_automata.registry import register_rule
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
 
 InteractionConfig = Dict[str, Dict[str, float]]
 
 
+@register_rule
 class SpeciesInteraction(Rule):
     def __init__(
         self,

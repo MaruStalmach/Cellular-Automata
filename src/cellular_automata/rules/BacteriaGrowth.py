@@ -2,9 +2,11 @@ from operator import itemgetter
 
 import numpy as np
 
+from cellular_automata.registry import register_rule
 from cellular_automata.Rule import Rule
 
 
+@register_rule
 class BacteriaGrowth(Rule):
     def __init__(
         self,
