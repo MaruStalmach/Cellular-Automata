@@ -29,8 +29,31 @@ def test_screening_config_records_the_given_seed(monkeypatch, tmp_path: Path):
     assert json.loads(path.read_text())["sim"]["seed"] == 123
 
 
-def test_bayesian_optimization_seeds_through_the_config():
-    source = (SCRIPTS_DIR / "bayesian_optimization.py").read_text()
+class _StopTrial(Exception):
+    pass
 
-    assert "np.random.seed" not in source
-    assert "seed=RANDOM_SEED" in source
+
+def test_bayesian_optimization_seeds_every_trial_through_the_config(monkeypatch, tmp_path):
+    _screening(monkeypatch, tmp_path)
+    sys.modules.pop("bayesian_optimization", None)
+    bo = importlib.import_module("bayesian_optimization")
+    calls = []
+
+    def record_config(*args, **kwargs):
+        calls.append(kwargs)
+        return tmp_path / "unused.json"
+
+    def stop(_path):
+        raise _StopTrial
+
+    monkeypatch.setattr(bo, "save_screening_config", record_config)
+    monkeypatch.setattr(bo, "parse_json", stop)
+    monkeypatch.setattr(bo, "interactions_from_vector", lambda base, values: {})
+
+    for run_no in (1, 2):
+        try:
+            bo.run_trial(run_no, values=None, base_interactions={}, real_data=None)
+        except _StopTrial:
+            pass
+
+    assert [call.get("seed") for call in calls] == [bo.RANDOM_SEED, bo.RANDOM_SEED]
