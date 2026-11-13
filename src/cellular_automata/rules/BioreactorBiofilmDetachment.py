@@ -31,7 +31,7 @@ class BioreactorBiofilmDetachment(Rule):
             self.detachment_probability * (z_indices**2), 0.0, 1.0
         )
 
-        chances = np.random.random(biofilm_grid.shape)
+        chances = self.rng.random(biofilm_grid.shape)
 
         # checks for biofilm on square and checks the prob of detachment
         # must be a boolean mask: an integer array would index whole slabs along x

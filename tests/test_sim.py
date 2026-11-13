@@ -169,19 +169,24 @@ def _utilization_sim(key_layers):
     return ca
 
 
-def _always_consume(monkeypatch):
-    monkeypatch.setattr(
-        np.random,
-        "random",
-        lambda *args, **kwargs: np.zeros(args[0], dtype=float) if args else 0.0,
-    )
+class _ZeroRandom:
+    """Generator whose random() always returns 0, so every probability check passes."""
+
+    def __init__(self):
+        self._rng = np.random.default_rng(0)
+
+    def random(self, size=None):
+        return 0.0 if size is None else np.zeros(size)
+
+    def __getattr__(self, name):
+        return getattr(self._rng, name)
 
 
-def test_utilization_consumes_only_one_substrate_particle_per_cell(monkeypatch):
+def test_utilization_consumes_only_one_substrate_particle_per_cell():
     ca = _utilization_sim(key_layers=[1, 6])
     ca.state["alive"][1, 1, 1] = 1
     ca.state["substrate"][1, 1, 2] = np.array([1, 1, 0, 0, 0, 0], dtype=np.uint8)
-    _always_consume(monkeypatch)
+    ca.rules[0].rng = _ZeroRandom()
 
     ca.step()
 
@@ -189,7 +194,7 @@ def test_utilization_consumes_only_one_substrate_particle_per_cell(monkeypatch):
     assert int(np.sum(ca.state["alive"])) == 1
 
 
-def test_bacteria_growth_claims_each_target_cell_once(monkeypatch):
+def test_bacteria_growth_claims_each_target_cell_once():
     geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
     rule = BacteriaGrowth(
         geometry=geometry,
@@ -208,11 +213,7 @@ def test_bacteria_growth_claims_each_target_cell_once(monkeypatch):
     ca.state["substrate"][...] = np.zeros((3, 3, 3), dtype=np.uint8)
     ca.state["substrate"][1, 1, 1] = 1
 
-    monkeypatch.setattr(
-        np.random,
-        "random",
-        lambda *args, **kwargs: np.zeros(args[0], dtype=float) if args else 0.0,
-    )
+    ca.rules[0].rng = _ZeroRandom()
 
     ca.step()
 

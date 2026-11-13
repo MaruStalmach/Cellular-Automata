@@ -53,35 +53,36 @@ def test_get_interaction(geometry: Geometry):
 
 
 @pytest.mark.xfail(
-    reason="D1 in docs/code-quality-plan.md: kill/spawn semantics undecided; "
-    "unseeded, so it can pass by chance",
-    strict=False,
+    reason="D1 in docs/code-quality-plan.md: kill/spawn semantics undecided",
+    strict=True,
 )
-def test_destructive_interaction(geometry: Geometry, base_state: State):
+def test_destructive_interaction(geometry: Geometry):
     """
     interaction coeff < 0.
     A should kill Species B ONLY if adjacent
     """
-    # -1.0 coeff guarantees a kill
+    # -1.0 coeff guarantees a kill, so it must happen for every seed
     interactions = {"A": {"B": -1.0}, "B": {}, "C": {}}
-    rule = SpeciesInteraction(geometry, time_step=1000, interactions=interactions)
+    for seed in range(20):
+        rule = SpeciesInteraction(geometry, time_step=1000, interactions=interactions)
+        rule.rng = np.random.default_rng(seed)
+        state = State(geometry=geometry, cell_keys=["A", "B", "C"], dtype=np.uint8)
 
-    base_state["A"][2, 2] = 1
+        state["A"][2, 2] = 1
 
-    base_state["B"][2, 3] = 1  # B adjeecent to A
-    base_state["B"][0, 0] = 1  # B not adjecent to A
+        state["B"][2, 3] = 1  # B adjeecent to A
+        state["B"][0, 0] = 1  # B not adjecent to A
 
-    new_state = rule.apply_state(base_state)
+        new_state = rule.apply_state(state)
 
-    assert new_state["A"][2, 2] == 1
-    assert new_state["B"][2, 3] == 0
-    assert new_state["B"][0, 0] == 1
+        assert new_state["A"][2, 2] == 1
+        assert new_state["B"][2, 3] == 0, f"seed {seed}: adjacent B survived"
+        assert new_state["B"][0, 0] == 1
 
 
 @pytest.mark.xfail(
-    reason="D1 in docs/code-quality-plan.md: kill/spawn semantics undecided; "
-    "unseeded, so it can pass by chance",
-    strict=False,
+    reason="D1 in docs/code-quality-plan.md: kill/spawn semantics undecided",
+    strict=True,
 )
 def test_symbiotic_interaction(geometry: Geometry, base_state: State):
     """
@@ -90,6 +91,7 @@ def test_symbiotic_interaction(geometry: Geometry, base_state: State):
     """
     interactions = {"A": {"B": 1.0}, "B": {}, "C": {}}
     rule = SpeciesInteraction(geometry, time_step=1000, interactions=interactions)
+    rule.rng = np.random.default_rng(0)
 
     base_state["A"][2, 2] = 1
     base_state["B"][1, 1] = 1
@@ -143,7 +145,7 @@ def test_tiebreaker(geometry: Geometry, base_state: State):
     base_state["B"][1, 3] = 1
     base_state["C"][3, 3] = 1
 
-    np.random.seed(42)
+    rule.rng = np.random.default_rng(42)
     new_state = rule.apply_state(base_state)
 
     b_claimed = new_state["B"][2, 3] == 1

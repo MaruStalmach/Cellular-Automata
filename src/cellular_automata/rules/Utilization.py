@@ -115,7 +115,7 @@ class Utilization(Rule):
         # a bacteria cell uses/eats a substrate particle
 
         # roll which bacteria cells eat a substrate particle
-        consumption_draw = np.random.random(state.shape)
+        consumption_draw = self.rng.random(state.shape)
         consumed_cells = self.mask & (consumption_draw < utilization_prob)
 
         # a substrate particle should be claimed by one bacteria only (no double spending)
@@ -128,10 +128,10 @@ class Utilization(Rule):
                 continue
 
             target_cell, target_layer = candidates[
-                int(np.random.randint(len(candidates)))
+                int(self.rng.integers(len(candidates)))
             ]
             substrate_claims.append(
-                (float(np.random.random()), coords, target_cell + (target_layer,))
+                (float(self.rng.random()), coords, target_cell + (target_layer,))
             )
 
         substrate_claims.sort(key=itemgetter(0), reverse=True)

@@ -88,7 +88,7 @@ class SpeciesInteraction(Rule):
                 kill_prob = np.clip(
                         abs(coeff) * (neighbour_counts[bact_a] / max_neighbors), 0.0, 1.0
                     )
-                killed = presence[bact_b] & (np.random.random(state.shape) < kill_prob)
+                killed = presence[bact_b] & (self.rng.random(state.shape) < kill_prob)
                 deaths[bact_b] |= killed
 
             elif coeff > 0:  # species are in symbiosis
@@ -118,7 +118,7 @@ class SpeciesInteraction(Rule):
         max_claim = claim_grid_spot.max(axis=-1)
 
         winner_idx = np.argmax(
-            claim_grid_spot + np.random.random(claim_grid_spot.shape) * 1e-6, axis=-1
+            claim_grid_spot + self.rng.random(claim_grid_spot.shape) * 1e-6, axis=-1
         )
         any_claim = max_claim > 0
 
@@ -129,7 +129,7 @@ class SpeciesInteraction(Rule):
         else:
             spawn_probability = np.clip(max_claim / self.spawn_claim_scale, 0.0, 1.0)
             spawn_here = (
-                empty & any_claim & (np.random.random(state.shape) < spawn_probability)
+                empty & any_claim & (self.rng.random(state.shape) < spawn_probability)
             )
 
         for i, sp in enumerate(bacteria_types):

@@ -69,7 +69,7 @@ class BacteriaGrowth(Rule):
         proposals: list[tuple[float, str, tuple[int, ...], tuple[int, ...]]] = []
         for key, grid in bacteria_grids.items():
             key_mask = self._cell_mask(grid)
-            dividing_cells = key_mask & (np.random.random(state.shape) < growth_prob)
+            dividing_cells = key_mask & (self.rng.random(state.shape) < growth_prob)
 
             for parent_coords in map(tuple, np.argwhere(dividing_cells)):
                 empty_targets = [
@@ -80,9 +80,9 @@ class BacteriaGrowth(Rule):
                 if not empty_targets:
                     continue
 
-                target = empty_targets[int(np.random.randint(len(empty_targets)))]
+                target = empty_targets[int(self.rng.integers(len(empty_targets)))]
                 proposals.append(
-                    (float(np.random.random()), key, parent_coords, target)
+                    (float(self.rng.random()), key, parent_coords, target)
                 )
 
         proposals.sort(key=itemgetter(0), reverse=True)
