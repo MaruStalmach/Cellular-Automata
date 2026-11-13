@@ -1,13 +1,15 @@
 """Named registries for the classes a config can refer to.
 
-A config names rules and neighbourhoods by string; the parser looks them up
-here, so only registered classes can be built from a config. Register a new
-rule with `@register_rule` on its class; putting the module in
-`cellular_automata/rules/` is enough for it to be imported.
+A config names rules, neighbourhoods, trackers, renderer callbacks and state
+initialisers by string; the parser looks them up here, so only registered
+objects can be built or called from a config. Register a new rule with
+`@register_rule` on its class; putting the module in `cellular_automata/rules/`
+is enough for it to be imported.
 """
 
 import importlib
 import pkgutil
+from collections.abc import Callable
 from types import ModuleType
 from typing import TYPE_CHECKING, Generic, TypeVar
 
@@ -56,9 +58,15 @@ class Registry(Generic[T]):
 
 RULES: Registry["type[Rule]"] = Registry("rule")
 NEIGHBOURHOODS: Registry[type] = Registry("neighbourhood")
+TRACKERS: Registry[type] = Registry("tracker")
+CALLBACKS: Registry[type] = Registry("callback")
+INITIALISERS: Registry[Callable] = Registry("initialiser")
 
 register_rule = RULES.register
 register_neighbourhood = NEIGHBOURHOODS.register
+register_tracker = TRACKERS.register
+register_callback = CALLBACKS.register
+register_initialiser = INITIALISERS.register
 
 
 def import_submodules(package: ModuleType) -> None:

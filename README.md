@@ -169,6 +169,7 @@ Experiment results are not kept on the code branches. Scripts write them to `res
 
 - **A new rule** - add a module to `src/cellular_automata/rules/` with a `Rule` subclass decorated with `@register_rule` (from `cellular_automata.registry`). Every module in that folder is imported automatically, so configs can refer to the rule by class name; no other file needs editing. Adding it to `rules/__init__.py` is optional and only enables `from cellular_automata.rules import NewRule`. A config naming an unregistered rule fails with `Unknown rule '<name>'` and the list of known rules.
 - **A new neighbourhood** - the same, in `src/cellular_automata/neighbourhoods/` with `@register_neighbourhood`.
+- **A new tracker, renderer callback or state initialiser** - decorate it with `@register_tracker`, `@register_callback` or `@register_initialiser` (all in `cellular_automata.registry`); the parser imports `tracking/StateTracker.py`, `Callback.py` and `util/helper_functions.py`, so put it there or import its module from the parser.
 - **A new study** - create `research/<study>/` with the same `configs/`, `data/`, `notebooks/`, `scripts/` layout as `research/bioreactor/`. Archive its results on the `results` branch.
 - **A new example config** - add it to `configs/examples/`.
 
@@ -179,7 +180,7 @@ Simulations are configured with JSON files and built by `cellular_automata.confi
 | Section | Required | Contents |
 |---|---|---|
 | `sim` | yes | `size`, `periodicity` (axes that wrap around, e.g. `"xy"`), `max_steps`, `render`; optional `neighbourhood` (`MooreNeighbourhood` by default), `dtype` and `seed` (see [Reproducibility](#reproducibility)) |
-| `state_keys` | yes | One entry per state variable: `name`, `layers`, `dtype`, and optional random initialisation (`random`, `random_func`, `random_args`) |
+| `state_keys` | yes | One entry per state variable: `name`, `layers`, `dtype` (a numpy type name, e.g. `"np.uint8"` or `"float32"`), and optional random initialisation (`random`, `random_func`, `random_args`); `random_func` is `np.random.<method>` or a registered initialiser (`init_block`, `random_seeds`) |
 | `rules` | yes | One entry per rule: `name` (the rule class) and `args` (constructor arguments; every rule needs `time_step`) |
 | `tracker` | no | Records the state each step and saves it to `output_files/tracked_simulations/<save_as>.npz` at `max_steps` |
 | `renderer` | when `render` is true | `key` to display, `window_size`, and an optional `callback` (`Callback`, `ReduceCallback`, `MultiKeyCallback`) with `args` |
