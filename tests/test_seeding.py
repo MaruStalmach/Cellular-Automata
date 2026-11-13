@@ -122,7 +122,7 @@ def _write_config(tmp_path: Path, seed=None, random_func="np.random.choice") -> 
         sim["seed"] = seed
     random_args = (
         {"a": [0, 1], "p": [0.5, 0.5]}
-        if random_func == "np.random.choice"
+        if random_func.endswith("choice")
         else {"n": 5, "value": 1}
     )
     config = {
@@ -161,18 +161,38 @@ def test_config_seed_fixes_rule_streams(tmp_path: Path):
     assert draws(11) != draws(12)
 
 
-def test_unseeded_config_reports_the_seed_it_used(tmp_path: Path, capsys):
-    sim, _ = parse_json(_write_config(tmp_path, seed=None))
+def test_unseeded_config_reports_the_seed_it_used(tmp_path: Path):
+    with pytest.warns(UserWarning, match="no sim.seed") as warned:
+        sim, _ = parse_json(_write_config(tmp_path, seed=None))
 
     replay, _ = parse_json(_write_config(tmp_path, seed=sim.seed))
 
-    assert str(sim.seed) in capsys.readouterr().out
+    assert str(sim.seed) in str(warned[0].message)
+    assert sim.seed < 2**63
     np.testing.assert_array_equal(sim.state["alive"], replay.state["alive"])
 
 
-def test_legacy_only_numpy_random_function_is_rejected(tmp_path: Path):
-    with pytest.raises(ValueError, match="np.random.randint"):
-        parse_json(_write_config(tmp_path, seed=1, random_func="np.random.randint"))
+@pytest.mark.parametrize("bad_seed", [1.5, True, "42", -1])
+def test_invalid_seed_is_rejected(bad_seed):
+    geometry = _geometry()
+    with pytest.raises(ValueError, match="seed"):
+        CellularAutomaton(geometry, [_DrawingRule(geometry)], state=_empty_state(geometry),
+                          seed=bad_seed)
+
+
+@pytest.mark.parametrize("name", ["np.random.randint", "random.randint"])
+def test_legacy_only_numpy_random_function_is_rejected(tmp_path: Path, name):
+    with pytest.raises(ValueError, match=name):
+        parse_json(_write_config(tmp_path, seed=1, random_func=name))
+
+
+def test_random_prefix_without_np_draws_from_the_seed(tmp_path: Path):
+    def build(seed):
+        sim, _ = parse_json(_write_config(tmp_path, seed, "random.choice"))
+        return sim.state["alive"]
+
+    np.testing.assert_array_equal(build(11), build(11))
+    assert not np.array_equal(build(11), build(12))
 
 
 def test_tracker_output_records_the_seed(tmp_path: Path):
@@ -191,3 +211,4 @@ def test_tracker_output_records_the_seed(tmp_path: Path):
         metadata = json.loads(str(saved["__state_tracker_metadata__"].item()))
 
     assert metadata["seed"] == 5
+    assert StateTracker.load(str(out)).seed == 5
