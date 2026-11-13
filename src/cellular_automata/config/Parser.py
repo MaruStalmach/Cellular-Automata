@@ -100,7 +100,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     period = sim_data["periodicity"]
     max_steps = sim_data["max_steps"]
     seed = resolve_seed(sim_data.get("seed"))
-    if "seed" not in sim_data:
+    if sim_data.get("seed") is None:
         warnings.warn(
             f'no sim.seed in config; using seed {seed} (add "seed": {seed} to repeat this run)',
             stacklevel=2,

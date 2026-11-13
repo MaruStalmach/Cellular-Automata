@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import operator
 import secrets
 import warnings
 from time import time
@@ -22,9 +23,13 @@ def resolve_seed(seed: int | None) -> int:
     """
     if seed is None:
         return secrets.randbits(63)
-    if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+    try:
+        value = operator.index(seed)
+    except TypeError:
+        value = None
+    if isinstance(seed, (bool, np.bool_)) or value is None or value < 0:
         raise ValueError(f"sim.seed must be a non-negative integer, got {seed!r}")
-    return seed
+    return int(value)
 
 
 def state_rng(seed: int) -> np.random.Generator:

@@ -172,6 +172,20 @@ def test_unseeded_config_reports_the_seed_it_used(tmp_path: Path):
     np.testing.assert_array_equal(sim.state["alive"], replay.state["alive"])
 
 
+def test_numpy_integer_seed_is_accepted():
+    assert _sim(seed=np.int64(7))[0].draws == _sim(seed=7)[0].draws
+
+
+def test_null_seed_in_config_is_reported(tmp_path: Path):
+    path = _write_config(tmp_path, seed=None)
+    config = json.loads(path.read_text())
+    config["sim"]["seed"] = None
+    path.write_text(json.dumps(config))
+
+    with pytest.warns(UserWarning, match="no sim.seed"):
+        parse_json(path)
+
+
 @pytest.mark.parametrize("bad_seed", [1.5, True, "42", -1])
 def test_invalid_seed_is_rejected(bad_seed):
     geometry = _geometry()
