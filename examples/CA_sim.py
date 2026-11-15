@@ -37,7 +37,6 @@ def main():
     except KeyboardInterrupt:
         print("Simulation stopped by user")
     finally:
-        # keeps the history recorded so far if the run stopped before max_steps
         ca_sim.save_tracker()
 
 
