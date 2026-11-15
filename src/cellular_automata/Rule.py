@@ -26,7 +26,6 @@ class Rule:
 
         for axis, shift in enumerate(offset):
             if shift != 0 and axis in self.geometry.periodic_dims:
-                # np.roll moves data forward, so roll by -shift to read grid[i + shift]
                 shifted = np.roll(shifted, shift=-shift, axis=axis)
 
         non_periodic_axes = [
