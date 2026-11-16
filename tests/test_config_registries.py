@@ -105,12 +105,13 @@ def test_bare_dtype_name_is_not_silently_float(tmp_path: Path):
 def test_sim_dtype_is_the_default_for_keys(tmp_path: Path):
     path = _write(tmp_path)
     config = json.loads(path.read_text())
-    config["sim"]["dtype"] = "uint8"
+    # not the parser's own default (np.uint8), so the test shows sim.dtype is read
+    config["sim"]["dtype"] = "float32"
     path.write_text(json.dumps(config))
 
     sim, _ = Parser.parse_json(path)
 
-    assert sim.state["alive"].dtype == np.uint8
+    assert sim.state["alive"].dtype == np.float32
 
 
 @pytest.mark.parametrize("dtype", ["np.random", "Path", "np.notatype", "object", "U10", 8, None])
