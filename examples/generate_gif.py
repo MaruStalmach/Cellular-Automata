@@ -11,7 +11,6 @@ from pathlib import Path
 import imageio.v2 as imageio
 import numpy as np
 
-from cellular_automata.rendering.Renderer import CARenderer
 from cellular_automata.tracking.StateTracker import StateTracker, TrackedStatePlayback
 
 
@@ -41,6 +40,8 @@ def _frame_for_keys(state, keys: list[str], spatial_rank: int) -> np.ndarray:
 
 
 def main() -> None:
+    from cellular_automata.rendering.Renderer import CARenderer
+
     parser = argparse.ArgumentParser(
         prog="generate_gif",
         description="Replay a tracked simulation in the renderer",
