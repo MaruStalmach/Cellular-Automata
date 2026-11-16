@@ -1,9 +1,11 @@
 import numpy as np
 
+from cellular_automata.registry import register_rule
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
 
 
+@register_rule
 class GameOfLife3D(Rule):
     """vectorized 3DGoL based on arrays
 
