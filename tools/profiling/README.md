@@ -15,7 +15,7 @@ python tools/profiling/monitoring_sim.py
 1. Profile a script with cProfile:
 
    ```bash
-   python -m cProfile -o output_files/out.profile examples/sim_no_render.py
+   python -m cProfile -o output_files/out.profile examples/sim_no_render.py -x 20 -y 20 -z 20 -s 100
    ```
 
 2. Print the 20 most expensive functions (defaults to `output_files/out.profile`):

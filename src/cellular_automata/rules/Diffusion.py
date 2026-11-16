@@ -1,7 +1,8 @@
+import numpy as np
+
+from cellular_automata.Geometry import Geometry
 from cellular_automata.Rule import Rule
 from cellular_automata.State import State
-from cellular_automata.Geometry import Geometry
-import numpy as np
 
 
 class Diffusion(Rule):
@@ -98,16 +99,15 @@ class Diffusion(Rule):
         np.copyto(self.rolls, 6, where=(source == 0))
 
         # change direction 180 deg for particles that would collide with wall
-        for i, ax_dir in enumerate([(2, 1), (1, 1), (0, 1)]):
-            ax, dir = ax_dir
+        for ax in (2, 1, 0):
             if ax not in state.geometry.periodic_dims:
-                l = -1 * ax + 2
-                l2 = (l + 3) % 6
+                forward_layer = -1 * ax + 2  # moving towards +ax
+                backward_layer = (forward_layer + 3) % 6  # moving towards -ax
                 sel = [slice(None)] * 4
                 sel[ax] = -1
-                self.rolls[tuple(sel)][self.rolls[tuple(sel)] == l] = l2
+                self.rolls[tuple(sel)][self.rolls[tuple(sel)] == forward_layer] = backward_layer
                 sel[ax] = 0
-                self.rolls[tuple(sel)][self.rolls[tuple(sel)] == l2] = l
+                self.rolls[tuple(sel)][self.rolls[tuple(sel)] == backward_layer] = forward_layer
 
         # reset layers to zeros
         self.layers[...] = 0

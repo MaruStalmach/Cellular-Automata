@@ -1,6 +1,8 @@
-from cellular_automata.Rule import Rule
-import numpy as np
 from operator import itemgetter
+
+import numpy as np
+
+from cellular_automata.Rule import Rule
 
 
 class BacteriaGrowth(Rule):
@@ -55,9 +57,7 @@ class BacteriaGrowth(Rule):
             occupied_mask |= self._cell_mask(grid)
 
         # counts amt of substrate particles in each cell
-        substrate_count = self.neighborhood_count(substrate_grid).astype(
-            np.int8, copy=False
-        )
+        substrate_count = self.neighborhood_count(substrate_grid)
 
         # equations based on QUANTITATIVE CELLULAR AUTOMATON MODEL FOR BIOFILMS by pizarro
 

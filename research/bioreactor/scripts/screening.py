@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
+from time import time
 
 import numpy as np
 import pandas as pd
 
 from cellular_automata.config.Parser import parse_json
-from time import time
 
 STUDY_DIR = Path(__file__).resolve().parents[1]
 CONFIGS_DIR = STUDY_DIR / 'configs'

@@ -1,5 +1,5 @@
-from datetime import datetime
 import json
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -43,7 +43,7 @@ class StateTracker:
         for frame in frames[1:]:
             candidate_shape = frame.shape
             prefix_length = 0
-            for left_dim, right_dim in zip(spatial_shape, candidate_shape):
+            for left_dim, right_dim in zip(spatial_shape, candidate_shape, strict=False):
                 if left_dim != right_dim:
                     break
                 prefix_length += 1
@@ -58,18 +58,17 @@ class StateTracker:
         if self.geometry is None:
             self.geometry = state.geometry
 
-        for key in state.keys:
+        for key in self.history:
             self.history[key].append(state[key].copy())
             self.key_layers[key] = state.key_layers[state.key_to_index[key]]
 
     def save(self, filename: str = "tracked_simulation") -> None:
-        base_dir = Path("output_files/tracked_simulations")
-
+        """Save the history. Paths resolve like `load()`: a bare name goes to
+        output_files/tracked_simulations/<name>.npz, anything else is used as given."""
         if filename == "tracked_simulation":
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = base_dir / f"{filename}_{timestamp}.npz"
-        else:
-            file_path = base_dir / f"{filename}.npz"
+            filename = f"{filename}_{timestamp}"
+        file_path = self._normalize_file_path(filename)
 
         stacked_history = {
             key: np.stack(arrays, axis=0) for key, arrays in self.history.items()
@@ -122,7 +121,9 @@ class StateTracker:
 
             tracker.key_layers = {
                 key: int(layer_count)
-                for key, layer_count in zip(metadata.get("keys", []), metadata.get("key_layers", []))
+                for key, layer_count in zip(
+                    metadata.get("keys", []), metadata.get("key_layers", []), strict=False
+                )
             }
 
         return tracker

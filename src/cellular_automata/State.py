@@ -77,7 +77,7 @@ class State:
                 for i, key in enumerate(self.keys):
                     kd = self.key_dtypes.get(key, self.dtype)
                     expected_shape = grid_dims + (self.key_layers[i],)
-                    if random_func[i] == None:
+                    if random_func[i] is None:
                         continue
                     try:
                         generated = random_func[i](

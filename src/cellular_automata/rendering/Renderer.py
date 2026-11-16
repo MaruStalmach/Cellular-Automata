@@ -108,11 +108,15 @@ class CARenderer:
         self.one_filler = glm.vec4(1.0)
 
         if not glfw.init():
-            raise Exception("GLFW initialization failed")
+            raise RuntimeError("GLFW initialization failed")
 
         self.window = glfw.create_window(width, height, "nrt", None, None)
         if not self.window:
             glfw.terminate()
+            raise RuntimeError(
+                "Could not create a GLFW window. Rendering needs a display and "
+                "OpenGL >= 4.3; set \"render\": false in the config to run headless."
+            )
 
         glfw.set_window_pos(self.window, 400, 200)
         glfw.make_context_current(self.window)
@@ -734,7 +738,6 @@ class CARenderer:
             glfw.poll_events()
 
         glfw.terminate()
-        quit()
 
 
 # Example usage

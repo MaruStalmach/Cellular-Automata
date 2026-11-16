@@ -5,30 +5,30 @@ import numpy as np
 
 from cellular_automata.Callback import *
 from cellular_automata.Geometry import Geometry
-from cellular_automata.Sim import CellularAutomaton
-from cellular_automata.State import State
-from cellular_automata.util.helper_functions import *
-from cellular_automata.tracking.StateTracker import *
-### RULES ########################
-from cellular_automata.rules.BacteriaGrowth import *
-from cellular_automata.rules.GameOfLife3D import *
-from cellular_automata.rules.GutDrift import *
-from cellular_automata.rules.Diffusion import *
-from cellular_automata.rules.BiofilmDetachment import *
-from cellular_automata.rules.BioreactorBiofilmDetachment import *
-from cellular_automata.rules.SpeciesInteraction import *
-from cellular_automata.rules.BacteriaDecay import *
-from cellular_automata.rules.Utilization import *
-from cellular_automata.rules.Inoculation import *
-from cellular_automata.rules.CreateBiofilm import *
-from cellular_automata.rules.AntibioticEffect import *
-
-### NEIGHBORHOODS #####################
 from cellular_automata.neighbourhoods.MooreNeighbourhood import *
 from cellular_automata.neighbourhoods.VonNeumannNeighbourhood import *
 from cellular_automata.rendering.Renderer import CARenderer
+from cellular_automata.rules.AntibioticEffect import *
 from cellular_automata.rules.BacteriaDecay import *
+from cellular_automata.rules.BacteriaGrowth import *
+from cellular_automata.rules.BiofilmDetachment import *
+from cellular_automata.rules.BioreactorBiofilmDetachment import *
+from cellular_automata.rules.CreateBiofilm import *
+from cellular_automata.rules.Diffusion import *
+from cellular_automata.rules.GameOfLife3D import *
+from cellular_automata.rules.GutDrift import *
+from cellular_automata.rules.Inoculation import *
+from cellular_automata.rules.SpeciesInteraction import *
+from cellular_automata.rules.Utilization import *
+from cellular_automata.Sim import CellularAutomaton
+from cellular_automata.State import State
+from cellular_automata.tracking.StateTracker import *
+from cellular_automata.util.helper_functions import *
 
+NEIGHBOURHOODS = {
+    "MooreNeighbourhood": MooreNeighbourhood,
+    "VonNeumannNeighbourhood": VonNeumannNeighbourhood,
+}
 
 
 def getnestedattr(module, name: str) -> object:
@@ -70,11 +70,14 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     neighbourhood_name = sim_data.get("neighbourhood", None)
     neighborhood_name = sim_data.get("neighborhood", None)
     n_n = neighborhood_name or neighbourhood_name
-    neigh_class = globals().get(n_n, None)
-    try:
-        neighborhood = neigh_class()
-    except:
-        neighborhood = None
+    if n_n is None:
+        neighborhood = None  # Geometry defaults to Moore
+    elif n_n in NEIGHBOURHOODS:
+        neighborhood = NEIGHBOURHOODS[n_n]()
+    else:
+        raise ValueError(
+            f"Unknown neighbourhood '{n_n}'. Known: {sorted(NEIGHBOURHOODS)}"
+        )
 
     geometry = Geometry(
         size=tuple(size), axes="xyz", periodicity=period, neighbourhood=neighborhood
@@ -175,9 +178,9 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     callback_data = renderer_data.get("callback", None)
 
     if callback_data is None:
-        callback = Callback()
+        callback = Callback(key, ca_sim)
     else:
-        cb_args = {} or callback_data.get("args", None)
+        cb_args = callback_data.get("args") or {}
         callback = globals()[callback_data["name"]](key, ca_sim, **cb_args)
 
     if isinstance(key, list):

@@ -8,8 +8,8 @@
 import argparse
 from pathlib import Path
 
-import numpy as np
 import imageio.v2 as imageio
+import numpy as np
 
 from cellular_automata.rendering.Renderer import CARenderer
 from cellular_automata.tracking.StateTracker import StateTracker, TrackedStatePlayback

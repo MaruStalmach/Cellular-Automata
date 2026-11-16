@@ -1,8 +1,8 @@
-from cellular_automata.Geometry import Geometry
-import pytest
 import numpy as np
+import pytest
 from scipy.sparse import csr_matrix
 
+from cellular_automata.Geometry import Geometry
 
 init_test_data = [
     ((10, 10), "xy", "y", 2, 100, {1}, 8),

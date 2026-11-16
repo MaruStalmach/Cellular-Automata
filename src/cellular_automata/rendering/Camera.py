@@ -1,5 +1,5 @@
-import numpy as np
 import glm
+import numpy as np
 
 
 class Camera:

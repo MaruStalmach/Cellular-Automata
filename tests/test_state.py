@@ -1,8 +1,8 @@
+import numpy as np
+import pytest
+
 from cellular_automata.Geometry import Geometry
 from cellular_automata.State import State
-import numpy as np
-
-import pytest
 
 test_data = [
     ((2, 3), "xy", "", (2, 3), (2, 3, 1), (0, 0)),

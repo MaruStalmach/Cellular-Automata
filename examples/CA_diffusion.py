@@ -1,55 +1,54 @@
-from cellular_automata.rules import Diffusion
-from cellular_automata.Geometry import Geometry
-from cellular_automata.Sim import CellularAutomaton
-from cellular_automata.rendering.Renderer import CARenderer
+"""Substrate diffusion from one corner of the grid, rendered live (press P to step)."""
 
 import numpy as np
 
+from cellular_automata.Geometry import Geometry
+from cellular_automata.rules import Diffusion
+from cellular_automata.Sim import CellularAutomaton
+from cellular_automata.State import State
 
-if __name__ == "__main__":
-    # TODO parse args
+SUBSTRATE_LAYERS = 6  # one layer per movement direction
+STEPS_PER_FRAME = 100
 
-    size = (50, 50, 50)
-    axes = "xyz"
-    p = ""
-    geometry = Geometry(size, axes, p)
 
-    rules = [Diffusion(geometry, a=6, p=0.08)]
+def build_sim(size: tuple[int, int, int], max_steps: int = 1000) -> CellularAutomaton:
+    geometry = Geometry(size, "xyz", "")
+    rules = [Diffusion(geometry, time_step=1, a=6, p=0.08, target_key="substrate")]
+    state = State(
+        geometry, cell_keys=["substrate"], key_layers=[SUBSTRATE_LAYERS], random=False
+    )
+    state["substrate"][0:3, 0:3, 0:3, 0] = 1
+    return CellularAutomaton(
+        geometry=geometry, rules=rules, state=state, max_steps=max_steps
+    )
 
-    ca_sim = CellularAutomaton(geometry=geometry, rules=rules)
 
-    init = np.zeros_like(ca_sim.state.data, dtype=np.uint8)
-    init[0:3, 0:3, 0:3, 0] = 1
+def main():
+    from cellular_automata.rendering.Renderer import CARenderer
 
-    ca_sim.state.data = init
-
-    sim_state = {"running": True, "step_count": 0, "max_steps": 1000}
+    ca_sim = build_sim((50, 50, 50))
 
     def update_callback(step=True):
         """Called each frame to get the latest CA state"""
-        if sim_state["running"] and sim_state["step_count"] < sim_state["max_steps"]:
-            if step:
-                for i in range(100):
-                    ca_sim.step()
-                    sim_state["step_count"] += 1
-            print(f"Step {sim_state['step_count']}/{sim_state['max_steps']}")
-        # Convert CA state to numpy array for rendering
-        try:
-            cell_array = ca_sim.state.data
-            cell_array = cell_array.reshape(size + (6,))
-            return np.maximum.reduce(cell_array, axis=-1)
-        except Exception:
-            # Fallback if structure is different
-            print("update_callback fallback triggered")
-            return None
+        if step:
+            for _ in range(STEPS_PER_FRAME):
+                if ca_sim.step() != 0:
+                    break
+            print(f"Step {ca_sim.step_no}/{ca_sim.max_steps}")
+        return np.maximum.reduce(ca_sim.state["substrate"], axis=-1)
 
-    # Initialize renderer
     renderer = CARenderer(
-        width=1200, height=800, init_state=update_callback(step=False)
+        width=1200,
+        height=800,
+        init_state=update_callback(step=False),
+        update_callback=update_callback,
     )
 
-    # Run renderer with CA updates
     try:
-        renderer.run(update_callback=update_callback)
+        renderer.run()
     except KeyboardInterrupt:
         print("Simulation stopped by user")
+
+
+if __name__ == "__main__":
+    main()
