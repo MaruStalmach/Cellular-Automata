@@ -255,21 +255,23 @@ Set `sim.seed` to a non-negative integer to make a run repeatable: the same conf
 ### Requirements
 
 - Python 3.12.
-- An OpenGL-compatible display and GLFW-compatible graphics support for rendered simulations.
+- For rendered simulations only: the `render` extra, a display, and OpenGL 4.3 or newer (the renderer uses shader storage buffers). Headless runs, tests and research scripts don't need OpenGL.
 
 ### Setup
 
 With [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv sync                      # library + dev tools (pytest, ruff)
+uv sync                      # library + dev tools (pytest, ruff); headless only
+uv sync --extra render       # also install the OpenGL renderer (glfw, PyOpenGL, PyGLM)
 uv sync --extra research     # also install pandas, imageio, psutil for examples/research/tools
+uv sync --all-extras         # everything
 ```
 
 Or with pip:
 
 ```bash
-pip install -e ".[research]"
+pip install -e ".[render,research]"
 ```
 
 ## Running Simulations
@@ -282,7 +284,7 @@ Run commands from the repository root (prefix them with `uv run` when using uv).
 python examples/CA_sim.py -f configs/examples/draft.json
 ```
 
-The renderer opens an interactive window. Press **P** to advance the simulation.
+The renderer opens an interactive window and needs the `render` extra; without it, a config with `"render": true` fails with an error saying how to install it. Press **P** to advance the simulation.
 Configs with `"render": false` in their `sim` section run headless with the same command.
 
 Config paths are resolved relative to the current directory, so research configs work the same way:

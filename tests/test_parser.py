@@ -19,7 +19,7 @@ class FakeRenderer:
 
 @pytest.fixture(autouse=True)
 def no_opengl(monkeypatch):
-    monkeypatch.setattr(Parser, "CARenderer", FakeRenderer)
+    monkeypatch.setattr(Parser, "renderer_class", lambda: FakeRenderer)
 
 
 def _write_config(tmp_path: Path, renderer_block: dict) -> Path:
