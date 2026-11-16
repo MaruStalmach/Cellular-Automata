@@ -5,10 +5,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from cellular_automata.config import Parser
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-RENDER_MODULES = ["glfw", "OpenGL", "glm", "pyglm"]
+RENDER_MODULES = ["glfw", "OpenGL", "OpenGL_accelerate", "glm"]
 
 # setting sys.modules[name] = None makes `import name` raise ImportError
 BLOCK_RENDERING = "import sys\n" + "".join(
@@ -97,3 +99,47 @@ def test_parser_module_does_not_import_opengl():
     result = _run_without_rendering("import cellular_automata.config.Parser\n")
 
     assert result.returncode == 0, result.stderr
+
+
+def test_every_library_module_outside_rendering_imports_without_opengl():
+    result = _run_without_rendering(
+        "import importlib, pkgutil, cellular_automata as ca\n"
+        "for info in pkgutil.walk_packages(ca.__path__, 'cellular_automata.'):\n"
+        "    if not info.name.startswith('cellular_automata.rendering'):\n"
+        "        importlib.import_module(info.name)\n"
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_missing_renderer_is_reported_before_the_simulation_is_built(tmp_path: Path):
+    path = _config(tmp_path, render=True)
+    config = json.loads(path.read_text())
+    config["rules"][0]["name"] = "NoSuchRule"
+    path.write_text(json.dumps(config))
+
+    result = _run_without_rendering(
+        "from cellular_automata.config.Parser import parse_json\n"
+        f"parse_json({str(path)!r})\n"
+    )
+
+    assert "--extra render" in result.stderr
+    assert "NoSuchRule" not in result.stderr
+
+
+def test_other_import_errors_are_not_reported_as_a_missing_extra(monkeypatch):
+    # a broken renderer module (not a missing OpenGL package) must surface as itself
+    monkeypatch.setitem(sys.modules, "cellular_automata.rendering.Renderer", None)
+
+    with pytest.raises(ImportError) as raised:
+        Parser.renderer_class()
+
+    assert "--extra render" not in str(raised.value)
+
+
+def test_renderer_class_finds_the_real_renderer():
+    pytest.importorskip("glfw")
+    pytest.importorskip("OpenGL.GL")
+    from cellular_automata.rendering.Renderer import CARenderer
+
+    assert Parser.renderer_class() is CARenderer

@@ -42,6 +42,10 @@ jobs:
       - name: Renderer imports
         run: uv run python -c "import cellular_automata.rendering.Renderer, cellular_automata.rendering.Shader"
 
+      # the parser imports the renderer lazily; check that path finds the real class
+      - name: Parser finds the renderer
+        run: uv run python -c "from cellular_automata.config.Parser import renderer_class; assert renderer_class().__name__ == 'CARenderer'"
+
   lint:
     runs-on: ubuntu-latest
     # `ruff format --check` is not enforced yet: adopting it reformats ~30 files,

@@ -27,6 +27,7 @@ from cellular_automata.State import State
 if TYPE_CHECKING:
     from cellular_automata.rendering.Renderer import CARenderer
 
+RENDER_PACKAGES = {"glfw", "OpenGL", "OpenGL_accelerate", "glm"}
 RENDER_INSTALL_HINT = (
     "Rendering needs the optional OpenGL packages: run `uv sync --extra render` "
     "(or `pip install 'cellular-automata[render]'`), or set sim.render to false"
@@ -89,10 +90,12 @@ def parse_json(filename) -> tuple[CellularAutomaton, "CARenderer | None"]:
     with open(config_path, "r") as file:
         data = json.load(file)
 
-    ca_sim = build_simulation(data)
     if not data["sim"]["render"]:
-        return ca_sim, None
-    return ca_sim, build_renderer(data, ca_sim)
+        return build_simulation(data), None
+    # check for the renderer first, so a missing extra doesn't cost a full build
+    renderer = renderer_class()
+    ca_sim = build_simulation(data)
+    return ca_sim, build_renderer(data, ca_sim, renderer)
 
 
 def build_simulation(data: dict) -> CellularAutomaton:
@@ -202,17 +205,25 @@ def build_simulation(data: dict) -> CellularAutomaton:
 
 
 def renderer_class() -> type["CARenderer"]:
-    """Import the OpenGL renderer, which is an optional dependency."""
+    """Import the OpenGL renderer, which is an optional dependency.
+
+    Only a missing OpenGL package gets the install hint; any other import
+    error (e.g. libGL not found) propagates unchanged.
+    """
     try:
         from cellular_automata.rendering.Renderer import CARenderer
-    except ImportError as error:
-        raise ImportError(RENDER_INSTALL_HINT) from error
+    except ModuleNotFoundError as error:
+        if (error.name or "").split(".")[0] in RENDER_PACKAGES:
+            raise ModuleNotFoundError(RENDER_INSTALL_HINT, name=error.name) from error
+        raise
     return CARenderer
 
 
-def build_renderer(data: dict, ca_sim: CellularAutomaton) -> "CARenderer":
+def build_renderer(
+    data: dict, ca_sim: CellularAutomaton, renderer: type["CARenderer"] | None = None
+) -> "CARenderer":
     """Build the renderer described by the config's `renderer` block for `ca_sim`."""
-    renderer = renderer_class()
+    renderer = renderer or renderer_class()
     renderer_data = data["renderer"]
     # TODO:multiple key rendering, will have to adjust renderer code also
     key = renderer_data.get("key", ca_sim.state.keys[0])
