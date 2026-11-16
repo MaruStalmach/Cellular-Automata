@@ -102,14 +102,26 @@ def test_parser_module_does_not_import_opengl():
 
 
 def test_every_library_module_outside_rendering_imports_without_opengl():
+    # walk files, not packages: config/, tracking/ and util/ have no __init__.py,
+    # so pkgutil.walk_packages would skip them
     result = _run_without_rendering(
-        "import importlib, pkgutil, cellular_automata as ca\n"
-        "for info in pkgutil.walk_packages(ca.__path__, 'cellular_automata.'):\n"
-        "    if not info.name.startswith('cellular_automata.rendering'):\n"
-        "        importlib.import_module(info.name)\n"
+        "import importlib, pathlib, cellular_automata as ca\n"
+        "root = pathlib.Path(ca.__path__[0])\n"
+        "for path in sorted(root.rglob('*.py')):\n"
+        "    parts = path.relative_to(root).with_suffix('').parts\n"
+        "    if parts[0] == 'rendering':\n"
+        "        continue\n"
+        "    if parts[-1] == '__init__':\n"
+        "        parts = parts[:-1]\n"
+        "    name = '.'.join(('cellular_automata',) + parts)\n"
+        "    importlib.import_module(name)\n"
+        "    print(name)\n"
     )
 
     assert result.returncode == 0, result.stderr
+    imported = set(result.stdout.split())
+    for name in ["config.Parser", "tracking.StateTracker", "util.helper_functions"]:
+        assert f"cellular_automata.{name}" in imported
 
 
 def test_missing_renderer_is_reported_before_the_simulation_is_built(tmp_path: Path):
