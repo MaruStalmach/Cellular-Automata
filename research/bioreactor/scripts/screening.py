@@ -144,7 +144,7 @@ def build_sparse_interactions(base_interactions, active_pairs: int = 18, value_s
     return interactions, selected_pairs
 
 
-def save_screening_config(interactions, run_no: int, config_name: str = 'screen'):
+def save_screening_config(interactions, run_no: int, config_name: str = 'screen', seed: int | None = None):
     base_dir = STUDY_DIR / 'configs'
     config_dir = base_dir / 'screening_runs'
     config_dir.mkdir(exist_ok=True)
@@ -159,6 +159,9 @@ def save_screening_config(interactions, run_no: int, config_name: str = 'screen'
             break
     else:
         raise ValueError('SpeciesInteraction rule was not found in the config JSON.')
+
+    if seed is not None:
+        config['sim']['seed'] = seed
 
     config_path = config_dir / f'{config_name}_{run_no}.json'
     with open(config_path, 'w', encoding='utf-8') as f:
@@ -180,6 +183,7 @@ def run_screening_trial(run_no: int, df_real_data: pd.DataFrame, base_matrix: di
 
     return {
         'run_no': run_no,
+        'seed': ca_sim.seed,
         'rmse': rmse,
         'interactions': random_matrix,
         'active_pairs': selected_pairs,
@@ -198,6 +202,7 @@ if __name__ == '__main__':
         df_results = pd.DataFrame([
             {
                 'run_no': row['run_no'],
+                'seed': row['seed'],
                 'rmse': row['rmse'],
                 'active_pairs': row['active_pairs'],
                 'config_path': row['config_path'],
