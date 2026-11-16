@@ -4,6 +4,7 @@ import warnings
 from collections.abc import Callable
 from functools import partial
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -20,9 +21,17 @@ from cellular_automata.registry import (
     RULES,
     TRACKERS,
 )
-from cellular_automata.rendering.Renderer import CARenderer
 from cellular_automata.Sim import CellularAutomaton, resolve_seed, state_rng
 from cellular_automata.State import State
+
+if TYPE_CHECKING:
+    from cellular_automata.rendering.Renderer import CARenderer
+
+RENDER_PACKAGES = {"glfw", "OpenGL", "OpenGL_accelerate", "glm"}
+RENDER_INSTALL_HINT = (
+    "Rendering needs the optional OpenGL packages: run `uv sync --extra render` "
+    "(or `pip install 'cellular-automata[render]'`), or set sim.render to false"
+)
 
 
 def parse_dtype(name: str) -> np.dtype:
@@ -64,11 +73,12 @@ def resolve_random_func(name: str, rng: np.random.Generator) -> Callable:
     return func
 
 
-def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
-    """Build a simulation from a JSON config.
+def parse_json(filename) -> tuple[CellularAutomaton, "CARenderer | None"]:
+    """Build a simulation, and its renderer if `sim.render` is true, from a JSON config.
 
     `filename` is a path to the config file, absolute or relative to the
-    current working directory (e.g. `configs/examples/demo.json`).
+    current working directory (e.g. `configs/examples/demo.json`). Headless
+    configs never import OpenGL.
     """
     config_path = Path(filename)
     if not config_path.is_file():
@@ -80,6 +90,16 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     with open(config_path, "r") as file:
         data = json.load(file)
 
+    if not data["sim"]["render"]:
+        return build_simulation(data), None
+    # check for the renderer first, so a missing extra doesn't cost a full build
+    renderer = renderer_class()
+    ca_sim = build_simulation(data)
+    return ca_sim, build_renderer(data, ca_sim, renderer)
+
+
+def build_simulation(data: dict) -> CellularAutomaton:
+    """Build the simulation from a loaded config. Needs no OpenGL."""
     sim_data = data["sim"]
 
     ### first setup geometry
@@ -181,14 +201,29 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         output_filename=output_filename,
         seed=seed,
     )
+    return ca_sim
 
-    ### if no rendering then its done
-    if not sim_data["render"]:
-        return ca_sim, None
 
-    ### next setup renderer
+def renderer_class() -> type["CARenderer"]:
+    """Import the OpenGL renderer, which is an optional dependency.
 
-    ### get update_callback
+    Only a missing OpenGL package gets the install hint; any other import
+    error (e.g. libGL not found) propagates unchanged.
+    """
+    try:
+        from cellular_automata.rendering.Renderer import CARenderer
+    except ModuleNotFoundError as error:
+        if (error.name or "").split(".")[0] in RENDER_PACKAGES:
+            raise ModuleNotFoundError(RENDER_INSTALL_HINT, name=error.name) from error
+        raise
+    return CARenderer
+
+
+def build_renderer(
+    data: dict, ca_sim: CellularAutomaton, renderer: type["CARenderer"] | None = None
+) -> "CARenderer":
+    """Build the renderer described by the config's `renderer` block for `ca_sim`."""
+    renderer = renderer or renderer_class()
     renderer_data = data["renderer"]
     # TODO:multiple key rendering, will have to adjust renderer code also
     key = renderer_data.get("key", ca_sim.state.keys[0])
@@ -206,8 +241,6 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     else:
         keys_amt = 1
 
-    renderer = CARenderer(
+    return renderer(
         callback(False), *window_size, update_callback=callback, keys_to_render=keys_amt
     )
-
-    return ca_sim, renderer
