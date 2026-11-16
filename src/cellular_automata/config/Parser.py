@@ -9,36 +9,41 @@ import numpy as np
 
 import cellular_automata.neighbourhoods  # noqa: F401  (registers the neighbourhoods)
 import cellular_automata.rules  # noqa: F401  (registers the rules)
-from cellular_automata.Callback import *
+import cellular_automata.tracking.StateTracker  # noqa: F401  (registers the tracker)
+import cellular_automata.util.helper_functions  # noqa: F401  (registers the initialisers)
+from cellular_automata.Callback import Callback
 from cellular_automata.Geometry import Geometry
-from cellular_automata.registry import NEIGHBOURHOODS, RULES
+from cellular_automata.registry import (
+    CALLBACKS,
+    INITIALISERS,
+    NEIGHBOURHOODS,
+    RULES,
+    TRACKERS,
+)
 from cellular_automata.rendering.Renderer import CARenderer
 from cellular_automata.Sim import CellularAutomaton, resolve_seed, state_rng
 from cellular_automata.State import State
-from cellular_automata.tracking.StateTracker import *
-from cellular_automata.util.helper_functions import *
 
 
-def getnestedattr(module, name: str) -> object:
-    names = name.split(".")
-    if len(names) == 1:
-        return globals().get(name)
-    obj = module
-    while True:
-        n = names.pop(0)
-        if globals().get(n, None) == module:
-            continue
-        obj = getattr(obj, n)
-        if not names:
-            return obj
+def parse_dtype(name: str) -> np.dtype:
+    """Turn a config dtype such as "np.uint8" or "float32" into a numeric numpy dtype."""
+    if not isinstance(name, str):
+        raise ValueError(f"Unknown dtype {name!r}")
+    try:
+        dtype = np.dtype(name.removeprefix("np."))
+    except TypeError as error:
+        raise ValueError(f"Unknown dtype '{name}'") from error
+    if not (dtype == np.bool_ or np.issubdtype(dtype, np.number)):
+        raise ValueError(f"Unknown dtype '{name}': state arrays must be numeric or bool")
+    return dtype
 
 
 def resolve_random_func(name: str, rng: np.random.Generator) -> Callable:
     """Look up a state `random_func` and make it draw from `rng`.
 
     `np.random.<method>` (or `random.<method>`) names map to that method of
-    `rng`; helper functions that take an `rng` argument (e.g. `random_seeds`)
-    get it bound.
+    `rng`; other names are registered initialisers, and those that take an
+    `rng` argument (e.g. `random_seeds`) get it bound.
     """
     if name.startswith(("np.random.", "random.")):
         method = name.split("random.", 1)[1]
@@ -49,9 +54,7 @@ def resolve_random_func(name: str, rng: np.random.Generator) -> Callable:
                 "np.random.randint)"
             )
         return getattr(rng, method)
-    func = getnestedattr(np, name)
-    if func is None:
-        raise ValueError(f"Unknown random_func '{name}'")
+    func = INITIALISERS.get(name)
     try:
         takes_rng = "rng" in inspect.signature(func).parameters
     except (TypeError, ValueError):
@@ -118,8 +121,8 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         key_layers.append(sk.get("layers", 1))
         random.append(sk.get("random", False))
         random_args.append(sk.get("random_args",None))
-        key_dtypes[sk["name"]] = getnestedattr(
-            np, sk.get("dtype", sim_data.get("dtype", "np.uint8"))
+        key_dtypes[sk["name"]] = parse_dtype(
+            sk.get("dtype", sim_data.get("dtype", "np.uint8"))
         )
         func_name = sk.get("random_func", None)
         if func_name is None:
@@ -152,13 +155,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
 
         output_filename = tracker_data.get("save_as", None) or tracker_data.get("filename", None)
 
-        tracker_class = globals().get(tracker_name)
-        if tracker_class is None:
-            raise RuntimeError
-        try:
-            tracker = tracker_class(**tracker_args)
-        except Exception as e:
-            raise RuntimeError from e
+        tracker = TRACKERS.get(tracker_name)(**tracker_args)
     else:
         print(
             "no 'tracker' block found in config JSON -> sim.tracker will be None and no history will be recorded"
@@ -202,7 +199,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         callback = Callback(key, ca_sim)
     else:
         cb_args = callback_data.get("args") or {}
-        callback = globals()[callback_data["name"]](key, ca_sim, **cb_args)
+        callback = CALLBACKS.get(callback_data["name"])(key, ca_sim, **cb_args)
 
     if isinstance(key, list):
         keys_amt = len(key)
