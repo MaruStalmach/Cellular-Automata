@@ -1,6 +1,8 @@
 import numpy as np
+import pytest
 
 from cellular_automata.Geometry import Geometry
+from cellular_automata.Rule import Rule
 from cellular_automata.rules.BacteriaGrowth import BacteriaGrowth
 from cellular_automata.rules.GameOfLife3D import GameOfLife3D
 from cellular_automata.rules.Utilization import Utilization
@@ -220,3 +222,69 @@ def test_bacteria_growth_claims_each_target_cell_once(monkeypatch):
 
 if __name__ == "__main__":
     test_gol_correctness()
+
+
+class _CountingRule(Rule):
+    def __init__(self, geometry, time_step):
+        super().__init__(geometry, time_step)
+        self.calls = 0
+
+    def apply_state(self, state):
+        self.calls += 1
+        return state
+
+
+def _geometry():
+    return Geometry((2, 2, 2), axes="xyz", periodicity="")
+
+
+def test_rules_run_max_dt_over_dt_times_per_step():
+    g = _geometry()
+    slow, fast = _CountingRule(g, time_step=10), _CountingRule(g, time_step=2)
+    ca = CellularAutomaton(g, [slow, fast], state=State(g, cell_keys=["x"]))
+
+    ca.step()
+
+    assert (slow.calls, fast.calls) == (1, 5)
+
+
+def test_warns_when_rule_runs_are_capped():
+    g = _geometry()
+    with pytest.warns(UserWarning, match="capped"):
+        CellularAutomaton(
+            g,
+            [_CountingRule(g, time_step=1000), _CountingRule(g, time_step=1)],
+            state=State(g, cell_keys=["x"]),
+        )
+
+
+def test_warns_when_time_steps_do_not_divide_evenly():
+    g = _geometry()
+    with pytest.warns(UserWarning, match="not a whole multiple"):
+        CellularAutomaton(
+            g,
+            [_CountingRule(g, time_step=10), _CountingRule(g, time_step=3)],
+            state=State(g, cell_keys=["x"]),
+        )
+
+
+def test_no_warning_for_compatible_time_steps(recwarn):
+    g = _geometry()
+    CellularAutomaton(
+        g,
+        [_CountingRule(g, time_step=10), _CountingRule(g, time_step=0.1)],
+        state=State(g, cell_keys=["x"]),
+    )
+
+    assert not [w for w in recwarn if issubclass(w.category, UserWarning)]
+
+
+def test_float_time_step_ratio_is_not_floored_down():
+    # 10 // 0.1 == 99.0 in floating point
+    g = _geometry()
+    slow, fast = _CountingRule(g, time_step=10), _CountingRule(g, time_step=0.1)
+    ca = CellularAutomaton(g, [slow, fast], state=State(g, cell_keys=["x"]))
+
+    ca.step()
+
+    assert fast.calls == 100
