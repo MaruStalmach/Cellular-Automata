@@ -8,7 +8,7 @@ from time import time
 import numpy as np
 
 from cellular_automata.Geometry import Geometry
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 from cellular_automata.tracking.StateTracker import StateTracker
 
@@ -113,7 +113,6 @@ class CellularAutomaton:
             self.state = State(
                 geometry, random=True, cell_keys=keys, rng=state_rng(self.seed)
             )
-        self.state._get_sim_reference(self)
 
         self.step_no = 0
         if self.tracker:
@@ -148,12 +147,13 @@ class CellularAutomaton:
         if self.step_no==0:
             self.start_time = time()
         
+        ctx = StepContext(step_no=self.step_no, max_steps=self.max_steps)
         times_to_execute = self.rule_exec_n_times.copy()
         while sum(times_to_execute) > 0:
             for i, rule in enumerate(self.rules):
                 if times_to_execute[i] <= 0:
                     continue
-                self.state = rule.apply_state(self.state)
+                self.state = rule.apply_state(self.state, ctx)
                 times_to_execute[i] -= 1
 
         self.step_no += 1

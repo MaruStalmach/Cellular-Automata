@@ -1,7 +1,7 @@
 import numpy as np
 
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 
 
@@ -35,7 +35,7 @@ class GameOfLife3D(Rule):
         self.fb = fb
         self.fh = fh
 
-    def apply_state(self, state: State) -> State:
+    def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
         # Use per-key accessors so reads/writes affect the underlying arrays
         alive_counts = self.neighborhood_count(state[self.target_key])
 

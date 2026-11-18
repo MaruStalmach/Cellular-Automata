@@ -2,7 +2,7 @@ import numpy as np
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule, require_3d
+from cellular_automata.Rule import Rule, StepContext, require_3d
 from cellular_automata.State import State
 
 
@@ -62,7 +62,7 @@ class Diffusion(Rule):
         xp=e/a/(d*g-f)-b/a
         return xp
 
-    def apply_state(self, state) -> State:
+    def apply_state(self, state, ctx: StepContext | None = None) -> State:
 
         source = state[self.target_key]
         
