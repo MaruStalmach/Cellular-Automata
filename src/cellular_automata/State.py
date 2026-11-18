@@ -5,6 +5,21 @@ import numpy as np
 from cellular_automata.Geometry import Geometry
 
 
+def _check_fits(key: str, values: np.ndarray, dtype: np.dtype) -> None:
+    """Raise ValueError if integer `values` would wrap around when cast to `dtype`."""
+    if values.size == 0 or not np.issubdtype(dtype, np.integer):
+        return
+    if not (np.issubdtype(values.dtype, np.integer) or np.issubdtype(values.dtype, np.bool_)):
+        return
+    info = np.iinfo(dtype)
+    low, high = values.min(), values.max()
+    if low < info.min or high > info.max:
+        raise ValueError(
+            f"random_func for key '{key}' gave values {low}..{high}, which don't fit "
+            f"its dtype {dtype} ({info.min}..{info.max})"
+        )
+
+
 class State:
     """Manages multi-layered, array-based cellular automaton states
 
@@ -14,7 +29,10 @@ class State:
         key_dtypes (dict[str, np.dtype | type], optional): Per-key data type overrides. Defaults to None
         key_layers (Iterable[int], optional): Depth/number of layers per key. Defaults to None
         random (bool, optional): If True, initializes with random values; otherwise 0s. Defaults to False
-        random_func (Iterable[Callable], optional): Per-key random generation functions. Defaults to None
+        random_func (Callable | Iterable[Callable | None], optional): Per-key initialisers,
+            each called as ``func(size=shape, **random_args)`` where shape is the key's
+            grid shape plus its layer axis; the result is broadcast to that shape and
+            cast to the key's dtype. None leaves a key at 0. Defaults to None
         random_args (Iterable[dict], optional): Kwargs mapped to `random_func`. Defaults to None
         dtype (np.dtype | type, optional): Global default array data type. Defaults to np.uint8
         rng (np.random.Generator, optional): Generator for the default random fill. Defaults to an unseeded one
@@ -36,7 +54,6 @@ class State:
             rng = np.random.default_rng()
 
         self.geometry = geometry
-        self.sim = None
 
         self.keys = tuple(cell_keys)
         self.key_to_index = {key: idx for idx, key in enumerate(self.keys)}
@@ -87,22 +104,12 @@ class State:
                     expected_shape = grid_dims + (self.key_layers[i],)
                     if random_func[i] is None:
                         continue
-                    try:
-                        generated = random_func[i](
-                            size=expected_shape, dtype=kd, **rand_args[i]
-                        )
-                    except TypeError:
-                        try:
-                            generated = random_func[i](
-                                size=expected_shape, **rand_args[i]
-                            )
-                        except TypeError:
-                            generated = random_func[i](**rand_args[i])
-
-                    generated = np.asarray(generated)
+                    generated = np.asarray(
+                        random_func[i](size=expected_shape, **(rand_args[i] or {}))
+                    )
                     if generated.shape != expected_shape:
                         generated = np.broadcast_to(generated, expected_shape)
-
+                    _check_fits(key, generated, np.dtype(kd))
                     self._data[key][...] = generated.astype(kd)
 
         ### squeeze last dim
@@ -159,7 +166,7 @@ class State:
         return self.geometry.size
 
     def copy(self) -> "State":
-        """Independent copy of the arrays; the copy has no simulation reference."""
+        """Independent copy of the arrays."""
         new_state = State(
             self.geometry, 
             random=False, 
@@ -171,34 +178,6 @@ class State:
         for key in self.keys:
             new_state._data[key] = self._data[key].copy()
         return new_state
-
-    def _pad_data(
-        self, unpadded_data: np.ndarray, constant_value: int = 0
-    ) -> np.ndarray:
-        """pad spatial axes only and preserve the final keys axis
-        - for axes listed in self.geometry.periodicity use wrap padding
-        - for non-periodic axes use constant padding with constant_value
-        """
-        padded = unpadded_data
-
-        for axis, axis_name in enumerate(self.geometry.axes):
-            pwidth = [(0, 0)] * padded.ndim
-            pwidth[axis] = (1, 1)
-
-            if axis_name in getattr(self.geometry, "periodicity", ""):
-                padded = np.pad(padded, pad_width=pwidth, mode="wrap")
-            else:
-                padded = np.pad(
-                    padded,
-                    pad_width=pwidth,
-                    mode="constant",
-                    constant_values=constant_value,
-                )
-
-        return padded
-
-        # kd = self.key_dtypes.get(key, self.dtype)
-        # self._data[key] = np.asarray(value, dtype=kd).copy()
 
     def key_grid(self, key: str, as_bool: bool = False) -> np.ndarray:
         grid = self[key]
@@ -222,6 +201,3 @@ class State:
             arr = np.expand_dims(arr, axis=-1)
 
         target[...] = arr
-        
-    def _get_sim_reference(self,sim_obj):
-        self.sim = sim_obj

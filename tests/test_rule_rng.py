@@ -8,7 +8,7 @@ import pytest
 
 from cellular_automata.config.Parser import parse_json
 from cellular_automata.rules import Diffusion
-from tests.rule_fixtures import RULE_IDS, SIZE, make_geometry, make_state, species_rules
+from tests.rule_fixtures import CTX, RULE_IDS, SIZE, make_geometry, make_state, species_rules
 
 LEGACY_FUNCTIONS = ["random", "rand", "randint", "choice", "shuffle", "permutation", "uniform"]
 
@@ -33,7 +33,7 @@ def test_rule_does_not_draw_from_global_rng(index, no_global_rng):
     rule, keys, layers = species_rules(geometry)[index]
     state = make_state(geometry, keys, layers)
 
-    rule.apply_state(state)
+    rule.apply_state(state, CTX)
 
 
 @pytest.mark.parametrize("index", range(len(RULE_IDS)), ids=RULE_IDS)
@@ -42,7 +42,7 @@ def test_rule_output_is_fixed_by_its_generator(index):
         geometry = make_geometry()
         rule, keys, layers = species_rules(geometry)[index]
         rule.rng = np.random.default_rng(seed)
-        state = rule.apply_state(make_state(geometry, keys, layers))
+        state = rule.apply_state(make_state(geometry, keys, layers), CTX)
         return {key: state[key].copy() for key in keys}
 
     first, second, other = run(3), run(3), run(4)

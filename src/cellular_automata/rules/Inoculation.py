@@ -1,6 +1,6 @@
 from cellular_automata.Geometry import Geometry
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 
 
@@ -40,7 +40,7 @@ class Inoculation(Rule):
             raise ValueError(f"Inoculation: layer must be >= 0, got {layer}")
         self.layer = layer
 
-    def apply_state(self, state: State):
+    def apply_state(self, state: State, ctx: StepContext | None = None):
         grid = state[self.target_key].copy()
         selection = self.box
         if grid.ndim == self.geometry.ndim + 1:

@@ -1,7 +1,7 @@
 import numpy as np
 
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 
 
@@ -26,7 +26,7 @@ class CreateBiofilm(Rule):
 			presence |= self._cell_mask(state[key])
 		return presence
 
-	def apply_state(self, state: State) -> State:
+	def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
 		biofilm_grid = state[self.biofilm_key].copy()
 		bacteria_presence = self._bacteria_presence(state)
 

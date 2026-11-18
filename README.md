@@ -91,6 +91,8 @@ Code operating on state data should account for this additional trailing dimensi
 
 Rules are independent processes that modify the simulation state. Each rule can have its own time step and parameters.
 
+A rule subclasses `Rule`, declares the state keys it uses in `self.required_keys`, and implements `apply_state(self, state, ctx=None)`. The simulation passes `ctx`, a `StepContext` with the current `step_no` and `max_steps`; rules that don't need it can ignore it.
+
 Examples include:
 
 - `biofilm_detachment`
@@ -247,7 +249,7 @@ For example, with `Diffusion` at `dt = 0.01` and `BacteriaGrowth` at `dt = 43200
 
 Set `sim.seed` to a non-negative integer to make a run repeatable: the same config and seed give the same initial state and the same random draws in every rule. Without a seed, the parser picks one, reports it in a warning, and the tracker stores it in the saved `.npz` metadata, so any tracked run can be repeated afterwards.
 
-- Initial state: `random_func: "np.random.<method>"` draws from the seeded generator, so the method must exist on `np.random.Generator` (use `np.random.integers`, not `np.random.randint`). Helper functions such as `random_seeds` get the generator through their `rng` argument.
+- Initial state: `random_func: "np.random.<method>"` draws from the seeded generator, so the method must exist on `np.random.Generator` (use `np.random.integers`, not `np.random.randint`). Helper functions such as `random_seeds` get the generator through their `rng` argument. Every `random_func` is called as `func(size=shape, **random_args)`, where `shape` is the grid shape plus the key's layer axis, and its result is cast to the key's dtype (integer values that don't fit raise an error rather than wrapping around). Generator methods are no longer passed `dtype`, so for the same seed `np.random.integers` on a non-int64 key or `np.random.random` on a float32 key now give a different initial state than before; the initialisers used by the repo configs are unaffected.
 - Rules: each rule gets its own generator, `self.rng`, derived from the seed and the rule's position in the config. Adding a rule at the end doesn't change the earlier rules' streams; inserting or reordering rules changes the streams of the rules after that point. A rule built outside a simulation has an unseeded `self.rng`. Draw from `self.rng` in new rules, never from `np.random`.
 
 ## Installation

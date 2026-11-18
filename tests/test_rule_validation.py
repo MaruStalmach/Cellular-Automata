@@ -20,6 +20,7 @@ from cellular_automata.rules import (
 from cellular_automata.Sim import CellularAutomaton
 from cellular_automata.State import State
 from tests.rule_fixtures import (
+    CTX,
     OTHER_RULE_IDS,
     RULE_IDS,
     make_geometry,
@@ -62,7 +63,7 @@ def test_rule_declares_exactly_the_keys_it_uses(index):
     rule, keys, layers = _all_rules(geometry)[index]
     state = RecordingState(make_state(geometry, keys, layers))
 
-    rule.apply_state(state)
+    rule.apply_state(state, CTX)
 
     assert sorted(rule.required_keys) == sorted(keys)
     assert state.touched == set(rule.required_keys)
@@ -117,7 +118,7 @@ def test_inoculation_fills_layer_0_of_a_layered_key_by_default():
     rule = Inoculation(geometry, time_step=1, target_key="s", location=[1, 1, 3], size=[2, 2, 1])
     state = State(geometry, cell_keys=["s"], key_layers=[6])
 
-    state = rule.apply_state(state)
+    state = rule.apply_state(state, CTX)
 
     assert state["s"][1:3, 1:3, 3, 0].min() == 1
     assert state["s"].sum() == 4
@@ -130,7 +131,7 @@ def test_inoculation_layer_and_2d_box():
     )
     state = State(geometry, cell_keys=["s"], key_layers=[3])
 
-    state = rule.apply_state(state)
+    state = rule.apply_state(state, CTX)
 
     assert state["s"][0, 2:4, 2].tolist() == [1, 1]
     assert state["s"].sum() == 2

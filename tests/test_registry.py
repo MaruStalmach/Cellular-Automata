@@ -149,7 +149,7 @@ def test_a_newly_registered_rule_is_usable_from_a_config(tmp_path: Path, monkeyp
             super().__init__(geometry, time_step)
             self.required_keys.append("alive")
 
-        def apply_state(self, state):
+        def apply_state(self, state, ctx=None):
             return state
 
     sim, _ = parse_json(_config(tmp_path, "KeepState"))
