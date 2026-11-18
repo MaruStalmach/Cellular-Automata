@@ -28,7 +28,8 @@ class GameOfLife3D(Rule):
         target_key: str = "alive",
     ):
         super().__init__(geometry, time_step)
-        self.required_keys.extend([target_key])
+        self.target_key = target_key
+        self.required_keys.append(target_key)
         self.eb = eb
         self.eh = eh
         self.fb = fb
@@ -36,13 +37,13 @@ class GameOfLife3D(Rule):
 
     def apply_state(self, state: State) -> State:
         # Use per-key accessors so reads/writes affect the underlying arrays
-        alive_counts = self.neighborhood_count(state[self.required_keys[0]])
+        alive_counts = self.neighborhood_count(state[self.target_key])
 
-        current_alive = state["alive"] == 1
+        current_alive = state[self.target_key] == 1
         survives = current_alive & (alive_counts >= self.eb) & (alive_counts <= self.eh)
         born = (~current_alive) & (alive_counts >= self.fb) & (alive_counts <= self.fh)
 
-        updated_alive = np.zeros_like(state["alive"])
+        updated_alive = np.zeros_like(state[self.target_key])
         updated_alive[survives | born] = 1
-        state["alive"] = updated_alive
+        state[self.target_key] = updated_alive
         return state

@@ -161,73 +161,38 @@ class Diffusion(Rule):
 
         for i, ax_dir in enumerate([(2, 1), (1, 1), (0, 1)]):
             ax, dir = ax_dir
-            # if ax not in state.geometry.periodic_dims:
-            #     sel = [slice(None)]*3
-            #     #save the edge next to wall and zero it in the array so that when it rolls later zeros come out on the other side
-            #     sel[ax] = -1
-            #     edge = self.layers[tuple(sel)+(i,)].copy()
-            #     self.layers[tuple(sel)+(i,)] = 0
-            #     # put the edge values on -2 as if they bounced
-            #     sel[ax] = -2
-            #     self.layers[tuple(sel)+(i,)] += edge
-            #     #similarly for the opposite direction
-            #     sel[ax] = 0
-            #     edge = self.layers[tuple(sel)+(i+3,)].copy()
-            #     self.layers[tuple(sel)+(i+3,)] = 0
-            #     # put the edge values on 1 as if they bounced
-            #     sel[ax] = 1
-            #     self.layers[tuple(sel)+(i+3,)] += edge
-
             if ax in state.geometry.periodic_dims:
                 shift_roll(self.layers[..., i], ax, dir, periodic=True)
                 shift_roll(self.layers[..., i + 3], ax, -dir, periodic=True)
             else:
                 shift_roll(self.layers[..., i], ax, dir)
                 shift_roll(self.layers[..., i + 3], ax, -dir)
-            # TODO: deal with collsions >1 values in arrays need to be spread out or some shit idk
 
         self.lost_particles += self.layers[self.layers > 1].sum() - np.prod(
             self.layers[self.layers > 1].shape
         )
         # naive collision resolution -> delete colliding particles
+        # (the boundary model is an open question: D4 in docs/code-quality-plan.md)
         self.layers[self.layers > 1] = 1
-        # restore lost particles
+        # put lost particles back in batches of RESTORE_THRESHOLD
         if self.lost_particles >= self.RESTORE_THRESHOLD:
-            # find 50 empty spots
             self._restore_random()
 
         state[self.target_key] = self.layers[...]
         return state
 
-    def _restore_deterministic(self):
-        c1, c2, c3, c4 = np.nonzero(self.layers == 0)
-        max_z = c3.max()
-        z_mask = c3 == max_z
-        c1 = c1[z_mask]
-        c2 = c2[z_mask]
-        c3 = c3[z_mask]
-        c4 = c4[z_mask]
-        order = np.lexsort((-c2, -c1))
-        order = order[:self.RESTORE_THRESHOLD]
-        sel = (c1[order], c2[order], c3[order], c4[order])
-        self.layers[sel] = 1
-        self.lost_particles -= self.RESTORE_THRESHOLD
-        
     def _restore_random(self):
+        """Place up to RESTORE_THRESHOLD lost particles in the highest z-layer with empty slots.
+
+        Only as many as there are empty slots are placed; the rest stay counted in
+        `lost_particles` and are placed in a later step.
+        """
         c1, c2, c3, c4 = np.nonzero(self.layers == 0)
-        max_z = c3.max()
-        z_mask = c3 == max_z
-        c1 = c1[z_mask]
-        c2 = c2[z_mask]
-        c3 = c3[z_mask]
-        c4 = c4[z_mask]
-        selection = self.rng.choice(
-            a=c1.shape[0], size=(self.RESTORE_THRESHOLD,), replace=False
-        )
-        c1 = c1[selection]
-        c2 = c2[selection]
-        c3 = c3[selection]
-        c4 = c4[selection]
-        sel = tuple([c1, c2, c3, c4])
-        self.layers[sel] = 1
-        self.lost_particles -= self.RESTORE_THRESHOLD
+        if c3.size == 0:
+            return
+        z_mask = c3 == c3.max()
+        c1, c2, c3, c4 = c1[z_mask], c2[z_mask], c3[z_mask], c4[z_mask]
+        count = min(self.RESTORE_THRESHOLD, c1.shape[0])
+        selection = self.rng.choice(a=c1.shape[0], size=(count,), replace=False)
+        self.layers[c1[selection], c2[selection], c3[selection], c4[selection]] = 1
+        self.lost_particles -= count
