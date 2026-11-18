@@ -3,7 +3,7 @@
 Branch: `refactor/code-quality-plan` (based on `refactor/repo-structure`, PR #33)
 Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch (reviewed at `e3d7313`).
 Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`)
-Status: updated 2026-11-06 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36 is merged; #37 is open. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
+Status: updated 2026-11-06 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36, #37 and #47 (landing them on `main`) are merged. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Bugs that need no modelling decision (BUG-7, BUG-8, BUG-9 and parts of ARCH-5) are in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48), stacked on #46. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
 
 ---
 
@@ -167,6 +167,8 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="bug-7"></a>
 ### BUG-7 - Diffusion mass "restoration" is non-physical and can crash (Medium)
 
+> **Status:** Partly fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): the refill places only as many particles as there are empty slots (the rest stay pending) instead of raising, and the dead code is deleted. **Open, needs D4:** the boundary/source model itself, and the hard-coded `RESTORE_THRESHOLD`.
+
 - **Where:** `rules/Diffusion.py:186-195`, `:214-231`
 - **What:**
   - Colliding particles are deleted. Once 100 are lost (`RESTORE_THRESHOLD`, hard-coded), 100 new ones are placed at random in the top z-layer. Mass is conserved only on average, and the source location is fixed to "max z" regardless of the experiment.
@@ -177,6 +179,8 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 
 <a id="bug-8"></a>
 ### BUG-8 - `AntibioticEffect` has hidden constants and odd maths (Medium)
+
+> **Status:** Mostly fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): float64 probabilities, the time scale is `time_step / reference_time_step` (not floored), the wall and neighbourhood constants come from the geometry, `effectiveness` scales the probability explicitly, the dosing end is no longer stored lazily, and arguments are validated. float16 had stored `base_prob` 1.041e-6 as 1.013e-6, so 13 bioreactor configs now kill ~2.7% more per dosed step. Still open: the wall axis comes from [ARCH-2](#arch-2) (D2), the `dose_start`/`dose_end` rename, and `required_keys`.
 
 - **Where:** `rules/AntibioticEffect.py:6`, `:18`, `:32-36`, `:40-41`
 - **What:**
@@ -193,7 +197,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="bug-9"></a>
 ### BUG-9 - Parser config handling hides errors (Medium)
 
-> **Status:** Partly fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): an unknown `neighbourhood` raises `ValueError` listing the known names. Still open: hard-coded `axes`, required `sim.render`, `RuntimeError` without a message, `random: true` without `random_func`.
+> **Status:** Mostly fixed. [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): an unknown `neighbourhood` raises `ValueError` listing the known names. [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `sim.render` defaults to false, `"random"` must be a boolean and come with `"random_func"`, and the axes follow `sim.size`, so 1D and 2D configs build (rules written for 3D still need 3D). The bare `RuntimeError` is already gone. Still open: up-front validation of the whole config ([ARCH-4](#arch-4)).
 
 - **Where:** `config/Parser.py:73-77`, `:80`, `:99`, `:132-138`, `:165`
 - **What:**
@@ -282,7 +286,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 | `GutDrift` | - | flow along **z** (last axis, `:29`) |
 | `AntibioticEffect` | - | wall at **z = 0** (`:32`) |
 | `SpeciesInteraction` | clears `"biofilm"`, `"floating_bacteria"` on death (`:113`) | - |
-| `GameOfLife3D` | ignores `target_key`, uses `"alive"` (`:41-47`) | - |
+| `GameOfLife3D` | ~~ignores `target_key`, uses `"alive"`~~ fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48) | - |
 | `util.random_seeds` | 3D only, seeds at z = 0 | **z** |
 | `gut-experiments` `seed_biofilm` | - | **z** |
 
@@ -327,6 +331,8 @@ Gut and bioreactor code don't agree on where the wall is: y in `BiofilmDetachmen
 
 <a id="arch-5"></a>
 ### ARCH-5 - `State` API is fragile (Medium)
+
+> **Status:** Partly fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `key_layers` accepts any iterable and must match the keys, and `copy()` is tested (its TODO is gone). The rest is open.
 
 - **Where:** `State.py`
 - **What:**
@@ -675,7 +681,7 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 
 23. **[HYG-3](#hyg-3---naming--layout-medium):** snake_case modules, public `__init__` exports, a `ca-sim` CLI entry point. One breaking release; note it in a CHANGELOG.
 24. **[PERF-1](#perf-1):** vectorise `BacteriaGrowth` / `Utilization` conflict resolution; profile before and after with `tools/profiling`.
-25. **[PERF-2](#perf-2---smaller-items), [BUG-7](#bug-7), [BUG-8](#bug-8)** (after **D4**): Diffusion buffers and boundary model; antibiotic maths and constants.
+25. **[PERF-2](#perf-2---smaller-items), [BUG-7](#bug-7), [BUG-8](#bug-8)** (after **D4**): Diffusion buffers and boundary model; antibiotic maths and constants. *Status: everything that needs no decision is in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48); the boundary model (D4) and the wall axis (D2) remain.*
 26. **[HYG-4](#hyg-4---logging-typing-docs-low)** and the dead-code table in [section 6](#6-duplication--dead-code-medium): logging, type hints, `mypy`, make `ruff` blocking in CI.
 
 ### Suggested branch / PR sequence
@@ -692,9 +698,10 @@ main
                          └─ refactor/config-registries (PR #43: ARCH-1 part 2)
                              └─ refactor/explicit-gl-imports (PR #44: ARCH-1 part 3)
                                  └─ refactor/optional-rendering (PR #46: ARCH-3 part 1)
-                                     └─ refactor/phase-3-geometry
-                                         └─ (Phase 4 code)
-                                             └─ refactor/phase-5-naming-perf
+                                     └─ fix/model-config-bugs (PR #48: bugs needing no decision)
+                                         └─ refactor/phase-3-geometry
+                                             └─ (Phase 4 code)
+                                                 └─ refactor/phase-5-naming-perf
 ```
 
 Gut-feature work can start **after step 15**. From then on, a new rule is one file with configurable keys and wall axis, and the explicit registry picks it up automatically.
