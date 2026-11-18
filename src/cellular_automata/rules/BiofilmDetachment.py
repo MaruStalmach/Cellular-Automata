@@ -1,7 +1,7 @@
 import numpy as np
 
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, require_3d
 from cellular_automata.State import State
 
 
@@ -20,6 +20,7 @@ class BiofilmDetachment(Rule):
         attachment_probability: float = 1.0,
     ):
         super().__init__(geometry, time_step)
+        require_3d(type(self).__name__, geometry)
         
         self.detachment_probability = detachment_rate * scaling
         self.target_keys = ["biofilm", "floating_bacteria"]
@@ -38,8 +39,6 @@ class BiofilmDetachment(Rule):
 
 
     def apply_state(self, state: State) -> State:
-        assert self.geometry.ndim == 3
-
         biofilm_grid = state["biofilm"]
         floating_bact_grid = state["floating_bacteria"]
 

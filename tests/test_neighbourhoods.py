@@ -83,10 +83,10 @@ def test_invalid_arguments(
     radius: int,
 ):
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         moore.generate_offsets(ndim=ndim, radius=radius)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         von_neumann.generate_offsets(ndim=ndim, radius=radius)
 
 

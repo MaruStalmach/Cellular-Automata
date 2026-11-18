@@ -2,7 +2,7 @@ import numpy as np
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, require_3d
 from cellular_automata.State import State
 
 
@@ -27,9 +27,13 @@ class Diffusion(Rule):
         biofilm_disruption: float = 0.8
     ):
         super().__init__(geometry, time_step)
+        require_3d(type(self).__name__, geometry)
 
         self.target_key = target_key
         self.biofilm_key = biofilm_key
+        self.required_keys.append(target_key)
+        if biofilm_key is not None:
+            self.required_keys.append(biofilm_key)
         p3 = (1 - 4 * p) / (a + 1)
         self.p = [a * p3, p, p, p3, p, p]
         if self.biofilm_key is not None:

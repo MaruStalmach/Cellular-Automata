@@ -13,6 +13,7 @@ class BacteriaDecay(Rule):
     ):
         super().__init__(geometry, time_step)
         self.target_keys = target_keys
+        self.required_keys.extend(target_keys)
         self.decay_probability = decay_probability
         self.buff = np.zeros(geometry.size, dtype=np.float32)
 
