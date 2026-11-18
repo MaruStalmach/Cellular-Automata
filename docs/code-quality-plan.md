@@ -3,7 +3,7 @@
 Branch: `refactor/code-quality-plan` (based on `refactor/repo-structure`, PR #33)
 Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch (reviewed at `e3d7313`).
 Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`)
-Status: updated 2026-11-06 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36, #37 and #47 (landing them on `main`) are merged. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Bugs that need no modelling decision (BUG-7, BUG-8, BUG-9 and parts of ARCH-5) are in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48), stacked on #46. ARCH-6 part 1 (rules declare and validate their keys) is in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49), stacked on #48. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
+Status: updated 2026-11-06 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36, #37 and #47 (landing them on `main`) are merged. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Bugs that need no modelling decision (BUG-7, BUG-8, BUG-9 and parts of ARCH-5) are in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48), stacked on #46. ARCH-6 part 1 (rules declare and validate their keys) is in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49), stacked on #48. ARCH-3 part 2 (shader errors raise) is in [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50), stacked on #49. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
 
 ---
 
@@ -37,7 +37,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 | 7 | [ARCH-4](#arch-4) / [RES-1](#res-1) | High | Two incompatible config formats (Parser vs `gut-experiments`), and the README documents the wrong one. `gut-experiments` no longer merges cleanly (12 conflicts) | Open |
 | 8 | [TEST-1](#test-1) | High ✅ | ~~4 tests fail because they are out of sync with the code (2 need a modelling decision)~~ | Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (2 tests xfail until D1) |
 | 9 | [HYG-1](#hyg-1) | High | No `LICENSE`, so nobody else may legally use the code | Open (needs D6) |
-| 10 | [ARCH-3](#arch-3) | High | Rendering (OpenGL/GLFW) is a hard dependency of the config parser, and the renderer calls `quit()` | Mostly fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36), [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46) |
+| 10 | [ARCH-3](#arch-3) | High | ~~Rendering (OpenGL/GLFW) is a hard dependency of the config parser, and the renderer calls `quit()`~~ | Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36), [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50) |
 
 ---
 
@@ -295,12 +295,12 @@ Gut and bioreactor code don't agree on where the wall is: y in `BiofilmDetachmen
 - **Fix:** add `wall_axis` and `wall_side` (and optionally `flow_axis`) to `Geometry`, set in the config. Every rule that needs a wall reads them from there. All key names become constructor parameters with today's names as defaults, so existing configs keep working.
 
 <a id="arch-3"></a>
-### ARCH-3 - Simulation core is coupled to rendering (High)
+### ~~ARCH-3 - Simulation core is coupled to rendering (High)~~
 
-> **Status:** Mostly fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) and [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46).
+> **Status:** Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36), [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46) and [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50).
 > - [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): `quit()` is gone from the renderer, a failed window creation raises, and the examples import the renderer lazily.
 > - [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46): `parse_json` is split into `build_simulation` and `build_renderer`, which imports the renderer lazily and explains how to install it. glfw, PyOpenGL and PyGLM are in an optional `render` extra. CI runs the tests without OpenGL or libGL and checks renderer imports in a separate job. The README documents the OpenGL 4.3 requirement.
-> - Still open (part 2): shader compile and link errors are only printed, and the fragment-shader error is mislabelled.
+> - [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50): shader compile and link errors (and unreadable shader files) raise `ShaderError` naming the stage, file and log, instead of being printed; the renderer terminates GLFW before re-raising.
 
 - **Where:** `config/Parser.py:29` imports `CARenderer` (`glfw`, `OpenGL`) at module level; `Renderer.py:113-115`, `:736-737`; `Shader.py:86-107`
 - **What:**
@@ -666,7 +666,7 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 ### Phase 3 - Architecture for extensibility (unblocks gut work)
 
 13. **[ARCH-1](#arch-1): registry.** `@register_rule` plus registries for neighbourhoods, trackers, callbacks and init functions; remove wildcard imports and `globals()` lookups. *Done when:* adding a rule needs only a new file, and `ruff` F403/F405 is zero. *Status: rules and neighbourhoods in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), so a new rule needs only a new file; trackers, callbacks, initialisers and dtypes in [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43). F403/F405 is zero after [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44). Step done.*
-14. **[ARCH-3](#arch-3): decouple rendering.** `build_simulation` vs `build_renderer`; lazy GL import; `render` optional extra. *Done when:* `pytest` passes in an environment without `glfw`/`pyopengl`. *Status: done in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46); CI runs the tests that way. Shader errors remain (part 2).*
+14. **[ARCH-3](#arch-3): decouple rendering.** `build_simulation` vs `build_renderer`; lazy GL import; `render` optional extra. *Done when:* `pytest` passes in an environment without `glfw`/`pyopengl`. *Status: done in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46); CI runs the tests that way. Shader errors raise since [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50). Step done.*
 15. **[ARCH-2](#arch-2): geometry wall/flow axis + parameterised keys** (after **D2**). Update `BiofilmDetachment`, `BioreactorBiofilmDetachment`, `GutDrift`, `AntibioticEffect`, `SpeciesInteraction`, `GameOfLife3D`, `random_seeds`. Then decide **D3**.
 16. **[ARCH-6](#arch-6): rule interface cleanup.** Consistent parameter names, `required_keys` everywhere, `ValueError` instead of `assert`, docstrings with units. Add a rule-authoring guide in the README. *Status: `required_keys`, key validation and `ValueError` in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49); names, docstrings, the guide and the `Inoculation` window remain.*
 17. **[ARCH-5](#arch-5): State cleanup.** Explicit initialisers, a `ctx` argument replacing `state.sim`, a fixed `copy()`.
@@ -709,9 +709,10 @@ main
                                  └─ refactor/optional-rendering (PR #46: ARCH-3 part 1)
                                      └─ fix/model-config-bugs (PR #48: bugs needing no decision)
                                          └─ refactor/rule-validation (PR #49: ARCH-6 part 1)
-                                             └─ refactor/phase-3-geometry
-                                                 └─ (Phase 4 code)
-                                                     └─ refactor/phase-5-naming-perf
+                                             └─ fix/shader-errors (PR #50: ARCH-3 part 2)
+                                                 └─ refactor/phase-3-geometry
+                                                     └─ (Phase 4 code)
+                                                         └─ refactor/phase-5-naming-perf
 ```
 
 Gut-feature work can start **after step 15**. From then on, a new rule is one file with configurable keys and wall axis, and the explicit registry picks it up automatically.
