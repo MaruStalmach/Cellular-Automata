@@ -49,9 +49,13 @@ class State:
             self.key_dtypes: dict[str, np.dtype | type] = {}
 
         if key_layers is not None:
-            self.key_layers = key_layers.copy()
+            self.key_layers = list(key_layers)
         else:
-            self.key_layers = [1 for _ in range(len(cell_keys))]
+            self.key_layers = [1 for _ in self.keys]
+        if len(self.key_layers) != len(self.keys):
+            raise ValueError(
+                f"{len(self.keys)} cell_keys but {len(self.key_layers)} key_layers"
+            )
 
         # shape of the spatial grid and number of keys
         grid_dims = self.geometry.size
@@ -155,7 +159,7 @@ class State:
         return self.geometry.size
 
     def copy(self) -> "State":
-        ##TODO:FIX THIS
+        """Independent copy of the arrays; the copy has no simulation reference."""
         new_state = State(
             self.geometry, 
             random=False, 

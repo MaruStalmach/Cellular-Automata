@@ -90,7 +90,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, "CARenderer | None"]:
     with open(config_path, "r") as file:
         data = json.load(file)
 
-    if not data["sim"]["render"]:
+    if not data["sim"].get("render", False):
         return build_simulation(data), None
     # check for the renderer first, so a missing extra doesn't cost a full build
     renderer = renderer_class()
@@ -103,7 +103,9 @@ def build_simulation(data: dict) -> CellularAutomaton:
     sim_data = data["sim"]
 
     ### first setup geometry
-    size = sim_data["size"]  # string of a tuple
+    size = tuple(sim_data["size"])
+    if not 1 <= len(size) <= 3:
+        raise ValueError(f"sim.size must have 1 to 3 dimensions, got {list(size)}")
     period = sim_data["periodicity"]
     max_steps = sim_data["max_steps"]
     seed = resolve_seed(sim_data.get("seed"))
@@ -122,7 +124,7 @@ def build_simulation(data: dict) -> CellularAutomaton:
         neighborhood = NEIGHBOURHOODS.get(n_n)()
 
     geometry = Geometry(
-        size=tuple(size), axes="xyz", periodicity=period, neighbourhood=neighborhood
+        size=size, axes="xyz"[: len(size)], periodicity=period, neighbourhood=neighborhood
     )
 
     ### next create State obj
@@ -132,19 +134,27 @@ def build_simulation(data: dict) -> CellularAutomaton:
     cell_keys = []
     key_dtypes = {}
     key_layers = []
-    random = []
     random_func = []
     random_args = []
 
     for sk in state_keys:
         cell_keys.append(sk["name"])
         key_layers.append(sk.get("layers", 1))
-        random.append(sk.get("random", False))
-        random_args.append(sk.get("random_args",None))
+        random_args.append(sk.get("random_args", None))
         key_dtypes[sk["name"]] = parse_dtype(
             sk.get("dtype", sim_data.get("dtype", "np.uint8"))
         )
         func_name = sk.get("random_func", None)
+        is_random = sk.get("random", False)
+        if not isinstance(is_random, bool):
+            raise ValueError(
+                f"state key '{sk['name']}': \"random\" must be true or false, got {is_random!r}"
+            )
+        if is_random != (func_name is not None):
+            raise ValueError(
+                f"state key '{sk['name']}': \"random\": true and \"random_func\" go "
+                "together; set both to fill the key at random, or neither to start at 0"
+            )
         if func_name is None:
             random_func.append(None)
         else:
@@ -155,7 +165,7 @@ def build_simulation(data: dict) -> CellularAutomaton:
         cell_keys=cell_keys,
         key_layers=key_layers,
         key_dtypes=key_dtypes,
-        random=random,
+        random=any(func is not None for func in random_func),
         random_func=random_func,
         random_args=random_args,
         rng=init_rng,

@@ -119,3 +119,36 @@ def test_state_padding(
 
     if wrap_pad_coords is not None:
         assert padded_data[wrap_pad_coords] == original_data[wrap_orig_coords]
+
+
+def test_key_layers_accepts_any_iterable():
+    geometry = Geometry((2, 2), axes="xy", periodicity="")
+
+    state = State(geometry, cell_keys=["a", "b"], key_layers=(1, 3))
+
+    assert state["a"].shape == (2, 2)
+    assert state["b"].shape == (2, 2, 3)
+
+
+def test_key_layers_must_match_the_keys():
+    geometry = Geometry((2, 2), axes="xy", periodicity="")
+
+    with pytest.raises(ValueError, match="2 cell_keys but 1 key_layers"):
+        State(geometry, cell_keys=["a", "b"], key_layers=[1])
+
+
+def test_copy_keeps_layers_and_dtypes_and_is_independent():
+    geometry = Geometry((2, 2), axes="xy", periodicity="")
+    state = State(
+        geometry, cell_keys=["a", "b"], key_layers=(1, 3), key_dtypes={"b": np.float32}
+    )
+    state["b"][0, 0, 2] = 0.5
+    state.sim = object()
+
+    copied = state.copy()
+    state["b"][0, 0, 2] = 0.25
+
+    assert copied["b"].shape == (2, 2, 3)
+    assert copied["b"].dtype == np.float32
+    assert copied["b"][0, 0, 2] == 0.5
+    assert copied.sim is None
