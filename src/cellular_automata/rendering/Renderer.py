@@ -1,5 +1,4 @@
 import ctypes
-from pathlib import Path
 
 import glfw
 import glm
@@ -91,7 +90,7 @@ from OpenGL.GL import (
 )
 
 from cellular_automata.rendering.Camera import Camera
-from cellular_automata.rendering.Shader import Shader
+from cellular_automata.rendering.Shader import ShaderError, build_shader
 
 
 class CARenderer:
@@ -206,28 +205,14 @@ class CARenderer:
         glfw.set_input_mode(self.window, glfw.STICKY_KEYS, True)
         glfw.set_key_callback(self.window, self._key_callback)
 
-        # compile shaders
-        shader_dir = Path(__file__).resolve().parent / "shaders"
-
-        self.solidShader = Shader()
-        self.solidShader.add_vertex(str(shader_dir / "solid.vert"))
-        self.solidShader.add_fragment(str(shader_dir / "solid.frag"))
-        self.solidShader.link_program()
-
-        self.transShader = Shader()
-        self.transShader.add_vertex(str(shader_dir / "vertex.vert"))
-        self.transShader.add_fragment(str(shader_dir / "transparent.frag"))
-        self.transShader.link_program()
-
-        self.compShader = Shader()
-        self.compShader.add_vertex(str(shader_dir / "composite.vert"))
-        self.compShader.add_fragment(str(shader_dir / "composite.frag"))
-        self.compShader.link_program()
-
-        self.screenShader = Shader()
-        self.screenShader.add_vertex(str(shader_dir / "screen.vert"))
-        self.screenShader.add_fragment(str(shader_dir / "screen.frag"))
-        self.screenShader.link_program()
+        try:
+            self.solidShader = build_shader("solid.vert", "solid.frag")
+            self.transShader = build_shader("vertex.vert", "transparent.frag")
+            self.compShader = build_shader("composite.vert", "composite.frag")
+            self.screenShader = build_shader("screen.vert", "screen.frag")
+        except ShaderError:
+            glfw.terminate()
+            raise
 
         glViewport(0, 0, width, height)
         glEnable(GL_CULL_FACE)
