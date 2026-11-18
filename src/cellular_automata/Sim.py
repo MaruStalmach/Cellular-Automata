@@ -42,6 +42,25 @@ def rule_rng(seed: int, index: int) -> np.random.Generator:
     return np.random.default_rng(np.random.SeedSequence(seed, spawn_key=(1, index)))
 
 
+def check_required_keys(rules: list[Rule], state: State) -> None:
+    """Raise ValueError naming every rule key missing from `state`.
+
+    Keys in the state that no rule declares are fine (e.g. keys only tracked
+    or rendered).
+    """
+    missing = [
+        f"{type(rule).__name__} needs '{key}'"
+        for rule in rules
+        for key in rule.required_keys
+        if key not in state.keys
+    ]
+    if missing:
+        raise ValueError(
+            "state is missing keys the rules need: " + "; ".join(missing)
+            + f" (state keys: {list(state.keys)})"
+        )
+
+
 class CellularAutomaton:
     """Simulation engine
 
@@ -89,13 +108,7 @@ class CellularAutomaton:
 
         if state is not None:
             self.state = state
-            # TODO: check if state keys are the same as rule keys
-            try:
-                assert keys == tuple(self.state.keys)
-            except AssertionError:
-                print(
-                    "key mismatch between rules and state arrays (soft error)"
-                )  # TODO: comparing tuple to list will always thorw a mismacth
+            check_required_keys(rules, state)
         else:
             self.state = State(
                 geometry, random=True, cell_keys=keys, rng=state_rng(self.seed)

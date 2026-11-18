@@ -56,6 +56,7 @@ class AntibioticEffect(Rule):
             )
         self.bacteria_keys = bacteria_keys
         self.biofilm_key = biofilm_key
+        self.required_keys.extend([*bacteria_keys, biofilm_key])
         self.effectiveness = effectiveness
         self.base_prob = base_prob
         self.scale = time_step / reference_time_step

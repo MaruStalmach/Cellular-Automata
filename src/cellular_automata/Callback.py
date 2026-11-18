@@ -14,10 +14,13 @@ class Callback:
         sim_obj_reference: CellularAutomaton,
         step_stride: int = 1,
     ):
+        if not isinstance(sim_obj_reference, CellularAutomaton):
+            raise TypeError(
+                f"Callback needs a CellularAutomaton, got {type(sim_obj_reference).__name__}"
+            )
         self.key = key_to_display
         self.sim = sim_obj_reference
         self.stride = step_stride
-        assert isinstance(sim_obj_reference, CellularAutomaton)
 
     def __call__(self, step: bool = True):
 
@@ -42,10 +45,14 @@ class ReduceCallback(Callback):
         reduce_op: np.ufunc = np.maximum,
     ):
         super().__init__(key_to_display, sim_obj_reference, step_stride)
+        if not isinstance(reduce_op, np.ufunc):
+            raise TypeError(f"reduce_op must be a numpy ufunc, got {reduce_op!r}")
         self.op = reduce_op
-        assert isinstance(reduce_op, np.ufunc)
         # this is intended only for layered state arrays
-        assert len(self.sim.state[self.key].shape) == 4
+        if self.sim.state[self.key].ndim != self.sim.geometry.ndim + 1:
+            raise ValueError(
+                f"ReduceCallback needs a key with several layers; '{self.key}' has one"
+            )
 
     def __call__(self, step=True):
 
@@ -65,7 +72,7 @@ class MultiKeyCallback(Callback):
         super().__init__(keys_to_display, sim_obj_reference, step_stride)
         self.callbacks = []
         for k in self.key:
-            if len(self.sim.state[k].shape) == 4:
+            if self.sim.state[k].ndim == self.sim.geometry.ndim + 1:
                 self.callbacks.append(ReduceCallback(k, self.sim, step_stride))
             else:
                 self.callbacks.append(Callback(k, self.sim, step_stride))
