@@ -1,7 +1,7 @@
 import numpy as np
 
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule, require_3d
+from cellular_automata.Rule import Rule, StepContext, require_3d
 from cellular_automata.State import State
 
 
@@ -38,7 +38,7 @@ class BiofilmDetachment(Rule):
         )
 
 
-    def apply_state(self, state: State) -> State:
+    def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
         biofilm_grid = state["biofilm"]
         floating_bact_grid = state["floating_bacteria"]
 

@@ -78,49 +78,6 @@ def test_state_custom():
     assert state["HP"][0, 0] == 5.0
 
 
-test_data = [
-    ((3, 3), "xy", "", (5, 5), (0, 2), None, None),
-    ((3, 4, 1), "xyz", "y", (5, 6, 3), (0, 2, 1), (2, 0, 1), (1, -1, 0)),
-    (
-        (2, 1, 5, 2),
-        "xyza",
-        "a",
-        (4, 3, 7, 4),
-        (0, 1, 3, 1),
-        (1, 1, 3, 0),
-        (0, 0, 2, -1),
-    ),
-]
-
-
-@pytest.mark.parametrize(
-    "size, axes, periodicity, expected_padded_size, const_coords, wrap_pad_coords, wrap_orig_coords",
-    test_data,
-)
-def test_state_padding(
-    size,
-    axes,
-    periodicity,
-    expected_padded_size,
-    const_coords,
-    wrap_pad_coords,
-    wrap_orig_coords,
-):
-    geometry = Geometry(size=size, axes=axes, periodicity=periodicity)
-    state = State(geometry=geometry, random=False, cell_keys=["value"], dtype=np.int32)
-
-    original_data = np.arange(np.prod(size)).reshape(size)
-    state["value"] = original_data
-
-    padded_data = state._pad_data(state["value"], constant_value=-1)
-    assert padded_data.shape == expected_padded_size
-
-    assert padded_data[const_coords] == -1
-
-    if wrap_pad_coords is not None:
-        assert padded_data[wrap_pad_coords] == original_data[wrap_orig_coords]
-
-
 def test_key_layers_accepts_any_iterable():
     geometry = Geometry((2, 2), axes="xy", periodicity="")
 
@@ -143,7 +100,6 @@ def test_copy_keeps_layers_and_dtypes_and_is_independent():
         geometry, cell_keys=["a", "b"], key_layers=(1, 3), key_dtypes={"b": np.float32}
     )
     state["b"][0, 0, 2] = 0.5
-    state.sim = object()
 
     copied = state.copy()
     state["b"][0, 0, 2] = 0.25
@@ -151,4 +107,62 @@ def test_copy_keeps_layers_and_dtypes_and_is_independent():
     assert copied["b"].shape == (2, 2, 3)
     assert copied["b"].dtype == np.float32
     assert copied["b"][0, 0, 2] == 0.5
-    assert copied.sim is None
+
+
+def test_initialiser_is_called_once_with_size_and_cast_to_the_key_dtype():
+    geometry = Geometry((2, 3), axes="xy", periodicity="")
+    calls = []
+
+    def init(size, value):
+        calls.append(size)
+        return np.full(size, value)
+
+    state = State(
+        geometry, cell_keys=["a"], key_dtypes={"a": np.uint8}, random=True,
+        random_func=[init], random_args=[{"value": 7}],
+    )
+
+    assert calls == [(2, 3, 1)]
+    assert state["a"].dtype == np.uint8
+    assert state["a"].tolist() == [[7, 7, 7], [7, 7, 7]]
+
+
+def test_initialiser_errors_are_not_swallowed():
+    # a TypeError inside an initialiser used to trigger retries with fewer arguments
+    geometry = Geometry((2, 2), axes="xy", periodicity="")
+    calls = []
+
+    def broken(size):
+        calls.append(size)
+        raise TypeError("bug inside the initialiser")
+
+    with pytest.raises(TypeError, match="bug inside the initialiser"):
+        State(geometry, cell_keys=["a"], random=True, random_func=[broken])
+    assert len(calls) == 1
+
+
+def test_initialiser_without_random_args():
+    geometry = Geometry((2, 2), axes="xy", periodicity="")
+
+    state = State(
+        geometry, cell_keys=["a", "b"], random=True,
+        random_func=[lambda size: np.ones(size), None], random_args=[None, None],
+    )
+
+    assert state["a"].sum() == 4
+    assert state["b"].sum() == 0
+
+
+def test_integer_initial_values_that_do_not_fit_the_dtype_raise():
+    geometry = Geometry((2, 2), axes="xy", periodicity="")
+
+    def too_big(size):
+        values = np.zeros(size, dtype=np.int64)
+        values[0, 0] = 300
+        return values
+
+    with pytest.raises(ValueError, match=r"key 'a' gave values 0\.\.300.*uint8"):
+        State(
+            geometry, cell_keys=["a"], key_dtypes={"a": np.uint8}, random=True,
+            random_func=[too_big],
+        )

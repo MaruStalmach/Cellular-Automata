@@ -1,7 +1,5 @@
 """AntibioticEffect: constants come from the geometry, probabilities are exact (BUG-8)."""
 
-from types import SimpleNamespace
-
 import numpy as np
 import pytest
 
@@ -9,6 +7,7 @@ from cellular_automata.Geometry import Geometry
 from cellular_automata.neighbourhoods.VonNeumannNeighbourhood import (
     VonNeumannNeighbourhood,
 )
+from cellular_automata.Rule import StepContext
 from cellular_automata.rules import AntibioticEffect
 from cellular_automata.State import State
 
@@ -24,11 +23,14 @@ def _rule(size=SIZE, neighbourhood=None, **kwargs):
     return AntibioticEffect(geometry, **args)
 
 
-def _state(rule, step_no=0, max_steps=10):
+def _state(rule):
     state = State(rule.geometry, cell_keys=["bacteria", "biofilm"])
     state["bacteria"] = np.ones(rule.geometry.size)
-    state.sim = SimpleNamespace(step_no=step_no, max_steps=max_steps)
     return state
+
+
+def _ctx(step_no=0, max_steps=10):
+    return StepContext(step_no=step_no, max_steps=max_steps)
 
 
 def _no_biofilm(rule):
@@ -103,7 +105,7 @@ def test_effectiveness_scales_the_death_probability(effectiveness, dies):
     rule = _rule(time_step=0.01, base_prob=0.2, effectiveness=[effectiveness])
     rule.rng = FixedRolls(0.3)
 
-    state = rule.apply_state(_state(rule))
+    state = rule.apply_state(_state(rule), _ctx())
 
     above_the_wall = state["bacteria"][:, :, 1:]
     assert (above_the_wall.sum() == 0) == dies
@@ -113,7 +115,7 @@ def test_effectiveness_scales_the_death_probability(effectiveness, dies):
 def test_dosing_window(step_no, max_steps):
     rule = _rule(base_prob=1.0, inoculation_start=5)
 
-    state = rule.apply_state(_state(rule, step_no=step_no, max_steps=max_steps))
+    state = rule.apply_state(_state(rule), _ctx(step_no, max_steps))
 
     dosed = 5 <= step_no < max_steps
     assert (state["bacteria"].sum() == 0) == dosed
@@ -122,9 +124,9 @@ def test_dosing_window(step_no, max_steps):
 def test_open_dosing_window_follows_the_current_max_steps():
     # the end used to be fixed at the max_steps of the first run that applied the rule
     rule = _rule(base_prob=1.0)
-    rule.apply_state(_state(rule, step_no=0, max_steps=10))
+    rule.apply_state(_state(rule), _ctx(0, 10))
 
-    state = rule.apply_state(_state(rule, step_no=15, max_steps=20))
+    state = rule.apply_state(_state(rule), _ctx(15, 20))
 
     assert state["bacteria"].sum() == 0
 
@@ -137,3 +139,10 @@ def test_mismatched_keys_and_effectiveness_raise():
 def test_effectiveness_below_minus_one_raises():
     with pytest.raises(ValueError, match=">= -1"):
         _rule(effectiveness=[-1.5])
+
+
+def test_needs_the_step_context():
+    rule = _rule()
+
+    with pytest.raises(ValueError, match="step context"):
+        rule.apply_state(_state(rule))
