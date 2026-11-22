@@ -1,4 +1,8 @@
+import inspect
 import json
+import warnings
+from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 
 import numpy as np
@@ -20,7 +24,7 @@ from cellular_automata.rules.GutDrift import *
 from cellular_automata.rules.Inoculation import *
 from cellular_automata.rules.SpeciesInteraction import *
 from cellular_automata.rules.Utilization import *
-from cellular_automata.Sim import CellularAutomaton
+from cellular_automata.Sim import CellularAutomaton, resolve_seed, state_rng
 from cellular_automata.State import State
 from cellular_automata.tracking.StateTracker import *
 from cellular_automata.util.helper_functions import *
@@ -45,6 +49,34 @@ def getnestedattr(module, name: str) -> object:
             return obj
 
 
+def resolve_random_func(name: str, rng: np.random.Generator) -> Callable:
+    """Look up a state `random_func` and make it draw from `rng`.
+
+    `np.random.<method>` (or `random.<method>`) names map to that method of
+    `rng`; helper functions that take an `rng` argument (e.g. `random_seeds`)
+    get it bound.
+    """
+    if name.startswith(("np.random.", "random.")):
+        method = name.split("random.", 1)[1]
+        if not hasattr(np.random.Generator, method):
+            raise ValueError(
+                f"random_func '{name}' is not a method of np.random.Generator, so it "
+                "can't be seeded; use one that is (e.g. np.random.integers instead of "
+                "np.random.randint)"
+            )
+        return getattr(rng, method)
+    func = getnestedattr(np, name)
+    if func is None:
+        raise ValueError(f"Unknown random_func '{name}'")
+    try:
+        takes_rng = "rng" in inspect.signature(func).parameters
+    except (TypeError, ValueError):
+        takes_rng = False
+    if takes_rng:
+        return partial(func, rng=rng)
+    return func
+
+
 def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     """Build a simulation from a JSON config.
 
@@ -67,6 +99,13 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     size = sim_data["size"]  # string of a tuple
     period = sim_data["periodicity"]
     max_steps = sim_data["max_steps"]
+    seed = resolve_seed(sim_data.get("seed"))
+    if sim_data.get("seed") is None:
+        warnings.warn(
+            f'no sim.seed in config; using seed {seed} (add "seed": {seed} to repeat this run)',
+            stacklevel=2,
+        )
+    init_rng = state_rng(seed)
     neighbourhood_name = sim_data.get("neighbourhood", None)
     neighborhood_name = sim_data.get("neighborhood", None)
     n_n = neighborhood_name or neighbourhood_name
@@ -106,7 +145,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         if func_name is None:
             random_func.append(None)
         else:
-            random_func.append(getnestedattr(np, func_name))
+            random_func.append(resolve_random_func(func_name, init_rng))
 
     state = State(
         geometry=geometry,
@@ -116,6 +155,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         random=random,
         random_func=random_func,
         random_args=random_args,
+        rng=init_rng,
     )
 
     ### parse tracker data from json and pass config
@@ -162,6 +202,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         max_steps=max_steps,
         tracker=tracker,
         output_filename=output_filename,
+        seed=seed,
     )
 
     ### if no rendering then its done
