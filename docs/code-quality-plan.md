@@ -3,7 +3,7 @@
 Branch: `refactor/code-quality-plan` (based on `refactor/repo-structure`, PR #33)
 Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch (reviewed at `e3d7313`).
 Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`)
-Status: updated 2026-11-06 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). Both PRs are open, stacked on #33. REPRO-1 is in progress: part 1 in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39), stacked on #37. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
+Status: updated 2026-11-06 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). Both PRs are open, stacked on #33. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
 
 ---
 
@@ -31,7 +31,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 | 1 | [BROKEN-1](#broken-1) | Critical ✅ | ~~3 example scripts crash on start (`from cellular_automata.rules import X` imports a *module*)~~ | Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) |
 | 2 | [BROKEN-2](#broken-2) | Critical ✅ | ~~3 of 8 example configs are missing the required `time_step` and fail to parse~~ | Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) |
 | 3 | [BUG-1](#bug-1) | Critical ✅ | ~~`int8` overflow in `Rule.neighborhood_count`: dense substrate gives **negative** neighbour counts~~ | Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) |
-| 4 | [REPRO-1](#repro-1) | Critical | No RNG seeding anywhere in the library, so runs can't be reproduced; parallel MC search likely reuses identical random streams | Partly fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) |
+| 4 | [REPRO-1](#repro-1) | Critical | No RNG seeding anywhere in the library, so runs can't be reproduced; parallel MC search likely reuses identical random streams | Mostly fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39), [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) |
 | 5 | [ARCH-1](#arch-1) | High | Rules are looked up through `globals()` + wildcard imports, which has no validation and hides typos | Open |
 | 6 | [ARCH-2](#arch-2) | High | State keys (`"biofilm"`, `"floating_bacteria"`, `"alive"`) and the "wall" axis are hard-coded inside rules, and gut and bioreactor rules disagree on which axis is the wall | Open (needs D2) |
 | 7 | [ARCH-4](#arch-4) / [RES-1](#res-1) | High | Two incompatible config formats (Parser vs `gut-experiments`), and the README documents the wrong one. `gut-experiments` no longer merges cleanly (12 conflicts) | Open |
@@ -223,7 +223,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="repro-1"></a>
 ### REPRO-1 - No seeding; global `np.random` everywhere (Critical)
 
-> **Status:** Partly fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39): `sim.seed` in the config, a seeded generator per rule (`rule.rng`) and for the initial state, unseeded runs report and save the seed they used, and the bioreactor scripts seed through the config. Still open: built-in rules still draw from `np.random` (part 2), BO noise, and `SeedSequence.spawn` for the gut MC search (step 21).
+> **Status:** Mostly fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): `sim.seed` in the config, a seeded generator per rule (`rule.rng`) and for the initial state, and every built-in rule draws from `self.rng`. The same seed gives identical tracker output (tiny-grid test). Unseeded runs report and save the seed they used, and the bioreactor scripts seed through the config. Still open: BO scores one realisation with noise `1e-6`, and `SeedSequence.spawn` for the gut MC search (step 21).
 
 - **Where:** every rule (including the new `SpontaneousSpawn`, which uses `np.random.shuffle` / `np.random.random`); `State.py:69`; `gut-experiments: experiments/data_preparation.py:264`
 - **What:**
@@ -385,7 +385,9 @@ There are 28 test functions. **No tests** exist for:
 4. Regression tests for BUG-1, BUG-2 and BUG-6.
 
 <a id="test-3"></a>
-### TEST-3 - Tests rely on monkeypatching the global RNG (Medium)
+### ~~TEST-3 - Tests rely on monkeypatching the global RNG (Medium)~~
+
+> **Status:** Fixed in [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40). Tests inject a generator. The two D1 xfails are seeded and `strict=True`.
 
 - **Where:** `test_sim.py:170-182`; `test_species_interaction_rule.py` uses `np.random.seed(42)`
 - **What:** patching `np.random.random` with call counting (`if self.calls == 3`) breaks whenever a rule's internal order of random calls changes.
@@ -623,7 +625,7 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 ### Phase 2 - Correctness and reproducibility
 
 8. **[BUG-1](#bug-1):** `int32` neighbour counts + regression test. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37). No comparison run: all earlier results are treated as invalid and will be redone after REPRO-1 and D10.*
-9. **[REPRO-1](#repro-1):** `sim.seed` in the config, a `Generator` in `CellularAutomaton`, `rule.rng` in every rule, and tests switched to an injected rng ([TEST-3](#test-3)). *Done when:* two runs with the same seed produce identical tracker output (tiny grid test). *Status: part 1 (seed plumbing) in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39).*
+9. **[REPRO-1](#repro-1):** `sim.seed` in the config, a `Generator` in `CellularAutomaton`, `rule.rng` in every rule, and tests switched to an injected rng ([TEST-3](#test-3)). *Done when:* two runs with the same seed produce identical tracker output (tiny grid test). *Status: fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40), including the done-when test. BO noise and the gut search's `SeedSequence.spawn` (step 21) remain.*
 10. **[BUG-2](#bug-2), [BUG-3](#bug-3), [BUG-6](#bug-6):** shift convention, Moore radius, bioreactor detachment keys, each with a test. *Status: BUG-2 and BUG-6 fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37); BUG-3 partly fixed (needs D9).*
 11. **[BUG-4](#bug-4) / [BUG-5](#bug-5):** remove the cell-wise path; abstract `apply_state`; warn when the 500 cap is hit; validate `dt` ratios. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37).*
 12. **[BUG-10](#bug-10):** tracker records only the selected keys; `record_every`; save on interrupt; symmetric paths. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) except `record_every`.*
@@ -666,9 +668,10 @@ main
      └─ fix/phase-0-safety-net (PR #36: Phases 0 and 1)
          └─ fix/phase-2-correctness-repro (PR #37: Phase 2 without REPRO-1)
              └─ fix/repro-seeding (PR #39: REPRO-1 part 1)
-                 └─ refactor/phase-3-registry-and-geometry
-                     └─ feat/phase-4-gut-experiments
-                         └─ refactor/phase-5-naming-perf
+                 └─ fix/repro-rules-rng (PR #40: REPRO-1 part 2, TEST-3)
+                     └─ refactor/phase-3-registry-and-geometry (next)
+                         └─ feat/phase-4-gut-experiments
+                             └─ refactor/phase-5-naming-perf
 ```
 
 Gut-feature work can start **after step 15**. From then on, a new rule is one file with configurable keys and wall axis, and the explicit registry picks it up automatically.
