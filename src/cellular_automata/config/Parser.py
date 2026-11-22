@@ -7,32 +7,16 @@ from pathlib import Path
 
 import numpy as np
 
+import cellular_automata.neighbourhoods  # noqa: F401  (registers the neighbourhoods)
+import cellular_automata.rules  # noqa: F401  (registers the rules)
 from cellular_automata.Callback import *
 from cellular_automata.Geometry import Geometry
-from cellular_automata.neighbourhoods.MooreNeighbourhood import *
-from cellular_automata.neighbourhoods.VonNeumannNeighbourhood import *
+from cellular_automata.registry import NEIGHBOURHOODS, RULES
 from cellular_automata.rendering.Renderer import CARenderer
-from cellular_automata.rules.AntibioticEffect import *
-from cellular_automata.rules.BacteriaDecay import *
-from cellular_automata.rules.BacteriaGrowth import *
-from cellular_automata.rules.BiofilmDetachment import *
-from cellular_automata.rules.BioreactorBiofilmDetachment import *
-from cellular_automata.rules.CreateBiofilm import *
-from cellular_automata.rules.Diffusion import *
-from cellular_automata.rules.GameOfLife3D import *
-from cellular_automata.rules.GutDrift import *
-from cellular_automata.rules.Inoculation import *
-from cellular_automata.rules.SpeciesInteraction import *
-from cellular_automata.rules.Utilization import *
 from cellular_automata.Sim import CellularAutomaton, resolve_seed, state_rng
 from cellular_automata.State import State
 from cellular_automata.tracking.StateTracker import *
 from cellular_automata.util.helper_functions import *
-
-NEIGHBOURHOODS = {
-    "MooreNeighbourhood": MooreNeighbourhood,
-    "VonNeumannNeighbourhood": VonNeumannNeighbourhood,
-}
 
 
 def getnestedattr(module, name: str) -> object:
@@ -111,12 +95,8 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     n_n = neighborhood_name or neighbourhood_name
     if n_n is None:
         neighborhood = None  # Geometry defaults to Moore
-    elif n_n in NEIGHBOURHOODS:
-        neighborhood = NEIGHBOURHOODS[n_n]()
     else:
-        raise ValueError(
-            f"Unknown neighbourhood '{n_n}'. Known: {sorted(NEIGHBOURHOODS)}"
-        )
+        neighborhood = NEIGHBOURHOODS.get(n_n)()
 
     geometry = Geometry(
         size=tuple(size), axes="xyz", periodicity=period, neighbourhood=neighborhood
@@ -190,7 +170,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     rules = []
     for rd in rules_data:
         args = rd.get("args", {})
-        rule_class = globals()[rd["name"]]
+        rule_class = RULES.get(rd["name"])
         rule = rule_class(geometry, **args)
         rules.append(rule)
 
