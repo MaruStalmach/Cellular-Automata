@@ -171,3 +171,91 @@ def test_scripts_share_one_study_dir(monkeypatch, tmp_path):
     assert common.STUDY_DIR == REPO_ROOT / "research" / "bioreactor"
     assert analyze.RESULTS_DIR == common.STUDY_DIR / "results"
     assert screening.CONFIGS_DIR == common.CONFIGS_DIR
+
+
+# --- command-line options (RES-2) ------------------------------------------------------
+
+
+def _bo(monkeypatch, tmp_path):
+    _screening(monkeypatch, tmp_path)
+    sys.modules.pop("bayesian_optimization", None)
+    return importlib.import_module("bayesian_optimization")
+
+
+def test_option_defaults_are_the_previous_constants(monkeypatch, tmp_path):
+    bo = _bo(monkeypatch, tmp_path)
+    screening = sys.modules["screening"]
+
+    s = screening.parse_args([])
+    b = bo.parse_args([])
+
+    assert (s.runs, s.bio_number, s.config, s.active_pairs, s.value_scale, s.seed) == (
+        12, 4, "screen", 18, 0.8, None
+    )
+    assert (b.bio_number, b.config, b.initial_runs, b.bo_runs, b.seed, b.seeds, b.radius) == (
+        4, "bo", 5, 10, bo.RANDOM_SEED, 1, 0.5
+    )
+
+
+def test_bo_rejects_zero_seeds(monkeypatch, tmp_path):
+    bo = _bo(monkeypatch, tmp_path)
+
+    with pytest.raises(SystemExit):
+        bo.parse_args(["--seeds", "0"])
+
+
+def test_bo_trial_scores_the_mean_over_its_seeds(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    bo = _bo(monkeypatch, tmp_path)
+    used_seeds = []
+    rmse_by_seed = {7: 0.2, 8: 0.4, 9: 0.6}
+
+    def save_config(interactions, run_no, config_name, seed):
+        used_seeds.append(seed)
+        return bo.CONFIGS_DIR / f"{config_name}_{run_no}.json"
+
+    monkeypatch.setattr(bo, "save_screening_config", save_config)
+    monkeypatch.setattr(bo, "interactions_from_vector", lambda base, values: {})
+    monkeypatch.setattr(
+        bo, "parse_json",
+        lambda path: (SimpleNamespace(max_dt=1800, tracker=SimpleNamespace(steps=None)), None),
+    )
+    monkeypatch.setattr(bo, "get_relative_sim_data", lambda sim: None)
+    monkeypatch.setattr(bo, "calc_rmse", lambda *args: rmse_by_seed[used_seeds[-1]])
+    results = tmp_path / "bo.csv"
+
+    score = bo.run_trial(
+        3, np.zeros(len(bo.SELECTED_PAIRS)), {}, None, seeds=(7, 8, 9), results_path=results
+    )
+
+    assert used_seeds == [7, 8, 9]
+    assert score == pytest.approx(0.4)
+    row = pd.read_csv(results).iloc[0]
+    assert (row["run_no"], row["seeds"]) == (3, 3)
+    assert row["rmse_sd"] == pytest.approx(0.2)
+
+
+def test_screening_main_passes_its_options_through(monkeypatch, tmp_path):
+    screening = _screening(monkeypatch, tmp_path)
+    calls = []
+    monkeypatch.setattr(screening, "get_real_data", lambda bio_number: f"bio{bio_number}")
+    monkeypatch.setattr(screening, "load_interactions", lambda name: {"from": name})
+
+    def trial(run_no, data, base, **kwargs):
+        calls.append((run_no, data, base, kwargs))
+        return {"run_no": run_no, "seed": 0, "rmse": 0.1, "active_pairs": [], "config_path": "x"}
+
+    monkeypatch.setattr(screening, "run_screening_trial", trial)
+    output = tmp_path / "out.csv"
+
+    screening.main([
+        "--runs", "2", "--bio-number", "3", "--config", "bo", "--active-pairs", "5",
+        "--value-scale", "0.3", "--seed", "1", "--output", str(output),
+    ])
+
+    assert [c[0] for c in calls] == [0, 1]
+    _, data, base, kwargs = calls[0]
+    assert (data, base) == ("bio3", {"from": "bo"})
+    assert (kwargs["config_name"], kwargs["active_pairs"], kwargs["value_scale"]) == ("bo", 5, 0.3)
+    assert len(pd.read_csv(output)) == 2

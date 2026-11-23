@@ -1,3 +1,5 @@
+import argparse
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -52,29 +54,34 @@ def interactions_from_vector(base_interactions: dict, values: np.ndarray) -> dic
     return interactions
 
 
-def load_results() -> pd.DataFrame:
-    if not RESULTS_PATH.exists():
+def load_results(path: Path = RESULTS_PATH) -> pd.DataFrame:
+    if not path.exists():
         return pd.DataFrame()
-    results = pd.read_csv(RESULTS_PATH)
+    results = pd.read_csv(path)
     value_columns = [f'x{i}' for i in range(len(SELECTED_PAIRS))]
     required = {'run_no', 'rmse', 'config_path', *value_columns}
     if not required.issubset(results.columns):
-        raise ValueError(f'{RESULTS_PATH} is missing BO columns.')
+        raise ValueError(f'{path} is missing BO columns.')
     return results
 
 
-def save_result(run_no: int, values: np.ndarray, rmse: float, config_path: str) -> None:
+def save_result(
+    run_no: int, values: np.ndarray, rmse: float, config_path: str,
+    path: Path = RESULTS_PATH, rmse_sd: float = 0.0, seeds: int = 1,
+) -> None:
     row = {
         'run_no': run_no,
         'rmse': rmse,
         'config_path': config_path,
+        'rmse_sd': rmse_sd,
+        'seeds': seeds,
     }
     row.update({f'x{i}': value for i, value in enumerate(values)})
     new_row = pd.DataFrame([row])
-    existing = load_results()
+    existing = load_results(path)
     updated = pd.concat([existing, new_row], ignore_index=True)
-    RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    updated.to_csv(RESULTS_PATH, index=False)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    updated.to_csv(path, index=False)
 
 
 def rbf_kernel(left: np.ndarray, right: np.ndarray, length_scale: float = 0.35) -> np.ndarray:
@@ -105,52 +112,103 @@ def propose(values: np.ndarray, scores: np.ndarray, lower: np.ndarray, upper: np
     return candidates[int(np.argmax(acquisition))]
 
 
-def run_trial(run_no: int, values: np.ndarray, base_interactions: dict, real_data: pd.DataFrame) -> float:
+def run_trial(
+    run_no: int,
+    values: np.ndarray,
+    base_interactions: dict,
+    real_data: pd.DataFrame,
+    seeds: tuple[int, ...] = (RANDOM_SEED,),
+    config_name: str = BASE_CONFIG,
+    results_path: Path = RESULTS_PATH,
+) -> float:
+    """Score one point: the mean RMSE over one simulation per seed.
+
+    Every trial uses the same seeds (common random numbers), so RMSE differences come
+    from the interactions; more seeds average out more of the simulation noise.
+    """
     interactions = interactions_from_vector(base_interactions, values)
-    # every trial uses the same seed (common random numbers), so RMSE differences come from the interactions
-    config_path = save_screening_config(interactions, run_no, config_name=BASE_CONFIG, seed=RANDOM_SEED)
-    ca_sim, _ = parse_json(config_path)
-    relative_sim = get_relative_sim_data(ca_sim)
-    rmse = calc_rmse(relative_sim, real_data, ca_sim.max_dt, ca_sim.tracker.steps)
-    save_result(run_no, values, rmse, str(config_path.relative_to(CONFIGS_DIR)))
-    print(f'run {run_no}: RMSE={rmse:.6f}')
+    scores = []
+    for seed in seeds:
+        config_path = save_screening_config(interactions, run_no, config_name=config_name, seed=seed)
+        ca_sim, _ = parse_json(config_path)
+        relative_sim = get_relative_sim_data(ca_sim)
+        scores.append(calc_rmse(relative_sim, real_data, ca_sim.max_dt, ca_sim.tracker.steps))
+    rmse = float(np.mean(scores))
+    rmse_sd = float(np.std(scores, ddof=1)) if len(scores) > 1 else 0.0
+    save_result(
+        run_no, values, rmse, str(config_path.relative_to(CONFIGS_DIR)),
+        path=results_path, rmse_sd=rmse_sd, seeds=len(scores),
+    )
+    print(f'run {run_no}: RMSE={rmse:.6f}' + (f' (sd {rmse_sd:.6f}, {len(scores)} seeds)' if len(scores) > 1 else ''))
     return rmse
 
 
-def main() -> None:
-    base_interactions = load_interactions(BASE_CONFIG)
-    baseline = vector_from_interactions(base_interactions)
-    real_data = get_real_data(bio_number=BIO_NUMBER)
-    rng = np.random.default_rng(RANDOM_SEED)
+def parse_args(argv=None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description='Bayesian optimisation of selected interaction coefficients.'
+    )
+    parser.add_argument('--bio-number', type=int, default=BIO_NUMBER,
+                        help='bioreactor whose measurements are fitted')
+    parser.add_argument('--config', default=BASE_CONFIG,
+                        help='base config in configs/ (without .json)')
+    parser.add_argument('--initial-runs', type=int, default=INITIAL_RUNS,
+                        help='Sobol points before the GP takes over')
+    parser.add_argument('--bo-runs', type=int, default=BO_RUNS, help='GP-proposed points')
+    parser.add_argument('--seed', type=int, default=RANDOM_SEED,
+                        help='seed for the sampler and the first simulation seed')
+    parser.add_argument('--seeds', type=int, default=1,
+                        help='simulations per point, seeded seed, seed+1, ...; '
+                             'the score is their mean RMSE')
+    parser.add_argument('--radius', type=float, default=VALUE_RADIUS,
+                        help='search radius around the base coefficients')
+    parser.add_argument('--results', type=Path, default=RESULTS_PATH,
+                        help='results CSV (an existing one is resumed)')
+    args = parser.parse_args(argv)
+    if args.seeds < 1:
+        parser.error('--seeds must be at least 1')
+    return args
 
-    results = load_results()
+
+def main(argv=None) -> None:
+    args = parse_args(argv)
+    seeds = tuple(args.seed + i for i in range(args.seeds))
+    base_interactions = load_interactions(args.config)
+    baseline = vector_from_interactions(base_interactions)
+    real_data = get_real_data(bio_number=args.bio_number)
+    rng = np.random.default_rng(args.seed)
+
+    def trial(run_no, point):
+        run_trial(run_no, point, base_interactions, real_data, seeds=seeds,
+                  config_name=args.config, results_path=args.results)
+
+    results = load_results(args.results)
     if results.empty:
-        run_trial(0, baseline, base_interactions, real_data)
-        results = load_results()
+        trial(0, baseline)
+        results = load_results(args.results)
 
     value_columns = [f'x{i}' for i in range(len(SELECTED_PAIRS))]
     values = results[value_columns].to_numpy(dtype=float)
     scores = results['rmse'].to_numpy(dtype=float)
-    lower = np.maximum(VALUE_BOUNDS[0], baseline - VALUE_RADIUS)
-    upper = np.minimum(VALUE_BOUNDS[1], baseline + VALUE_RADIUS)
+    lower = np.maximum(VALUE_BOUNDS[0], baseline - args.radius)
+    upper = np.minimum(VALUE_BOUNDS[1], baseline + args.radius)
 
-    while len(results) < INITIAL_RUNS + BO_RUNS + 1:
-        if len(results) < INITIAL_RUNS + 1:
-            sampler = qmc.Sobol(d=len(SELECTED_PAIRS), scramble=True, seed=RANDOM_SEED + len(results))
+    while len(results) < args.initial_runs + args.bo_runs + 1:
+        if len(results) < args.initial_runs + 1:
+            sampler = qmc.Sobol(d=len(SELECTED_PAIRS), scramble=True, seed=args.seed + len(results))
             point = qmc.scale(sampler.random(1), lower, upper)[0]
         else:
             point = propose(values, scores, lower, upper, rng)
 
         run_no = int(results['run_no'].max()) + 1
-        run_trial(run_no, point, base_interactions, real_data)
-        results = load_results()
+        trial(run_no, point)
+        results = load_results(args.results)
         values = results[value_columns].to_numpy(dtype=float)
         scores = results['rmse'].to_numpy(dtype=float)
 
     best = results.loc[results['rmse'].idxmin()]
     print(f'best RMSE: {best["rmse"]:.6f}')
     print(f'best run: {int(best["run_no"])}')
-    print(f'saved results: {RESULTS_PATH}')
+    print(f'saved results: {args.results}')
     print('best coefficients:')
     for index, (source, target) in enumerate(SELECTED_PAIRS):
         print(f'  {source} -> {target}: {best[f"x{index}"]:.6f}')

@@ -19,6 +19,12 @@ python research/bioreactor/scripts/analyze_screening.py            # or: --input
 python examples/CA_sim.py -f research/bioreactor/configs/full18.json
 ```
 
+Both `screening.py` and `bayesian_optimization.py` take `--help`. Their defaults match the earlier hard-coded settings, so they still run without options. Useful ones:
+
+- `--config <name>` and `--bio-number <n>` choose the base config in `configs/` and the bioreactor to fit.
+- `screening.py --seed <n>` makes the random perturbations repeatable.
+- `bayesian_optimization.py --seeds <n>` scores each point by the mean RMSE of `n` simulations (seeds `--seed`, `--seed`+1, …) instead of one. The results CSV records the standard deviation and the number of seeds.
+
 The scripts need the optional research dependencies (`uv sync --extra research` or `pip install -e ".[research]"`).
 
 Biofilm detachment in these configs uses the `BioreactorBiofilmDetachment` rule.
