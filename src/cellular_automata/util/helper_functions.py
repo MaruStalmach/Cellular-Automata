@@ -1,6 +1,9 @@
 import numpy as np
 
+from cellular_automata.registry import register_initialiser
 
+
+@register_initialiser
 def init_block(size, start, block_size, value):
     res = np.zeros(size, dtype=np.uint8)
     sel = [
@@ -11,6 +14,7 @@ def init_block(size, start, block_size, value):
     res[tuple(sel)] = value
     return res
 
+@register_initialiser
 def random_seeds(size, n, value, rng: np.random.Generator | None = None):
     if rng is None:
         rng = np.random.default_rng()

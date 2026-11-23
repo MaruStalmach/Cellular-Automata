@@ -1,8 +1,10 @@
 import numpy as np
 
+from cellular_automata.registry import register_callback
 from cellular_automata.Sim import CellularAutomaton
 
 
+@register_callback
 class Callback:
     """A class to generalize update_callback functions used for rendering"""
 
@@ -30,6 +32,7 @@ class Callback:
             return 0
 
 
+@register_callback
 class ReduceCallback(Callback):
     def __init__(
         self,
@@ -56,6 +59,7 @@ class ReduceCallback(Callback):
             return 0
 
 
+@register_callback
 class MultiKeyCallback(Callback):
     def __init__(self, keys_to_display, sim_obj_reference, step_stride=1):
         super().__init__(keys_to_display, sim_obj_reference, step_stride)
