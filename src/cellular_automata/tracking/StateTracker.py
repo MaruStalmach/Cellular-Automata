@@ -11,8 +11,18 @@ from cellular_automata.State import State
 
 @register_tracker
 class StateTracker:
-    def __init__(self, keys: list[str]) -> None:
+    """Records the chosen keys of a run, every `record_every` steps.
+
+    The first and last step are always recorded; `steps` lists the step number of
+    each recorded frame.
+    """
+
+    def __init__(self, keys: list[str], record_every: int = 1) -> None:
+        if isinstance(record_every, bool) or not isinstance(record_every, int) or record_every < 1:
+            raise ValueError(f"record_every must be a positive integer, got {record_every!r}")
+        self.record_every = record_every
         self.history: dict[str, list[np.ndarray]] = {key: [] for key in keys}
+        self.steps: list[int] = []
         self.geometry: Geometry | None = None
         self.key_layers: dict[str, int] = {}
         # set by CellularAutomaton so saved runs record the seed that produced them
@@ -58,10 +68,19 @@ class StateTracker:
 
         return tuple(spatial_shape)
 
-    def record_step(self, state: State, step_no: int) -> None:
+    def record_step(self, state: State, step_no: int, final: bool = False) -> None:
+        """Record `state` if `step_no` is a multiple of `record_every`, or if `final`.
+
+        A step that is already recorded is not recorded twice.
+        """
+        if self.steps and self.steps[-1] == step_no:
+            return
+        if step_no % self.record_every != 0 and not final:
+            return
         if self.geometry is None:
             self.geometry = state.geometry
 
+        self.steps.append(step_no)
         for key in self.history:
             self.history[key].append(state[key].copy())
             self.key_layers[key] = state.key_layers[state.key_to_index[key]]
@@ -85,6 +104,8 @@ class StateTracker:
             "keys": list(self.history.keys()),
             "key_layers": [self.key_layers.get(key, 1) for key in self.history],
             "seed": self.seed,
+            "steps": self.steps,
+            "record_every": self.record_every,
         }
         
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -112,8 +133,11 @@ class StateTracker:
                 if key != "__state_tracker_metadata__"
             }
 
-        tracker = cls(list(history.keys()))
+        tracker = cls(list(history.keys()), record_every=(metadata or {}).get("record_every", 1))
         tracker.history = history
+        frames = len(next(iter(history.values()), []))
+        # files saved before record_every recorded every step
+        tracker.steps = list((metadata or {}).get("steps") or range(frames))
         if metadata:
             tracker.seed = metadata.get("seed")
 

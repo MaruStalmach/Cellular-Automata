@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.State import State
@@ -97,3 +98,79 @@ def test_sim_saves_partial_history_on_demand(tmp_path):
     ca.save_tracker()
 
     assert len(StateTracker.load(str(output)).history["alive"]) == 2
+
+
+# --- record_every (BUG-10) ---------------------------------------------------------
+
+
+def _gol_sim(tracker, max_steps):
+    from cellular_automata.rules import GameOfLife3D
+    from cellular_automata.Sim import CellularAutomaton
+
+    geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
+    return CellularAutomaton(
+        geometry, [GameOfLife3D(geometry, time_step=1)], tracker=tracker,
+        max_steps=max_steps, seed=0, output_filename="run",
+    )
+
+
+def test_record_every_keeps_every_nth_step_and_the_last():
+    tracker = StateTracker(["alive"], record_every=3)
+    sim = _gol_sim(tracker, max_steps=7)
+
+    while sim.step() == 0:
+        pass
+
+    assert tracker.steps == [0, 3, 6, 7]
+    assert len(tracker.history["alive"]) == 4
+
+
+def test_record_every_one_records_every_step():
+    tracker = StateTracker(["alive"])
+    sim = _gol_sim(tracker, max_steps=4)
+
+    while sim.step() == 0:
+        pass
+
+    assert tracker.steps == [0, 1, 2, 3, 4]
+
+
+def test_saving_an_interrupted_run_records_the_current_step(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    tracker = StateTracker(["alive"], record_every=10)
+    sim = _gol_sim(tracker, max_steps=100)
+    for _ in range(4):
+        sim.step()
+
+    sim.save_tracker()
+
+    assert tracker.steps == [0, 4]
+    np.testing.assert_array_equal(tracker.history["alive"][-1], sim.state["alive"])
+
+
+def test_recorded_steps_survive_a_save_and_load(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    tracker = StateTracker(["alive"], record_every=2)
+    sim = _gol_sim(tracker, max_steps=5)
+    while sim.step() == 0:
+        pass
+
+    loaded = StateTracker.load("run")
+
+    assert loaded.steps == [0, 2, 4, 5]
+    assert loaded.record_every == 2
+
+
+def test_files_without_recorded_steps_load_as_every_step(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    np.savez_compressed(tmp_path / "old.npz", alive=np.zeros((3, 2, 2, 2), dtype=np.uint8))
+
+    loaded = StateTracker.load(str(tmp_path / "old.npz"))
+
+    assert loaded.steps == [0, 1, 2]
+
+
+@pytest.mark.parametrize("value", [0, -1, 1.5, True, "2"])
+def test_record_every_must_be_a_positive_integer(value):
+    with pytest.raises(ValueError, match="record_every"):
+        StateTracker(["alive"], record_every=value)
