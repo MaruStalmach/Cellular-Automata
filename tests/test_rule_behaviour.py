@@ -168,6 +168,20 @@ def test_utilization_only_eats_next_to_bacteria(seed):
     assert eaten_cells <= _neighbours((0, 0, 0), geometry.size)
 
 
+@pytest.mark.parametrize("seed", SEEDS)
+def test_a_particle_two_bacteria_pick_is_eaten_once(seed):
+    geometry = _geometry()
+    state = _state(geometry, ["A", "B", "substrate"], [1, 1, 6])
+    state["A"][1, 2, 2] = 1
+    state["B"][3, 2, 2] = 1
+    state["substrate"][2, 2, 2, 0] = 1  # the only particle, next to both
+    rule = _utilization(geometry, substitute_constant=1.0, Sb=1e9)  # both always eat
+
+    state = _seeded(rule, seed).apply_state(state)
+
+    assert not state["substrate"].any()
+
+
 def test_utilization_without_bacteria_leaves_substrate_alone():
     geometry = _geometry()
     state = _state(geometry, ["A", "B", "substrate"], [1, 1, 6])

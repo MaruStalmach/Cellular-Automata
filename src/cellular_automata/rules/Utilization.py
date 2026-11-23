@@ -1,5 +1,3 @@
-from operator import itemgetter
-
 import numpy as np
 
 from cellular_automata.registry import register_rule
@@ -86,10 +84,9 @@ class Utilization(Rule):
         consumption_draw = self.rng.random(state.shape)
         consumed_cells = self.mask & (consumption_draw < utilization_prob)
 
-        # a substrate particle should be claimed by one bacteria only (no double spending)
-        # this lets every bacteria cell claim an uneaten particle and remove it from the 'plate',
-        # so other bacteria dont eat the particle again
-        substrate_claims: list[tuple[float, tuple[int, ...], tuple[int, ...]]] = []
+        # each consuming cell picks one substrate particle next to it; a particle picked by
+        # several cells is eaten once, and the others go without this time
+        eaten: set[tuple[int, ...]] = set()
         for coords in map(tuple, np.argwhere(consumed_cells)):
             candidates = self._substrate_candidates_for_cell(substrate_grid, coords)
             if not candidates:
@@ -98,19 +95,10 @@ class Utilization(Rule):
             target_cell, target_layer = candidates[
                 int(self.rng.integers(len(candidates)))
             ]
-            substrate_claims.append(
-                (float(self.rng.random()), coords, target_cell + (target_layer,))
-            )
+            eaten.add(target_cell + (target_layer,))
 
-        substrate_claims.sort(key=itemgetter(0), reverse=True)
-        claimed_substrate_targets: set[tuple[int, ...]] = set()
-
-        for _, _, substrate_coords in substrate_claims:
-            if substrate_coords in claimed_substrate_targets:
-                continue
-
+        for substrate_coords in eaten:
             self._consume_substrate_particle(substrate_grid, substrate_coords)
-            claimed_substrate_targets.add(substrate_coords)
 
         state[self.sub_key] = substrate_grid
 
