@@ -1,0 +1,6 @@
+# Bulk formatting commits; hide them from git blame with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# (GitHub applies this file automatically.)
+
+# ruff format the whole repository (HYG-2)
+06b9281b12747d7649012b7d0a6c8b2dfbaef3f8
