@@ -2,26 +2,14 @@
 
 import json
 from pathlib import Path
-from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
 from cellular_automata.config.Parser import parse_json
-from cellular_automata.Geometry import Geometry
-from cellular_automata.rules import (
-    AntibioticEffect,
-    BacteriaDecay,
-    BacteriaGrowth,
-    BiofilmDetachment,
-    BioreactorBiofilmDetachment,
-    Diffusion,
-    SpeciesInteraction,
-    Utilization,
-)
-from cellular_automata.State import State
+from cellular_automata.rules import Diffusion
+from tests.rule_fixtures import RULE_IDS, SIZE, make_geometry, make_state, species_rules
 
-SIZE = (6, 6, 6)
 LEGACY_FUNCTIONS = ["random", "rand", "randint", "choice", "shuffle", "permutation", "uniform"]
 
 
@@ -39,91 +27,11 @@ def no_global_rng(monkeypatch):
         monkeypatch.setattr(np.random, name, forbidden(name))
 
 
-def _geometry():
-    return Geometry(SIZE, axes="xyz", periodicity="")
-
-
-def _state(geometry, keys, layers=None):
-    """Half-filled random state, drawn before the global RNG is patched."""
-    layers = layers or [1] * len(keys)
-    rng = np.random.default_rng(0)
-    state = State(geometry, cell_keys=keys, key_layers=layers)
-    for key in keys:
-        state[key][...] = rng.integers(0, 2, size=state[key].shape)
-    # AntibioticEffect reads the step number through this back-reference (ARCH-5)
-    state.sim = SimpleNamespace(step_no=0, max_steps=10)
-    return state
-
-
-def _species_rules(geometry):
-    species = ["A", "B"]
-    return [
-        (
-            AntibioticEffect(
-                geometry, time_step=1, bacteria_keys=species, biofilm_key="biofilm",
-                effectiveness=[0.5, 0.5], base_prob=0.001,
-            ),
-            ["A", "B", "biofilm"],
-            None,
-        ),
-        (BacteriaDecay(geometry, time_step=1, target_keys=species, decay_probability=0.5),
-         species, None),
-        (
-            BacteriaGrowth(
-                geometry, time_step=1, bacteria_keys=species, substrate_key="substrate"
-            ),
-            ["A", "B", "substrate"],
-            [1, 1, 6],
-        ),
-        (
-            Utilization(geometry, time_step=1, bacteria_keys=species, substrate_key="substrate"),
-            ["A", "B", "substrate"],
-            [1, 1, 6],
-        ),
-        (
-            BiofilmDetachment(
-                geometry, time_step=1, detachment_rate=0.5, scaling=1.0,
-                species_keys=species, attachment_probability=0.5,
-            ),
-            ["biofilm", "floating_bacteria", "A", "B"],
-            None,
-        ),
-        (
-            BioreactorBiofilmDetachment(
-                geometry, time_step=1, biofilm_key="biofilm", detachment_rate=0.5, scaling=1.0
-            ),
-            ["biofilm"],
-            None,
-        ),
-        (
-            SpeciesInteraction(
-                geometry, time_step=1,
-                interactions={"A": {"B": -1.0}, "B": {"A": 1.0}},
-            ),
-            ["A", "B"],
-            None,
-        ),
-        (Diffusion(geometry, time_step=1, a=7.4, p=0.07), ["substrate"], [6]),
-        (
-            Diffusion(geometry, time_step=1, a=7.4, p=0.07, biofilm_key="biofilm"),
-            ["substrate", "biofilm"],
-            [6, 1],
-        ),
-    ]
-
-
-RULE_IDS = [
-    "AntibioticEffect", "BacteriaDecay", "BacteriaGrowth", "Utilization",
-    "BiofilmDetachment", "BioreactorBiofilmDetachment", "SpeciesInteraction",
-    "Diffusion", "Diffusion-biofilm",
-]
-
-
 @pytest.mark.parametrize("index", range(len(RULE_IDS)), ids=RULE_IDS)
 def test_rule_does_not_draw_from_global_rng(index, no_global_rng):
-    geometry = _geometry()
-    rule, keys, layers = _species_rules(geometry)[index]
-    state = _state(geometry, keys, layers)
+    geometry = make_geometry()
+    rule, keys, layers = species_rules(geometry)[index]
+    state = make_state(geometry, keys, layers)
 
     rule.apply_state(state)
 
@@ -131,10 +39,10 @@ def test_rule_does_not_draw_from_global_rng(index, no_global_rng):
 @pytest.mark.parametrize("index", range(len(RULE_IDS)), ids=RULE_IDS)
 def test_rule_output_is_fixed_by_its_generator(index):
     def run(seed):
-        geometry = _geometry()
-        rule, keys, layers = _species_rules(geometry)[index]
+        geometry = make_geometry()
+        rule, keys, layers = species_rules(geometry)[index]
         rule.rng = np.random.default_rng(seed)
-        state = rule.apply_state(_state(geometry, keys, layers))
+        state = rule.apply_state(make_state(geometry, keys, layers))
         return {key: state[key].copy() for key in keys}
 
     first, second, other = run(3), run(3), run(4)
@@ -146,7 +54,7 @@ def test_rule_output_is_fixed_by_its_generator(index):
 
 
 def test_diffusion_refill_does_not_draw_from_global_rng(no_global_rng):
-    rule = Diffusion(_geometry(), time_step=1, a=7.4, p=0.07)
+    rule = Diffusion(make_geometry(), time_step=1, a=7.4, p=0.07)
     rule.lost_particles = rule.RESTORE_THRESHOLD
 
     rule._restore_random()

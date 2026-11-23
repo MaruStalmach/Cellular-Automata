@@ -8,8 +8,10 @@ from cellular_automata.registry import register_neighbourhood
 @register_neighbourhood
 class MooreNeighbourhood:
     def generate_offsets(self, ndim: int, radius: int = 1) -> np.ndarray:
-        assert ndim > 0, "dimensionality must be greater than 0"
-        assert radius > 0, "radius must be greater than 0"
+        if ndim < 1:
+            raise ValueError(f"dimensionality must be at least 1, got {ndim}")
+        if radius < 1:
+            raise ValueError(f"radius must be at least 1, got {radius}")
 
         offsets = [
             offset

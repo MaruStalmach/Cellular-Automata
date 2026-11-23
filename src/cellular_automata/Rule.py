@@ -4,6 +4,12 @@ from cellular_automata.Geometry import Geometry
 from cellular_automata.State import State
 
 
+def require_3d(rule_name: str, geometry: Geometry) -> None:
+    """Raise ValueError unless `geometry` is 3D (for rules written for 3D grids only)."""
+    if geometry.ndim != 3:
+        raise ValueError(f"{rule_name} only works on 3D grids, got {geometry.ndim}D")
+
+
 class Rule:
     def __init__(self, geometry: Geometry, time_step: float):
         self.geometry = geometry
