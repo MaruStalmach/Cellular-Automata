@@ -426,3 +426,71 @@ def test_decay_never_creates_cells(seed):
     state = _seeded(rule, seed).apply_state(state)
 
     assert (state["A"] <= before).all() and not state["B"].any()
+
+
+# --- fairness of the vectorised choices (PERF-1) -------------------------------------
+
+
+def test_growth_picks_each_empty_neighbour_equally_often():
+    geometry = _geometry()
+    counts = np.zeros(geometry.size, dtype=int)
+    for seed in range(2600):
+        state = _state(geometry, ["A", "B", "substrate"], [1, 1, 6])
+        state["A"][2, 2, 2] = 1
+        state["substrate"][...] = 1
+        state = _seeded(_growth(geometry, base_prob=1.0), seed).apply_state(state)
+        state["A"][2, 2, 2] = 0
+        counts += state["A"]
+
+    picks = counts[1:4, 1:4, 1:4].ravel()
+    picks = np.delete(picks, 13)  # the parent itself
+    # 2600 draws over 26 cells: 100 each, sd ~10
+    assert picks.sum() == 2600
+    assert picks.min() > 65 and picks.max() < 135
+
+
+def test_two_species_competing_for_one_cell_win_equally_often():
+    geometry = _geometry(size=(1, 1, 3))
+    wins = {"A": 0, "B": 0}
+    for seed in range(2000):
+        state = _state(geometry, ["A", "B", "substrate"], [1, 1, 6])
+        state["A"][0, 0, 0] = 1
+        state["B"][0, 0, 2] = 1
+        state["substrate"][...] = 1
+        state = _seeded(_growth(geometry, base_prob=1.0), seed).apply_state(state)
+        for key in wins:
+            wins[key] += int(state[key][0, 0, 1])
+
+    assert wins["A"] + wins["B"] == 2000
+    assert 900 < wins["A"] < 1100  # sd ~22
+
+
+def test_utilization_picks_particles_not_cells():
+    # one neighbour holds 3 particles, the other 1: the first should be picked 3x as often
+    geometry = _geometry(size=(1, 1, 3))
+    picked = np.zeros(2, dtype=int)
+    for seed in range(2000):
+        state = _state(geometry, ["A", "B", "substrate"], [1, 1, 6])
+        state["A"][0, 0, 1] = 1
+        state["substrate"][0, 0, 0, :3] = 1
+        state["substrate"][0, 0, 2, 0] = 1
+        rule = _utilization(geometry, substitute_constant=1.0, Sb=1e9)
+        state = _seeded(rule, seed).apply_state(state)
+        picked += [3 - int(state["substrate"][0, 0, 0].sum()), 1 - int(state["substrate"][0, 0, 2].sum())]
+
+    assert picked.sum() == 2000
+    assert 1440 < picked[0] < 1560  # expected 1500, sd ~19
+
+
+@pytest.mark.parametrize("seed", SEEDS)
+def test_utilization_gives_the_same_result_in_chunks(seed, monkeypatch):
+    geometry = _geometry()
+    whole = _seeded(_utilization(geometry), seed).apply_state(
+        _growth_state(geometry, np.random.default_rng(seed))
+    )
+    monkeypatch.setattr(Utilization, "CHUNK", 3)
+    chunked = _seeded(_utilization(geometry), seed).apply_state(
+        _growth_state(geometry, np.random.default_rng(seed))
+    )
+
+    np.testing.assert_array_equal(whole["substrate"], chunked["substrate"])

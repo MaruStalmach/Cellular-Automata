@@ -73,6 +73,42 @@ class Rule(ABC):
 
         return shifted
 
+    def _neighbour_coords(self, coords: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """Neighbours of each cell in `coords` (shape (n, ndim)), in offset order.
+
+        Returns `targets` (n, k, ndim) and `valid` (n, k): periodic axes wrap, and a
+        neighbour past a closed edge is invalid (its coordinates are clipped so they
+        can still be used as an index).
+        """
+        offsets = np.asarray(self.geometry._offsets, dtype=np.intp)
+        targets = coords[:, None, :].astype(np.intp) + offsets[None, :, :]
+        valid = np.ones(targets.shape[:2], dtype=bool)
+        for axis, size in enumerate(self.geometry.size):
+            if axis in self.geometry.periodic_dims:
+                targets[..., axis] %= size
+            else:
+                valid &= (targets[..., axis] >= 0) & (targets[..., axis] < size)
+                np.clip(targets[..., axis], 0, size - 1, out=targets[..., axis])
+        return targets, valid
+
+    def _pick_uniform(self, candidates: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """For each row of the boolean `candidates`, the column of one True picked uniformly.
+
+        Returns `(column, has_any)`; `column` is meaningless where `has_any` is False.
+        Draws one random number per row.
+        """
+        counts = candidates.sum(axis=1)
+        draws = (self.rng.random(candidates.shape[0]) * counts).astype(np.intp)
+        cumulative = np.cumsum(candidates, axis=1, dtype=np.int32)
+        column = np.argmax(cumulative > draws[:, None], axis=1)
+        return column, counts > 0
+
+    def _first_claims(self, targets: np.ndarray) -> np.ndarray:
+        """Indices into `targets` (flat cell indices) of one uniformly chosen claim per cell."""
+        order = self.rng.permutation(targets.size)
+        _, first = np.unique(targets[order], return_index=True)
+        return order[first]
+
     def _layer_count(self, grid: np.ndarray) -> np.ndarray:
         if grid.ndim == self.geometry.ndim + 1:
             return (grid > 0).sum(axis=-1)
