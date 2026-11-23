@@ -1,4 +1,6 @@
+import argparse
 import json
+from pathlib import Path
 from time import time
 
 import numpy as np
@@ -8,6 +10,8 @@ from bioreactor_common import CONFIGS_DIR, STUDY_DIR, load_interactions
 from cellular_automata.config.Parser import parse_json
 
 SAMPLE_RUNS = 12
+ACTIVE_PAIRS = 18
+VALUE_SCALE = 0.8
 BIO_NUMBER = 4
 IDX_TO_NAME = {
     0: 'Bacteroidaceae',
@@ -181,12 +185,22 @@ def save_screening_config(interactions, run_no: int, config_name: str = 'screen'
     return config_path
 
 
-def run_screening_trial(run_no: int, df_real_data: pd.DataFrame, base_matrix: dict | None = None):
+def run_screening_trial(
+    run_no: int,
+    df_real_data: pd.DataFrame,
+    base_matrix: dict | None = None,
+    config_name: str = BASE_CONFIG,
+    active_pairs: int = ACTIVE_PAIRS,
+    value_scale: float = VALUE_SCALE,
+    rng: np.random.Generator | None = None,
+):
     if base_matrix is None:
-        base_matrix = load_interactions(BASE_CONFIG)
+        base_matrix = load_interactions(config_name)
 
-    random_matrix, selected_pairs = build_sparse_interactions(base_matrix, active_pairs=18, value_scale=0.8)
-    config_path = save_screening_config(random_matrix, run_no)
+    random_matrix, selected_pairs = build_sparse_interactions(
+        base_matrix, active_pairs=active_pairs, value_scale=value_scale, rng=rng
+    )
+    config_path = save_screening_config(random_matrix, run_no, config_name=config_name)
     ca_sim, _ = parse_json(config_path)
 
     relative_sim = get_relative_sim_data(ca_sim)
@@ -202,28 +216,53 @@ def run_screening_trial(run_no: int, df_real_data: pd.DataFrame, base_matrix: di
     }
 
 
-if __name__ == '__main__':
-    df_real_data = get_real_data()
-    base_interactions = load_interactions(BASE_CONFIG)
+def parse_args(argv=None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description='Screen random sparse perturbations of the interaction matrix.'
+    )
+    parser.add_argument('--runs', type=int, default=SAMPLE_RUNS, help='number of trials')
+    parser.add_argument('--bio-number', type=int, default=BIO_NUMBER,
+                        help='bioreactor whose measurements are fitted')
+    parser.add_argument('--config', default=BASE_CONFIG,
+                        help='base config in configs/ (without .json)')
+    parser.add_argument('--active-pairs', type=int, default=ACTIVE_PAIRS,
+                        help='interaction entries perturbed per trial')
+    parser.add_argument('--value-scale', type=float, default=VALUE_SCALE,
+                        help='perturbed entries are drawn from [-scale, scale]')
+    parser.add_argument('--seed', type=int, default=None,
+                        help='seed for drawing the perturbations (default: unseeded)')
+    parser.add_argument('--output', type=Path, default=STUDY_DIR / 'results' / 'screening_results.csv')
+    return parser.parse_args(argv)
+
+
+def main(argv=None) -> None:
+    args = parse_args(argv)
+    df_real_data = get_real_data(bio_number=args.bio_number)
+    base_interactions = load_interactions(args.config)
+    rng = np.random.default_rng(args.seed)
     results = []
-    for run_no in range(SAMPLE_RUNS):
-        result = run_screening_trial(run_no, df_real_data, base_interactions)
+    for run_no in range(args.runs):
+        result = run_screening_trial(
+            run_no, df_real_data, base_interactions, config_name=args.config,
+            active_pairs=args.active_pairs, value_scale=args.value_scale, rng=rng,
+        )
         results.append(result)
         print(f'run {run_no}: RMSE={result["rmse"]:.6f}')
 
-        df_results = pd.DataFrame([
-            {
-                'run_no': row['run_no'],
-                'seed': row['seed'],
-                'rmse': row['rmse'],
-                'active_pairs': row['active_pairs'],
-                'config_path': row['config_path'],
-            }
-            for row in results
-        ])
-        results_path = STUDY_DIR / 'results' / 'screening_results.csv'
-        results_path.parent.mkdir(parents=True, exist_ok=True)
-        df_results.to_csv(results_path, index=False)
-        print('Saved screening results to', results_path)
-        
-          
+    df_results = pd.DataFrame([
+        {
+            'run_no': row['run_no'],
+            'seed': row['seed'],
+            'rmse': row['rmse'],
+            'active_pairs': row['active_pairs'],
+            'config_path': row['config_path'],
+        }
+        for row in results
+    ])
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    df_results.to_csv(args.output, index=False)
+    print('Saved screening results to', args.output)
+
+
+if __name__ == '__main__':
+    main()
