@@ -30,47 +30,13 @@ class Utilization(Rule):
 
         self.mask = np.zeros(shape=geometry.size, dtype=bool)
 
-    def _neighbour_candidates(self, coords: tuple[int, ...]) -> list[tuple[int, ...]]:
-        candidates: list[tuple[int, ...]] = []
-        for offset in self.geometry._offsets:
-            target = []
-            valid = True
-            for axis, (coord, delta) in enumerate(zip(coords, offset, strict=True)):
-                value = coord + int(delta)
-                if axis in self.geometry.periodic_dims:
-                    value %= self.geometry.size[axis]
-                elif value < 0 or value >= self.geometry.size[axis]:
-                    valid = False
-                    break
-                target.append(value)
-
-            if valid:
-                candidates.append(tuple(target))
-
-        return candidates
-
     def _substrate_candidates_for_cell(
         self,
         substrate_grid: np.ndarray,
         coords: tuple[int, ...],
     ) -> list[tuple[tuple[int, ...], int]]:
         candidates: list[tuple[tuple[int, ...], int]] = []
-        for offset in self.geometry._offsets:
-            neighbour = []
-            valid = True
-            for axis, (coord, delta) in enumerate(zip(coords, offset, strict=True)):
-                value = coord + int(delta)
-                if axis in self.geometry.periodic_dims:
-                    value %= self.geometry.size[axis]
-                elif value < 0 or value >= self.geometry.size[axis]:
-                    valid = False
-                    break
-                neighbour.append(value)
-
-            if not valid:
-                continue
-
-            neighbour_coords = tuple(neighbour)
+        for neighbour_coords in self.geometry.neighbours_of(coords):
             if substrate_grid.ndim == self.geometry.ndim + 1:
                 active_layers = np.flatnonzero(substrate_grid[neighbour_coords] > 0)
                 for layer in active_layers:

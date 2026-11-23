@@ -36,11 +36,28 @@ class Geometry:
         self.neighbourhood = neighbourhood or MooreNeighbourhood()
         self._offsets = self.neighbourhood.generate_offsets(self.ndim)
 
+    def neighbours_of(self, coords: tuple[int, ...]) -> list[tuple[int, ...]]:
+        """The cells next to `coords`, in neighbourhood offset order.
+
+        Periodic axes wrap around; offsets that leave the grid on a non-periodic
+        axis are skipped.
+        """
+        neighbours: list[tuple[int, ...]] = []
+        for offset in self._offsets:
+            target = []
+            for axis, (coord, delta) in enumerate(zip(coords, offset, strict=True)):
+                value = coord + int(delta)
+                if axis in self.periodic_dims:
+                    value %= self.size[axis]
+                elif value < 0 or value >= self.size[axis]:
+                    break
+                target.append(value)
+            else:
+                neighbours.append(tuple(target))
+        return neighbours
+
     def _apply_offset(
-        self,
-        flat_coords: np.ndarray,
-        shifted: np.ndarray,
-        offset: np.ndarray,
+        self, flat_coords: np.ndarray, offset: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
 
         shifted = flat_coords + offset
@@ -63,12 +80,11 @@ class Geometry:
     def generate_neighbourhood_matrix(self) -> csr_matrix:
 
         flat_coords = np.indices(self.size).reshape(self.ndim, -1).T
-        shifted = np.empty_like(flat_coords)
 
         row_idx, col_idx = [], []
 
         for offset in self._offsets:
-            origin_idx, neighbour_idx = self._apply_offset(flat_coords, shifted, offset)
+            origin_idx, neighbour_idx = self._apply_offset(flat_coords, offset)
             row_idx.append(origin_idx)
             col_idx.append(neighbour_idx)
 

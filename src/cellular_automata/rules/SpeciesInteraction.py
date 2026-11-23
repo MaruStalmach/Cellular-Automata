@@ -42,15 +42,6 @@ class SpeciesInteraction(Rule):
         """gets interaction coeff, returns 0.0 if there's no interaction"""
         return self._interactions.get(species_a, {}).get(species_b, 0.0)
 
-    def _get_neighbour_counts(self, grid: np.ndarray) -> np.ndarray:
-        neighbour_counts = np.zeros_like(grid, dtype=np.int32)
-
-        for offset in getattr(self.geometry, "_offsets", []):
-            shifted = self._shift_for_offset(grid, tuple(int(v) for v in offset))
-            neighbour_counts += shifted
-
-        return neighbour_counts
-
     def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
 
         bacteria_types = list(self._interactions.keys())
@@ -66,7 +57,7 @@ class SpeciesInteraction(Rule):
                 state[sp].reshape(state.shape).astype(bool)
             )  # checks presence of each species on the grid
             occupied |= presence[sp]  # mark all occupied grid spots for all species
-            neighbour_counts[sp] = self._get_neighbour_counts(
+            neighbour_counts[sp] = self.neighborhood_count(
                 presence[sp].astype(np.uint8)
             )
 

@@ -806,18 +806,3 @@ class CARenderer:
             glfw.poll_events()
 
         glfw.terminate()
-
-
-# Example usage
-if __name__ == "__main__":
-    renderer = CARenderer(
-        width=1200,
-        height=800,
-        init_state=np.random.choice([0, 1], size=(100, 100, 100), p=[0.999, 0.001]),
-    )
-    renderer.run()
-
-    # np.array([
-    #     [[0.1,0.5,1.0],[0.0,0.0,0.0],[0.0,0.0,0.0]],
-    #     [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]],
-    #     [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]]],dtype=np.float32)

@@ -11,32 +11,8 @@ from pathlib import Path
 import imageio.v2 as imageio
 import numpy as np
 
+from cellular_automata.tracking.playback import frame_for_keys, parse_keys
 from cellular_automata.tracking.StateTracker import StateTracker, TrackedStatePlayback
-
-
-def _parse_keys(raw_keys: list[str] | None, available_keys: tuple[str, ...]) -> list[str]:
-    if not raw_keys:
-        return list(available_keys)
-
-    parsed_keys: list[str] = []
-    for item in raw_keys:
-        parsed_keys.extend([key for key in item.split(",") if key])
-
-    return parsed_keys
-
-
-def _frame_for_keys(state, keys: list[str], spatial_rank: int) -> np.ndarray:
-    frames = []
-    for key in keys:
-        values = state[key]
-        if values.ndim == spatial_rank + 1:
-            values = values.max(axis=-1)
-        frames.append(values)
-
-    if len(frames) == 1:
-        return frames[0]
-
-    return np.stack(frames, axis=0)
 
 
 def main() -> None:
@@ -76,7 +52,7 @@ def main() -> None:
     args = parser.parse_args()
 
     tracker = StateTracker.load(args.file)
-    selected_keys = _parse_keys(args.keys, tracker.history.keys())
+    selected_keys = parse_keys(args.keys, tracker.history.keys())
     stride = int(args.stride)
 
     if not selected_keys:
@@ -92,7 +68,7 @@ def main() -> None:
         if step:
             should_capture_frame = True
             playback(step=True)
-        return _frame_for_keys(playback.state, selected_keys, spatial_rank)
+        return frame_for_keys(playback.state, selected_keys, spatial_rank)
 
     def frame_callback(frame: np.ndarray) -> None:
         nonlocal should_capture_frame
@@ -122,7 +98,7 @@ def main() -> None:
         )
         print(f"Saved GIF to {output_path}")
 
-    first_frame = _frame_for_keys(playback.state, selected_keys, spatial_rank)
+    first_frame = frame_for_keys(playback.state, selected_keys, spatial_rank)
 
     renderer = CARenderer(
         init_state=first_frame,

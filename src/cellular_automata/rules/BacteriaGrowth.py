@@ -30,25 +30,6 @@ class BacteriaGrowth(Rule):
 
         self.required_keys.extend([*bacteria_keys, substrate_key])
 
-    def _neighbour_candidates(self, coords: tuple[int, ...]) -> list[tuple[int, ...]]:
-        candidates: list[tuple[int, ...]] = []
-        for offset in self.geometry._offsets:
-            target = []
-            valid = True
-            for axis, (coord, delta) in enumerate(zip(coords, offset, strict=True)):
-                value = coord + int(delta)
-                if axis in self.geometry.periodic_dims:
-                    value %= self.geometry.size[axis]
-                elif value < 0 or value >= self.geometry.size[axis]:
-                    valid = False
-                    break
-                target.append(value)
-
-            if valid:
-                candidates.append(tuple(target))
-
-        return candidates
-
     def apply_state(self, state, ctx: StepContext | None = None):
         substrate_grid = state[self.sub_key].copy()
         bacteria_grids = {key: state[key].copy() for key in self.b_keys}
@@ -76,7 +57,7 @@ class BacteriaGrowth(Rule):
             for parent_coords in map(tuple, np.argwhere(dividing_cells)):
                 empty_targets = [
                     target
-                    for target in self._neighbour_candidates(parent_coords)
+                    for target in self.geometry.neighbours_of(parent_coords)
                     if not occupied_mask[target]
                 ]
                 if not empty_targets:
