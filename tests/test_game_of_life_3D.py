@@ -46,6 +46,19 @@ def test_gol_3d_rules(center_val, neighbours, expected, desc):
     assert new_state["alive"][center] == expected, f"Failed: {desc}"
 
 
+def test_target_key_is_used():
+    geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
+    gol = GameOfLife3D(geometry, time_step=1, target_key="cells")
+    state = State(geometry, random=False, cell_keys=["cells"])
+    center = (1, 1, 1)
+    for offset in geometry._offsets[:6]:
+        state["cells"][tuple(c + o for c, o in zip(center, offset, strict=True))] = 1
+
+    state = gol.apply_state(state)
+
+    assert state["cells"][center] == 1
+
+
 if __name__ == "__main__":
     for d in test_data:
         test_gol_3d_rules(*d)

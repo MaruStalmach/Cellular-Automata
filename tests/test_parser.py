@@ -93,3 +93,75 @@ def test_unknown_neighbourhood_raises(tmp_path: Path):
 
     with pytest.raises(ValueError, match="Unknown neighbourhood 'MoorNeighbourhood'"):
         Parser.parse_json(path)
+
+
+def _config_data(tmp_path: Path, mutate) -> Path:
+    path = _headless_config(tmp_path, seed=1)
+    data = json.loads(path.read_text())
+    mutate(data)
+    path.write_text(json.dumps(data))
+    return path
+
+
+def test_render_defaults_to_false(tmp_path: Path):
+    path = _config_data(tmp_path, lambda data: data["sim"].pop("render"))
+
+    _, renderer = Parser.parse_json(path)
+
+    assert renderer is None
+
+
+@pytest.mark.parametrize(
+    "state_key",
+    [
+        {"name": "alive", "random": True},
+        {"name": "alive", "random_func": "np.random.integers", "random_args": {"low": 0, "high": 2}},
+    ],
+    ids=["random-without-func", "func-without-random"],
+)
+def test_random_and_random_func_must_come_together(tmp_path: Path, state_key):
+    path = _config_data(tmp_path, lambda data: data.update(state_keys=[state_key]))
+
+    with pytest.raises(ValueError, match="state key 'alive'"):
+        Parser.parse_json(path)
+
+
+def test_random_must_be_a_boolean(tmp_path: Path):
+    path = _config_data(
+        tmp_path, lambda data: data.update(state_keys=[{"name": "alive", "random": "false"}])
+    )
+
+    with pytest.raises(ValueError, match="must be true or false"):
+        Parser.parse_json(path)
+
+
+def test_random_key_is_filled_and_plain_key_starts_at_zero(tmp_path: Path):
+    def mutate(data):
+        data["state_keys"] = [
+            {"name": "alive", "random": True, "random_func": "np.random.integers",
+             "random_args": {"low": 1, "high": 2}},
+            {"name": "other"},
+        ]
+
+    ca_sim, _ = Parser.parse_json(_config_data(tmp_path, mutate))
+
+    assert ca_sim.state["alive"].min() == 1
+    assert ca_sim.state["other"].max() == 0
+
+
+def test_two_dimensional_config_builds_and_steps(tmp_path: Path):
+    def mutate(data):
+        data["sim"].update(size=[5, 5], periodicity="xy")
+
+    ca_sim, _ = Parser.parse_json(_config_data(tmp_path, mutate))
+    ca_sim.step()
+
+    assert ca_sim.geometry.axes == "xy"
+    assert ca_sim.state["alive"].shape == (5, 5)
+
+
+def test_more_than_three_dimensions_raises(tmp_path: Path):
+    path = _config_data(tmp_path, lambda data: data["sim"].update(size=[2, 2, 2, 2]))
+
+    with pytest.raises(ValueError, match="1 to 3 dimensions"):
+        Parser.parse_json(path)
