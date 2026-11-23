@@ -5,6 +5,7 @@ example usage:
 """
 
 import argparse
+import logging
 from time import time
 
 from cellular_automata.config.Parser import parse_json
@@ -26,6 +27,7 @@ def main():
     )
     parser.add_argument("--filename", "-f", required=True)
     args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     ca_sim, renderer = parse_json(args.filename)
 

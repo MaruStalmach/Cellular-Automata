@@ -1,5 +1,6 @@
 import inspect
 import json
+import logging
 import warnings
 from collections.abc import Callable
 from functools import partial
@@ -26,6 +27,8 @@ from cellular_automata.State import State
 
 if TYPE_CHECKING:
     from cellular_automata.rendering.Renderer import CARenderer
+
+logger = logging.getLogger(__name__)
 
 RENDER_PACKAGES = {"glfw", "OpenGL", "OpenGL_accelerate", "glm"}
 RENDER_INSTALL_HINT = (
@@ -187,9 +190,7 @@ def build_simulation(data: dict) -> CellularAutomaton:
 
         tracker = TRACKERS.get(tracker_name)(**tracker_args)
     else:
-        print(
-            "no 'tracker' block found in config JSON -> sim.tracker will be None and no history will be recorded"
-        )
+        logger.info("no 'tracker' block in the config, so no history will be recorded")
 
     ### create rules list
     rules_data = data["rules"]

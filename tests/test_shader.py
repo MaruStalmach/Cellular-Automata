@@ -211,6 +211,35 @@ def test_renderer_terminates_glfw_when_a_shader_fails(monkeypatch, fresh_renderi
     sys.modules["glfw"].terminate.assert_called_once_with()
 
 
+@pytest.fixture
+def mocked_renderer(monkeypatch, fresh_rendering_modules):
+    """The renderer module imported against mocked glfw, glm and OpenGL."""
+    from unittest import mock
+
+    for name in ["glfw", "glm", "OpenGL", "OpenGL.GL"]:
+        monkeypatch.setitem(sys.modules, name, mock.MagicMock(name=name))
+    return importlib.import_module("cellular_automata.rendering.Renderer")
+
+
+def test_incomplete_framebuffer_raises_and_terminates_glfw(mocked_renderer, monkeypatch):
+    monkeypatch.setattr(mocked_renderer, "glCheckFramebufferStatus", lambda target: 0x8CD6)
+    monkeypatch.setattr(mocked_renderer, "GL_FRAMEBUFFER_COMPLETE", 0x8CD5)
+
+    with pytest.raises(RuntimeError, match="opaque framebuffer is incomplete"):
+        mocked_renderer.CARenderer._check_framebuffer("opaque")
+
+    mocked_renderer.glfw.terminate.assert_called_once_with()
+
+
+def test_complete_framebuffer_passes(mocked_renderer, monkeypatch):
+    monkeypatch.setattr(mocked_renderer, "glCheckFramebufferStatus", lambda target: 0x8CD5)
+    monkeypatch.setattr(mocked_renderer, "GL_FRAMEBUFFER_COMPLETE", 0x8CD5)
+
+    mocked_renderer.CARenderer._check_framebuffer("opaque")
+
+    mocked_renderer.glfw.terminate.assert_not_called()
+
+
 def test_no_fake_backed_rendering_module_is_left_behind():
     """Runs after the faked tests in this file; they must have restored sys.modules."""
     import cellular_automata.rendering as rendering
