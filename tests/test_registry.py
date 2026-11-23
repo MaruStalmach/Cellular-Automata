@@ -124,8 +124,7 @@ def test_every_built_in_neighbourhood_is_registered():
 
 def _config(tmp_path: Path, rule_name: str) -> Path:
     config = {
-        "sim": {"size": [3, 3, 3], "periodicity": "", "max_steps": 1, "render": False,
-                "seed": 1},
+        "sim": {"size": [3, 3, 3], "periodicity": "", "max_steps": 1, "render": False, "seed": 1},
         "state_keys": [{"name": "alive"}],
         "rules": [{"name": rule_name, "args": {"time_step": 1}}],
     }

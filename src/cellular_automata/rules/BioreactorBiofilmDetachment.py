@@ -11,7 +11,7 @@ class BioreactorBiofilmDetachment(Rule):
     moves detached cells from biofilm layer to detached bacteria layer"""
 
     def __init__(
-        self, geometry, time_step: float, biofilm_key : str, detachment_rate: float, scaling: float
+        self, geometry, time_step: float, biofilm_key: str, detachment_rate: float, scaling: float
     ):
         super().__init__(geometry, time_step)
         require_3d(type(self).__name__, geometry)
@@ -27,16 +27,13 @@ class BioreactorBiofilmDetachment(Rule):
         z_indices = np.arange(total_layers)
         # chooses the chance of detachment based on the distance from the wall of the gut
         # TODO: check the distance to the wall at both sides
-        chance_detachment = np.clip(
-            self.detachment_probability * (z_indices**2), 0.0, 1.0
-        )
+        chance_detachment = np.clip(self.detachment_probability * (z_indices**2), 0.0, 1.0)
 
         chances = self.rng.random(biofilm_grid.shape)
 
         # checks for biofilm on square and checks the prob of detachment
         detached_mask = (biofilm_grid > 0) & (chances < chance_detachment)
         biofilm_grid[detached_mask] = 0
-
 
         state[self.target_key] = biofilm_grid
 

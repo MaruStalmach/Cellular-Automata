@@ -26,8 +26,13 @@ def no_opengl(monkeypatch):
 
 def _write(tmp_path: Path, state_key=None, tracker=None, callback=None) -> Path:
     config = {
-        "sim": {"size": [3, 3, 3], "periodicity": "", "max_steps": 1,
-                "render": callback is not None, "seed": 1},
+        "sim": {
+            "size": [3, 3, 3],
+            "periodicity": "",
+            "max_steps": 1,
+            "render": callback is not None,
+            "seed": 1,
+        },
         "state_keys": [state_key or {"name": "alive"}],
         "rules": [{"name": "GameOfLife3D", "args": {"time_step": 1}}],
     }
@@ -96,7 +101,7 @@ def test_dtype_names_with_or_without_np_prefix(tmp_path: Path, dtype):
 
 
 def test_bare_dtype_name_is_not_silently_float(tmp_path: Path):
-    """"uint8" without the np. prefix used to fall back to float64 arrays."""
+    """ "uint8" without the np. prefix used to fall back to float64 arrays."""
     sim, _ = Parser.parse_json(_write(tmp_path, state_key={"name": "alive", "dtype": "uint8"}))
 
     assert sim.state["alive"].dtype == np.uint8

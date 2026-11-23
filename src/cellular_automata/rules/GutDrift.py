@@ -21,7 +21,7 @@ class GutDrift(Rule):
         require_3d(type(self).__name__, geometry)
         self.drift_speed = drift_speed
         self.species_keys = species_keys
-        self.target_key = target_key # target key for the layer to be drifted
+        self.target_key = target_key  # target key for the layer to be drifted
 
         self.required_keys.append(target_key)
         self.required_keys.extend(species_keys)
@@ -48,19 +48,17 @@ class GutDrift(Rule):
         shifted[tuple(dst)] = grid[tuple(src)]
         return shifted
 
-
-
     def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
         if self.drift_speed == 0:
             return state
 
-        #floating bacteria per key
+        # floating bacteria per key
         floating_mask = state[self.target_key].astype(bool)
 
-        #attached bacteria per key
+        # attached bacteria per key
         attached_mask = np.zeros(self.geometry.size, dtype=bool)
         for sp in self.species_keys:
-            attached_mask |= (state[sp].astype(bool) & ~floating_mask)
+            attached_mask |= state[sp].astype(bool) & ~floating_mask
 
         shifted_floating_mask = self._shift_z(floating_mask.astype(np.uint8)).astype(bool)
         surviving_floating_mask = shifted_floating_mask & ~attached_mask
@@ -68,7 +66,9 @@ class GutDrift(Rule):
         for species_key in self.species_keys:
             grid = state[species_key]
 
-            mask = floating_mask[..., None] if grid.ndim == floating_mask.ndim + 1 else floating_mask
+            mask = (
+                floating_mask[..., None] if grid.ndim == floating_mask.ndim + 1 else floating_mask
+            )
             survive_mask = (
                 surviving_floating_mask[..., None]
                 if grid.ndim == surviving_floating_mask.ndim + 1
@@ -84,6 +84,5 @@ class GutDrift(Rule):
             state[species_key] = np.maximum(attached_species, surviving_shifted_species)
 
         state[self.target_key] = surviving_floating_mask.astype(state[self.target_key].dtype)
-        
+
         return state
-        

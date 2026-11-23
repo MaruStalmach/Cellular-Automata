@@ -115,7 +115,11 @@ def test_render_defaults_to_false(tmp_path: Path):
     "state_key",
     [
         {"name": "alive", "random": True},
-        {"name": "alive", "random_func": "np.random.integers", "random_args": {"low": 0, "high": 2}},
+        {
+            "name": "alive",
+            "random_func": "np.random.integers",
+            "random_args": {"low": 0, "high": 2},
+        },
     ],
     ids=["random-without-func", "func-without-random"],
 )
@@ -138,8 +142,12 @@ def test_random_must_be_a_boolean(tmp_path: Path):
 def test_random_key_is_filled_and_plain_key_starts_at_zero(tmp_path: Path):
     def mutate(data):
         data["state_keys"] = [
-            {"name": "alive", "random": True, "random_func": "np.random.integers",
-             "random_args": {"low": 1, "high": 2}},
+            {
+                "name": "alive",
+                "random": True,
+                "random_func": "np.random.integers",
+                "random_args": {"low": 1, "high": 2},
+            },
             {"name": "other"},
         ]
 

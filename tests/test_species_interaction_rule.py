@@ -16,9 +16,7 @@ def geometry() -> Geometry:
 
 @pytest.fixture
 def base_state(geometry: Geometry) -> State:
-    return State(
-        geometry=geometry, random=False, cell_keys=["A", "B", "C"], dtype=np.uint8
-    )
+    return State(geometry=geometry, random=False, cell_keys=["A", "B", "C"], dtype=np.uint8)
 
 
 def test_load_json_config(tmp_path: Path):

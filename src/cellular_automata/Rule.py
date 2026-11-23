@@ -36,9 +36,7 @@ class Rule(ABC):
             return np.any(grid > 0, axis=-1)
         return grid > 0
 
-    def _shift_for_offset(
-        self, grid: np.ndarray, offset: tuple[int, ...]
-    ) -> np.ndarray:
+    def _shift_for_offset(self, grid: np.ndarray, offset: tuple[int, ...]) -> np.ndarray:
         """Return `result` with `result[i] == grid[i + offset]` (the neighbour at `offset`).
 
         Periodic axes wrap around; on non-periodic axes cells past the edge read as 0.
@@ -50,9 +48,7 @@ class Rule(ABC):
                 shifted = np.roll(shifted, shift=-shift, axis=axis)
 
         non_periodic_axes = [
-            axis
-            for axis in range(self.geometry.ndim)
-            if axis not in self.geometry.periodic_dims
+            axis for axis in range(self.geometry.ndim) if axis not in self.geometry.periodic_dims
         ]
         if non_periodic_axes:
             pad_width = [(0, 0)] * shifted.ndim
@@ -119,9 +115,7 @@ class Rule(ABC):
         # int32: a 3D Moore neighbourhood of a 6-layer key holds up to 156 particles
         count = np.zeros_like(dim_count, dtype=np.int32)
         for offset in self.geometry._offsets:
-            count += self._shift_for_offset(
-                dim_count, tuple(int(value) for value in offset)
-            )
+            count += self._shift_for_offset(dim_count, tuple(int(value) for value in offset))
         return count
 
     @abstractmethod

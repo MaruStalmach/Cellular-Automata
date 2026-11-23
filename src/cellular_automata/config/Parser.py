@@ -144,9 +144,7 @@ def build_simulation(data: dict) -> CellularAutomaton:
         cell_keys.append(sk["name"])
         key_layers.append(sk.get("layers", 1))
         random_args.append(sk.get("random_args", None))
-        key_dtypes[sk["name"]] = parse_dtype(
-            sk.get("dtype", sim_data.get("dtype", "np.uint8"))
-        )
+        key_dtypes[sk["name"]] = parse_dtype(sk.get("dtype", sim_data.get("dtype", "np.uint8")))
         func_name = sk.get("random_func", None)
         is_random = sk.get("random", False)
         if not isinstance(is_random, bool):
@@ -155,7 +153,7 @@ def build_simulation(data: dict) -> CellularAutomaton:
             )
         if is_random != (func_name is not None):
             raise ValueError(
-                f"state key '{sk['name']}': \"random\": true and \"random_func\" go "
+                f'state key \'{sk["name"]}\': "random": true and "random_func" go '
                 "together; set both to fill the key at random, or neither to start at 0"
             )
         if func_name is None:

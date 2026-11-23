@@ -163,9 +163,7 @@ def _utilization_sim(key_layers):
         substrate_key="substrate",
     )
     ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
-    ca.state = State(
-        geometry, random=None, cell_keys=["alive", "substrate"], key_layers=key_layers
-    )
+    ca.state = State(geometry, random=None, cell_keys=["alive", "substrate"], key_layers=key_layers)
     return ca
 
 
@@ -197,15 +195,10 @@ def test_utilization_consumes_only_one_substrate_particle_per_cell():
 def test_bacteria_growth_claims_each_target_cell_once():
     geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
     rule = BacteriaGrowth(
-        geometry=geometry,
-        bacteria_keys=["alive"],
-        substrate_key="substrate",
-        time_step=1000
+        geometry=geometry, bacteria_keys=["alive"], substrate_key="substrate", time_step=1000
     )
     ca = CellularAutomaton(geometry=geometry, rules=[rule], state=None)
-    ca.state = State(
-        geometry, random=None, cell_keys=["alive", "substrate"], key_layers=[1, 1]
-    )
+    ca.state = State(geometry, random=None, cell_keys=["alive", "substrate"], key_layers=[1, 1])
 
     ca.state["alive"][...] = np.ones((3, 3, 3), dtype=np.uint8)
     ca.state["alive"][1, 1, 1] = 0

@@ -17,9 +17,7 @@ def test_state_tracker_round_trip_and_playback(tmp_path, monkeypatch):
         key_layers=[1, 2],
     )
 
-    state["alive"][...] = np.array(
-        [[[0, 1], [1, 0]], [[1, 0], [0, 1]]], dtype=np.uint8
-    )
+    state["alive"][...] = np.array([[[0, 1], [1, 0]], [[1, 0], [0, 1]]], dtype=np.uint8)
     state["substrate"][...] = np.array(
         [
             [[[1, 0], [0, 1]], [[0, 1], [1, 0]]],
@@ -53,6 +51,7 @@ def test_state_tracker_round_trip_and_playback(tmp_path, monkeypatch):
     assert np.array_equal(first_frame[0], tracker.history["alive"][0])
     assert np.array_equal(second_frame[0], tracker.history["alive"][1])
     assert np.array_equal(second_frame[1], tracker.history["substrate"][1].max(axis=-1))
+
 
 def _two_key_state():
     geometry = Geometry((2, 2, 2), axes="xyz", periodicity="")
@@ -109,8 +108,12 @@ def _gol_sim(tracker, max_steps):
 
     geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
     return CellularAutomaton(
-        geometry, [GameOfLife3D(geometry, time_step=1)], tracker=tracker,
-        max_steps=max_steps, seed=0, output_filename="run",
+        geometry,
+        [GameOfLife3D(geometry, time_step=1)],
+        tracker=tracker,
+        max_steps=max_steps,
+        seed=0,
+        output_filename="run",
     )
 
 

@@ -14,13 +14,13 @@ def init_block(size, start, block_size, value):
     res[tuple(sel)] = value
     return res
 
+
 @register_initialiser
 def random_seeds(size, n, value, rng: np.random.Generator | None = None):
     if rng is None:
         rng = np.random.default_rng()
-    res = np.zeros(size,dtype=np.uint8)
-    pos_x=rng.integers(size[0], size=(n,))
-    pos_y=rng.integers(size[1], size=(n,))
-    res[pos_x,pos_y,0]=value
+    res = np.zeros(size, dtype=np.uint8)
+    pos_x = rng.integers(size[0], size=(n,))
+    pos_y = rng.integers(size[1], size=(n,))
+    res[pos_x, pos_y, 0] = value
     return res
-        

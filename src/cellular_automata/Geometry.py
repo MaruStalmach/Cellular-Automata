@@ -28,9 +28,7 @@ class Geometry:
         self.ndim = len(size)
 
         self.periodic_dims = {
-            dim_idx
-            for dim_idx, axis in enumerate(self.axes)
-            if axis in self.periodicity
+            dim_idx for dim_idx, axis in enumerate(self.axes) if axis in self.periodicity
         }
 
         self.neighbourhood = neighbourhood or MooreNeighbourhood()
@@ -67,9 +65,7 @@ class Geometry:
             if dim in self.periodic_dims:
                 shifted[:, dim] %= self.size[dim]  # wrap if periodic axis
             else:
-                within_bounds = (shifted[:, dim] >= 0) & (
-                    shifted[:, dim] < self.size[dim]
-                )
+                within_bounds = (shifted[:, dim] >= 0) & (shifted[:, dim] < self.size[dim])
                 is_valid &= within_bounds
 
         origin_idx = np.ravel_multi_index(tuple(flat_coords[is_valid].T), self.size)

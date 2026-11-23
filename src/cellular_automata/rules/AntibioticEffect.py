@@ -75,7 +75,9 @@ class AntibioticEffect(Rule):
 
     def apply_state(self, state: State, ctx: StepContext | None = None):
         if ctx is None:
-            raise ValueError("AntibioticEffect needs the step context (ctx) to know the dose window")
+            raise ValueError(
+                "AntibioticEffect needs the step context (ctx) to know the dose window"
+            )
         end = ctx.max_steps if self.end is None else self.end
         if ctx.step_no < self.start or ctx.step_no >= end:
             return state

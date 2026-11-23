@@ -149,7 +149,9 @@ def _common(monkeypatch):
 def test_load_interactions_reads_the_species_interaction_rule(monkeypatch):
     common = _common(monkeypatch)
     config = json.loads((REPO_ROOT / "research/bioreactor/configs/screen.json").read_text())
-    (expected,) = [r["args"]["interactions"] for r in config["rules"] if r["name"] == "SpeciesInteraction"]
+    (expected,) = [
+        r["args"]["interactions"] for r in config["rules"] if r["name"] == "SpeciesInteraction"
+    ]
 
     assert common.load_interactions("screen") == expected
 
@@ -190,10 +192,21 @@ def test_option_defaults_are_the_previous_constants(monkeypatch, tmp_path):
     b = bo.parse_args([])
 
     assert (s.runs, s.bio_number, s.config, s.active_pairs, s.value_scale, s.seed) == (
-        12, 4, "screen", 18, 0.8, None
+        12,
+        4,
+        "screen",
+        18,
+        0.8,
+        None,
     )
     assert (b.bio_number, b.config, b.initial_runs, b.bo_runs, b.seed, b.seeds, b.radius) == (
-        4, "bo", 5, 10, bo.RANDOM_SEED, 1, 0.5
+        4,
+        "bo",
+        5,
+        10,
+        bo.RANDOM_SEED,
+        1,
+        0.5,
     )
 
 
@@ -218,7 +231,8 @@ def test_bo_trial_scores_the_mean_over_its_seeds(monkeypatch, tmp_path):
     monkeypatch.setattr(bo, "save_screening_config", save_config)
     monkeypatch.setattr(bo, "interactions_from_vector", lambda base, values: {})
     monkeypatch.setattr(
-        bo, "parse_json",
+        bo,
+        "parse_json",
         lambda path: (SimpleNamespace(max_dt=1800, tracker=SimpleNamespace(steps=None)), None),
     )
     monkeypatch.setattr(bo, "get_relative_sim_data", lambda sim: None)
@@ -249,10 +263,24 @@ def test_screening_main_passes_its_options_through(monkeypatch, tmp_path):
     monkeypatch.setattr(screening, "run_screening_trial", trial)
     output = tmp_path / "out.csv"
 
-    screening.main([
-        "--runs", "2", "--bio-number", "3", "--config", "bo", "--active-pairs", "5",
-        "--value-scale", "0.3", "--seed", "1", "--output", str(output),
-    ])
+    screening.main(
+        [
+            "--runs",
+            "2",
+            "--bio-number",
+            "3",
+            "--config",
+            "bo",
+            "--active-pairs",
+            "5",
+            "--value-scale",
+            "0.3",
+            "--seed",
+            "1",
+            "--output",
+            str(output),
+        ]
+    )
 
     assert [c[0] for c in calls] == [0, 1]
     _, data, base, kwargs = calls[0]

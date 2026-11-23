@@ -39,16 +39,12 @@ def test_state_initialisation(
 
 def test_state_setters_and_copy():
     geometry = Geometry((3, 3), axes="xy", periodicity="")
-    state = State(
-        geometry=geometry, random=False, cell_keys=["alive", "oxygen saturation"]
-    )
+    state = State(geometry=geometry, random=False, cell_keys=["alive", "oxygen saturation"])
 
     state["alive"] = np.ones((3, 3))
     assert np.all(state["alive"] == 1)
 
-    state["oxygen saturation"] = np.concatenate(
-        (np.ones((2, 3)), np.zeros((1, 3))), axis=0
-    )
+    state["oxygen saturation"] = np.concatenate((np.ones((2, 3)), np.zeros((1, 3))), axis=0)
     assert state["oxygen saturation"][0, 0] == 1
     assert state["oxygen saturation"][2, 2] == 0
 
@@ -96,9 +92,7 @@ def test_key_layers_must_match_the_keys():
 
 def test_copy_keeps_layers_and_dtypes_and_is_independent():
     geometry = Geometry((2, 2), axes="xy", periodicity="")
-    state = State(
-        geometry, cell_keys=["a", "b"], key_layers=(1, 3), key_dtypes={"b": np.float32}
-    )
+    state = State(geometry, cell_keys=["a", "b"], key_layers=(1, 3), key_dtypes={"b": np.float32})
     state["b"][0, 0, 2] = 0.5
 
     copied = state.copy()
@@ -118,8 +112,12 @@ def test_initialiser_is_called_once_with_size_and_cast_to_the_key_dtype():
         return np.full(size, value)
 
     state = State(
-        geometry, cell_keys=["a"], key_dtypes={"a": np.uint8}, random=True,
-        random_func=[init], random_args=[{"value": 7}],
+        geometry,
+        cell_keys=["a"],
+        key_dtypes={"a": np.uint8},
+        random=True,
+        random_func=[init],
+        random_args=[{"value": 7}],
     )
 
     assert calls == [(2, 3, 1)]
@@ -145,8 +143,11 @@ def test_initialiser_without_random_args():
     geometry = Geometry((2, 2), axes="xy", periodicity="")
 
     state = State(
-        geometry, cell_keys=["a", "b"], random=True,
-        random_func=[lambda size: np.ones(size), None], random_args=[None, None],
+        geometry,
+        cell_keys=["a", "b"],
+        random=True,
+        random_func=[lambda size: np.ones(size), None],
+        random_args=[None, None],
     )
 
     assert state["a"].sum() == 4
@@ -163,7 +164,10 @@ def test_integer_initial_values_that_do_not_fit_the_dtype_raise():
 
     with pytest.raises(ValueError, match=r"key 'a' gave values 0\.\.300.*uint8"):
         State(
-            geometry, cell_keys=["a"], key_dtypes={"a": np.uint8}, random=True,
+            geometry,
+            cell_keys=["a"],
+            key_dtypes={"a": np.uint8},
+            random=True,
             random_func=[too_big],
         )
 

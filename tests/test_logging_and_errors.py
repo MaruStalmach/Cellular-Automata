@@ -21,7 +21,10 @@ def _sim(max_steps=1):
     geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
     state = State(geometry, cell_keys=["alive", "s"], key_layers=[1, 4])
     return CellularAutomaton(
-        geometry, [GameOfLife3D(geometry, time_step=1)], state=state, seed=1,
+        geometry,
+        [GameOfLife3D(geometry, time_step=1)],
+        state=state,
+        seed=1,
         max_steps=max_steps,
     )
 
