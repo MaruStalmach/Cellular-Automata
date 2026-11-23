@@ -57,3 +57,7 @@ jobs:
 
       - name: Ruff check
         run: uv run ruff check .
+
+      # with the render extra, so the renderer is checked against PyGLM's types as it is locally
+      - name: Type check
+        run: uv run --extra render mypy

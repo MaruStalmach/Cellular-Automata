@@ -181,7 +181,7 @@ class CARenderer:
         self.gif_callback = gif_callback
 
         self.ca_state = init_state.astype(dtype=np.float32)
-        self.num_cells = np.prod(self.ca_state.shape) // self.num_keys
+        self.num_cells = int(np.prod(self.ca_state.shape)) // self.num_keys
         self.cell_size = 1.0
         self.alpha = 0.2
         self.running = True
@@ -540,7 +540,7 @@ class CARenderer:
         self.solidShader.use_program()
 
         # make smaller cube
-        m = glm.scale(glm.vec3(0.3, 0.3, 0.3)) * m
+        m = glm.scale(glm.vec3(0.3, 0.3, 0.3)) * m  # type: ignore[attr-defined]  # missing from PyGLM's stubs
 
         m_loc = glGetUniformLocation(self.solidShader.program, "model")
         glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm.value_ptr(m))
@@ -605,7 +605,7 @@ class CARenderer:
         if self.cross_section:
             self.layer = int(np.clip(self.layer, 0, grid_shape[self.cs_axis] - 1))
             # keys are stacked on a leading axis when there are several
-            sel = [slice(None)] * self.ca_state.ndim
+            sel: list[slice | int] = [slice(None)] * self.ca_state.ndim
             sel[self.ca_state.ndim - 3 + self.cs_axis] = self.layer
             visible = self.ca_state[tuple(sel)]
             grid_shape[self.cs_axis] = 1

@@ -75,7 +75,7 @@ class Geometry:
         origin_idx = np.ravel_multi_index(tuple(flat_coords[is_valid].T), self.size)
         neighbour_idx = np.ravel_multi_index(tuple(shifted[is_valid].T), self.size)
 
-        return origin_idx, neighbour_idx  # type: ignore
+        return origin_idx, neighbour_idx
 
     def generate_neighbourhood_matrix(self) -> csr_matrix:
 

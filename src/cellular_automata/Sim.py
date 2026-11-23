@@ -79,7 +79,7 @@ class CellularAutomaton:
         self,
         geometry: Geometry,
         rules: list[Rule],
-        state: State = None,
+        state: State | None = None,
         max_steps: int = 100,
         tracker: StateTracker | None = None,
         output_filename: str | None = None,
@@ -93,7 +93,7 @@ class CellularAutomaton:
         self.output_filename = output_filename
         self.start_time = 0.0
         self._saved_at_step: int | None = None
-        self.max_dt = 0
+        self.max_dt = 0.0
 
         # collect the keys the rules need; one step lasts as long as the largest rule dt
         keys: list[str] = []

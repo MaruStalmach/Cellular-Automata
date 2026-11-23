@@ -42,7 +42,7 @@ class Inoculation(Rule):
 
     def apply_state(self, state: State, ctx: StepContext | None = None):
         grid = state[self.target_key].copy()
-        selection = self.box
+        selection: tuple[slice | int, ...] = self.box
         if grid.ndim == self.geometry.ndim + 1:
             if self.layer >= grid.shape[-1]:
                 raise ValueError(

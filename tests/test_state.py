@@ -166,3 +166,19 @@ def test_integer_initial_values_that_do_not_fit_the_dtype_raise():
             geometry, cell_keys=["a"], key_dtypes={"a": np.uint8}, random=True,
             random_func=[too_big],
         )
+
+
+def test_data_setter_round_trips_layered_keys():
+    # np.stack over a layered slice used to move the first grid axis to the end
+    geometry = Geometry((2, 3, 4), axes="xyz", periodicity="")
+    state = State(geometry, cell_keys=["a", "sub"], key_layers=[1, 3])
+    rng = np.random.default_rng(0)
+    state["a"][...] = rng.integers(0, 2, size=(2, 3, 4))
+    state["sub"][...] = rng.integers(0, 2, size=(2, 3, 4, 3))
+    before = {key: state[key].copy() for key in state.keys}
+
+    state.data = state.data
+
+    for key in state.keys:
+        assert state[key].shape == before[key].shape
+        np.testing.assert_array_equal(state[key], before[key])

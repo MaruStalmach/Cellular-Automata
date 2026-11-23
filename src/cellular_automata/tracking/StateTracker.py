@@ -112,7 +112,7 @@ class StateTracker:
         np.savez_compressed(
             file_path,
             __state_tracker_metadata__=np.array(json.dumps(metadata)),
-            **stacked_history,
+            **stacked_history,  # type: ignore[arg-type]  # numpy's stubs reject **arrays
         )
 
     def get_history(self) -> dict[str, list[np.ndarray]]:
