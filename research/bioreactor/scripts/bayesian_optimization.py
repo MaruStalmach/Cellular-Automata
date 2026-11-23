@@ -1,8 +1,7 @@
-import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from bioreactor_common import STUDY_DIR, load_interactions
 from scipy.special import ndtr
 from scipy.stats import qmc
 from screening import (
@@ -17,7 +16,6 @@ from cellular_automata.config.Parser import parse_json
 
 BIO_NUMBER=4
 BASE_CONFIG = 'bo'
-STUDY_DIR = Path(__file__).resolve().parents[1]
 RESULTS_PATH = STUDY_DIR / 'results' / 'bo_results.csv'
 INITIAL_RUNS = 5
 BO_RUNS = 10
@@ -37,16 +35,6 @@ SELECTED_PAIRS = [
     ('Prevotellaceae','Bifidobacteriaceae'),
     ('Oscillospiraceae','Tannerellaceae'),
 ]
-
-
-def load_interactions(config_name: str) -> dict:
-    config_path = STUDY_DIR / 'configs' / f'{config_name}.json'
-    with open(config_path, 'r', encoding='utf-8') as file:
-        config = json.load(file)
-    for rule in config['rules']:
-        if rule.get('name') == 'SpeciesInteraction':
-            return rule['args']['interactions']
-    raise ValueError('SpeciesInteraction rule was not found in the config.')
 
 
 def vector_from_interactions(interactions: dict) -> np.ndarray:

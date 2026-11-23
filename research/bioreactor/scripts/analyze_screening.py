@@ -4,8 +4,9 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+from bioreactor_common import STUDY_DIR
 
-RESULTS_DIR = Path(__file__).resolve().parents[1] / 'results'
+RESULTS_DIR = STUDY_DIR / 'results'
 # screening.py writes here; archived screening runs are on the `results` branch
 DEFAULT_INPUT = RESULTS_DIR / 'screening_results.csv'
 DEFAULT_OUTPUT = RESULTS_DIR / 'screening_pair_analysis.csv'
