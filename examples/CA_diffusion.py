@@ -14,13 +14,9 @@ STEPS_PER_FRAME = 100
 def build_sim(size: tuple[int, int, int], max_steps: int = 1000) -> CellularAutomaton:
     geometry = Geometry(size, "xyz", "")
     rules = [Diffusion(geometry, time_step=1, a=6, p=0.08, target_key="substrate")]
-    state = State(
-        geometry, cell_keys=["substrate"], key_layers=[SUBSTRATE_LAYERS], random=False
-    )
+    state = State(geometry, cell_keys=["substrate"], key_layers=[SUBSTRATE_LAYERS], random=False)
     state["substrate"][0:3, 0:3, 0:3, 0] = 1
-    return CellularAutomaton(
-        geometry=geometry, rules=rules, state=state, max_steps=max_steps
-    )
+    return CellularAutomaton(geometry=geometry, rules=rules, state=state, max_steps=max_steps)
 
 
 def main():

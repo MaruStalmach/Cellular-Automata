@@ -44,18 +44,23 @@ def species_rules(geometry):
     return [
         (
             AntibioticEffect(
-                geometry, time_step=1, bacteria_keys=species, biofilm_key="biofilm",
-                effectiveness=[0.5, 0.5], base_prob=0.001,
+                geometry,
+                time_step=1,
+                bacteria_keys=species,
+                biofilm_key="biofilm",
+                effectiveness=[0.5, 0.5],
+                base_prob=0.001,
             ),
             ["A", "B", "biofilm"],
             None,
         ),
-        (BacteriaDecay(geometry, time_step=1, target_keys=species, decay_probability=0.5),
-         species, None),
         (
-            BacteriaGrowth(
-                geometry, time_step=1, bacteria_keys=species, substrate_key="substrate"
-            ),
+            BacteriaDecay(geometry, time_step=1, target_keys=species, decay_probability=0.5),
+            species,
+            None,
+        ),
+        (
+            BacteriaGrowth(geometry, time_step=1, bacteria_keys=species, substrate_key="substrate"),
             ["A", "B", "substrate"],
             [1, 1, 6],
         ),
@@ -66,8 +71,12 @@ def species_rules(geometry):
         ),
         (
             BiofilmDetachment(
-                geometry, time_step=1, detachment_rate=0.5, scaling=1.0,
-                species_keys=species, attachment_probability=0.5,
+                geometry,
+                time_step=1,
+                detachment_rate=0.5,
+                scaling=1.0,
+                species_keys=species,
+                attachment_probability=0.5,
             ),
             ["biofilm", "floating_bacteria", "A", "B"],
             None,
@@ -81,7 +90,8 @@ def species_rules(geometry):
         ),
         (
             SpeciesInteraction(
-                geometry, time_step=1,
+                geometry,
+                time_step=1,
                 interactions={"A": {"B": -1.0}, "B": {"A": 1.0}},
             ),
             ["A", "B"],
@@ -97,9 +107,15 @@ def species_rules(geometry):
 
 
 RULE_IDS = [
-    "AntibioticEffect", "BacteriaDecay", "BacteriaGrowth", "Utilization",
-    "BiofilmDetachment", "BioreactorBiofilmDetachment", "SpeciesInteraction",
-    "Diffusion", "Diffusion-biofilm",
+    "AntibioticEffect",
+    "BacteriaDecay",
+    "BacteriaGrowth",
+    "Utilization",
+    "BiofilmDetachment",
+    "BioreactorBiofilmDetachment",
+    "SpeciesInteraction",
+    "Diffusion",
+    "Diffusion-biofilm",
 ]
 
 
@@ -119,7 +135,10 @@ def other_rules(geometry):
         ),
         (
             Inoculation(
-                geometry, time_step=1, target_key="substrate", location=[1, 1, 1],
+                geometry,
+                time_step=1,
+                target_key="substrate",
+                location=[1, 1, 1],
                 size=[2, 2, 2],
             ),
             ["substrate"],

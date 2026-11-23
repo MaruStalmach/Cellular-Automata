@@ -57,9 +57,7 @@ class SpeciesInteraction(Rule):
                 state[sp].reshape(state.shape).astype(bool)
             )  # checks presence of each species on the grid
             occupied |= presence[sp]  # mark all occupied grid spots for all species
-            neighbour_counts[sp] = self.neighborhood_count(
-                presence[sp].astype(np.uint8)
-            )
+            neighbour_counts[sp] = self.neighborhood_count(presence[sp].astype(np.uint8))
 
             spawns[sp] = np.zeros(
                 state.shape, dtype=np.float32
@@ -74,22 +72,18 @@ class SpeciesInteraction(Rule):
             if coeff == 0.0:  # no influence on each other between species
                 continue
 
-        
             max_neighbors = max(1, len(getattr(self.geometry, "_offsets", [])))
 
             if coeff < 0:  # species are destructive
                 kill_prob = np.clip(
-                        abs(coeff) * (neighbour_counts[bact_a] / max_neighbors), 0.0, 1.0
-                    )
+                    abs(coeff) * (neighbour_counts[bact_a] / max_neighbors), 0.0, 1.0
+                )
                 killed = presence[bact_b] & (self.rng.random(state.shape) < kill_prob)
                 deaths[bact_b] |= killed
 
             elif coeff > 0:  # species are in symbiosis
                 spawns[bact_b] += (
-                    empty
-                    * coeff
-                    * neighbour_counts[bact_a]
-                    * (neighbour_counts[bact_b] >= 1)
+                    empty * coeff * neighbour_counts[bact_a] * (neighbour_counts[bact_b] >= 1)
                 )
 
         # resolving deaths from previous stes
@@ -97,9 +91,7 @@ class SpeciesInteraction(Rule):
         for sp in bacteria_types:
             any_death |= deaths[sp]
             state[sp] = (
-                (presence[sp] & ~deaths[sp])
-                .reshape(state[sp].shape)
-                .astype(state[sp].dtype)
+                (presence[sp] & ~deaths[sp]).reshape(state[sp].shape).astype(state[sp].dtype)
             )
 
         if any_death.any():
@@ -121,9 +113,7 @@ class SpeciesInteraction(Rule):
             )  # if scale set to none, prob of spawn is = 1 for any claim
         else:
             spawn_probability = np.clip(max_claim / self.spawn_claim_scale, 0.0, 1.0)
-            spawn_here = (
-                empty & any_claim & (self.rng.random(state.shape) < spawn_probability)
-            )
+            spawn_here = empty & any_claim & (self.rng.random(state.shape) < spawn_probability)
 
         for i, sp in enumerate(bacteria_types):
             wins = spawn_here & (winner_idx == i)

@@ -24,7 +24,7 @@ class Diffusion(Rule):
         p: float,
         target_key: str = "substrate",
         biofilm_key: str | None = None,
-        biofilm_disruption: float = 0.8
+        biofilm_disruption: float = 0.8,
     ):
         super().__init__(geometry, time_step)
         require_3d(type(self).__name__, geometry)
@@ -38,7 +38,7 @@ class Diffusion(Rule):
         self.p = [a * p3, p, p, p3, p, p]
         if self.biofilm_key is not None:
             # calculate new a for when diffusion is in biofilm
-            ap = self._calc_a_prim(a,p,biofilm_disruption)
+            ap = self._calc_a_prim(a, p, biofilm_disruption)
             p3 = (1 - 4 * p) / (ap + 1)
             self.p_bio = [ap * p3, p, p, p3, p, p]
         # preallocated per-slot buffers, reused every call; values are 0..6, so uint8
@@ -49,25 +49,21 @@ class Diffusion(Rule):
         self.lost_particles: int = 0
 
         self.RESTORE_THRESHOLD = 100
-        
-        
 
-    
-    
     @staticmethod
-    def _calc_a_prim(x,p,d):
-        a=12*p
-        b=-12*p+6
-        e=-1/2/p+2
-        f=(1-2*p)/12/p
-        g=f+e/(a*x+b)
-        xp=e/a/(d*g-f)-b/a
+    def _calc_a_prim(x, p, d):
+        a = 12 * p
+        b = -12 * p + 6
+        e = -1 / 2 / p + 2
+        f = (1 - 2 * p) / 12 / p
+        g = f + e / (a * x + b)
+        xp = e / a / (d * g - f) - b / a
         return xp
 
     def apply_state(self, state, ctx: StepContext | None = None) -> State:
 
         source = state[self.target_key]
-        
+
         if self.biofilm_key is not None:
             biofilm_source = state[self.biofilm_key]
 
@@ -82,26 +78,26 @@ class Diffusion(Rule):
         # l5      - -x
         self.rolls.fill(0)
         if self.biofilm_key is not None:
-            particle_mask = source==1
-            bio_mask = biofilm_source==1
-            #broadcast to 4d shape
-            bio_mask = bio_mask[...,None]
-            particle_in_bio = particle_mask&bio_mask
-            particle_out_bio = particle_mask&(~bio_mask)
-            pib_amt=particle_in_bio.sum()
-            pob_amt=particle_out_bio.sum()
+            particle_mask = source == 1
+            bio_mask = biofilm_source == 1
+            # broadcast to 4d shape
+            bio_mask = bio_mask[..., None]
+            particle_in_bio = particle_mask & bio_mask
+            particle_out_bio = particle_mask & (~bio_mask)
+            pib_amt = particle_in_bio.sum()
+            pob_amt = particle_out_bio.sum()
             self.rolls[particle_out_bio] = self.rng.choice(
-            [0, 1, 2, 3, 4, 5], size=(pob_amt,), p=self.p
+                [0, 1, 2, 3, 4, 5], size=(pob_amt,), p=self.p
             ).astype(np.uint8)
             self.rolls[particle_in_bio] = self.rng.choice(
-                        [0, 1, 2, 3, 4, 5], size=(pib_amt,), p=self.p_bio
-                        ).astype(np.uint8)
+                [0, 1, 2, 3, 4, 5], size=(pib_amt,), p=self.p_bio
+            ).astype(np.uint8)
         else:
-            roll_amt = source[source==1].sum()
-            self.rolls[source==1] = self.rng.choice(
+            roll_amt = source[source == 1].sum()
+            self.rolls[source == 1] = self.rng.choice(
                 [0, 1, 2, 3, 4, 5], size=(roll_amt,), p=self.p
             ).astype(np.uint8)
-        
+
         # in place: a new array here would defeat the preallocated buffer
         np.add(self.rolls, self._slot_index, out=self.rolls)
         np.remainder(self.rolls, 6, out=self.rolls)
@@ -138,9 +134,7 @@ class Diffusion(Rule):
         # l4      - -y
         # l5      - -x
 
-        def shift_roll(
-            layer: np.ndarray, axis: int, shift: int, periodic=False
-        ) -> None:
+        def shift_roll(layer: np.ndarray, axis: int, shift: int, periodic=False) -> None:
             buffer = self.shift_buffer
             buffer[...] = layer
             layer.fill(0)

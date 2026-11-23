@@ -126,9 +126,7 @@ def test_inoculation_fills_layer_0_of_a_layered_key_by_default():
 
 def test_inoculation_layer_and_2d_box():
     geometry = Geometry((4, 4), axes="xy", periodicity="")
-    rule = Inoculation(
-        geometry, time_step=1, target_key="s", location=[0, 2], size=[1, 2], layer=2
-    )
+    rule = Inoculation(geometry, time_step=1, target_key="s", location=[0, 2], size=[1, 2], layer=2)
     state = State(geometry, cell_keys=["s"], key_layers=[3])
 
     state = rule.apply_state(state, CTX)
@@ -140,10 +138,12 @@ def test_inoculation_layer_and_2d_box():
 def test_inoculation_layer_must_exist():
     geometry = Geometry((4, 4, 4), axes="xyz", periodicity="")
     with pytest.raises(ValueError, match="layer"):
-        Inoculation(geometry, time_step=1, target_key="s", location=[0, 0, 0],
-                    size=[1, 1, 1], layer=-1)
-    rule = Inoculation(geometry, time_step=1, target_key="s", location=[0, 0, 0],
-                       size=[1, 1, 1], layer=6)
+        Inoculation(
+            geometry, time_step=1, target_key="s", location=[0, 0, 0], size=[1, 1, 1], layer=-1
+        )
+    rule = Inoculation(
+        geometry, time_step=1, target_key="s", location=[0, 0, 0], size=[1, 1, 1], layer=6
+    )
 
     with pytest.raises(ValueError, match="layer 6 but 's' has 6 layers"):
         rule.apply_state(State(geometry, cell_keys=["s"], key_layers=[6]))
@@ -186,16 +186,13 @@ def test_library_has_no_assert_statements():
 def test_neighbourhood_arguments_raise_value_error():
     with pytest.raises(ValueError, match="radius"):
         MooreNeighbourhood().generate_offsets(3, radius=0)
-    assert np.array_equal(
-        MooreNeighbourhood().generate_offsets(1), np.array([[-1], [1]])
-    )
+    assert np.array_equal(MooreNeighbourhood().generate_offsets(1), np.array([[-1], [1]]))
 
 
 def test_multi_key_callback_reduces_layered_keys_on_2d_grids():
     geometry = Geometry((3, 3), axes="xy", periodicity="")
     state = State(geometry, cell_keys=["alive", "s"], key_layers=[1, 4])
-    sim = CellularAutomaton(geometry, [GameOfLife3D(geometry, time_step=1)], state=state,
-                            seed=1)
+    sim = CellularAutomaton(geometry, [GameOfLife3D(geometry, time_step=1)], state=state, seed=1)
 
     callback = MultiKeyCallback(["alive", "s"], sim)
 

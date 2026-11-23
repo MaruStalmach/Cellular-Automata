@@ -129,7 +129,6 @@ class CARenderer:
             self.x_press = True
         elif key == glfw.KEY_G and action == glfw.PRESS:
             self.g_press = True
-        
 
         # Map GLFW keys to camera keys
         key_map = {
@@ -199,7 +198,7 @@ class CARenderer:
             glfw.terminate()
             raise RuntimeError(
                 "Could not create a GLFW window. Rendering needs a display and "
-                "OpenGL >= 4.3; set \"render\": false in the config to run headless."
+                'OpenGL >= 4.3; set "render": false in the config to run headless.'
             )
 
         glfw.set_window_pos(self.window, 400, 200)
@@ -438,12 +437,8 @@ class CARenderer:
         glBindTexture(GL_TEXTURE_2D, 0)
 
         glBindFramebuffer(GL_FRAMEBUFFER, self.opqFBO)
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self.opqTex, 0
-        )
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0
-        )
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self.opqTex, 0)
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0)
 
         self._check_framebuffer("opaque")
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
@@ -468,9 +463,7 @@ class CARenderer:
 
         self.revealTex = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self.revealTex)
-        glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_R8, self.width, self.height, 0, GL_RED, GL_FLOAT, None
-        )
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, self.width, self.height, 0, GL_RED, GL_FLOAT, None)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glBindTexture(GL_TEXTURE_2D, 0)
@@ -482,9 +475,7 @@ class CARenderer:
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, self.revealTex, 0
         )
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0
-        )
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0)
 
         glDrawBuffers(2, [GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1])
 
@@ -551,7 +542,6 @@ class CARenderer:
         p_loc = glGetUniformLocation(self.solidShader.program, "projection")
         glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
 
-
     @staticmethod
     def _check_framebuffer(name: str) -> None:
         """Raise RuntimeError (after terminating GLFW) if the bound framebuffer is incomplete."""
@@ -565,8 +555,6 @@ class CARenderer:
         pixels = glReadPixels(0, 0, self.width, self.height, GL_RGB, GL_UNSIGNED_BYTE)
         frame = np.frombuffer(pixels, dtype=np.uint8).reshape(self.height, self.width, 3)
         return np.flipud(frame).copy()
-
-        
 
     def set_ca_state(self, state_array):
         """
@@ -614,9 +602,7 @@ class CARenderer:
             visible = self.ca_state
             alpha = self.alpha
 
-        glUniform3f(
-            glGetUniformLocation(self.transShader.program, "grid_size"), *grid_shape
-        )
+        glUniform3f(glGetUniformLocation(self.transShader.program, "grid_size"), *grid_shape)
         glUniform1f(glGetUniformLocation(self.transShader.program, "Ualpha"), alpha)
         self._upload(visible)
         self.num_cells = int(np.prod(grid_shape))
@@ -749,7 +735,7 @@ class CARenderer:
                     self.g_press = False
                     if self.gif_callback:
                         self.gif_callback()
-                    
+
                 if new_state is not None:
                     self.set_ca_state(new_state)
 

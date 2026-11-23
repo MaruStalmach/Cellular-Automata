@@ -333,6 +333,7 @@ python examples/generate_gif.py -f demo -k bacteria --duration 8  # writes outpu
 ```bash
 uv run pytest                    # or: python -m pytest
 uv run ruff check .              # lint
+uv run ruff format .             # format (CI checks it with --check)
 uv run --extra render mypy       # type check (CI runs all three)
 ```
 

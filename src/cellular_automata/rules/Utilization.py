@@ -47,8 +47,7 @@ class Utilization(Rule):
         # equations based on 'QUANTITATIVE CELLULAR AUTOMATON MODEL FOR BIOFILMS' by pizarro
         # reusing the same array for calculations
         utilization_prob = self.sub_const * (
-            (self.Sb * substrate_count / 27)
-            / (self.Ks + (self.Sb * substrate_count / 27))
+            (self.Sb * substrate_count / 27) / (self.Ks + (self.Sb * substrate_count / 27))
         )
         # p=r *dt=q*(S/(10+S))*40*dt
         # S=15*neighbors/max
@@ -74,7 +73,7 @@ class Utilization(Rule):
         consumers = np.argwhere(consumed_cells)
         eaten = []
         for start in range(0, len(consumers), self.CHUNK):
-            chunk = consumers[start:start + self.CHUNK]
+            chunk = consumers[start : start + self.CHUNK]
             neighbours, valid = self._neighbour_coords(chunk)
             slots = has_particle[tuple(np.moveaxis(neighbours, -1, 0))] & valid[..., None]
             column, has_target = self._pick_uniform(slots.reshape(len(chunk), -1))

@@ -21,14 +21,15 @@ BLOCK_RENDERING = "import sys\n" + "".join(
 def _run_without_rendering(code: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, "-c", BLOCK_RENDERING + code],
-        capture_output=True, text=True, cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
     )
 
 
 def _config(tmp_path: Path, render: bool) -> Path:
     config = {
-        "sim": {"size": [3, 3, 3], "periodicity": "", "max_steps": 1, "render": render,
-                "seed": 1},
+        "sim": {"size": [3, 3, 3], "periodicity": "", "max_steps": 1, "render": render, "seed": 1},
         "state_keys": [{"name": "alive"}],
         "rules": [{"name": "GameOfLife3D", "args": {"time_step": 1}}],
     }
@@ -70,8 +71,7 @@ def test_rendered_config_without_opengl_says_how_to_install_it(tmp_path: Path):
     path = _config(tmp_path, render=True)
 
     result = _run_without_rendering(
-        "from cellular_automata.config.Parser import parse_json\n"
-        f"parse_json({str(path)!r})\n"
+        f"from cellular_automata.config.Parser import parse_json\nparse_json({str(path)!r})\n"
     )
 
     assert result.returncode != 0
@@ -131,8 +131,7 @@ def test_missing_renderer_is_reported_before_the_simulation_is_built(tmp_path: P
     path.write_text(json.dumps(config))
 
     result = _run_without_rendering(
-        "from cellular_automata.config.Parser import parse_json\n"
-        f"parse_json({str(path)!r})\n"
+        f"from cellular_automata.config.Parser import parse_json\nparse_json({str(path)!r})\n"
     )
 
     assert "--extra render" in result.stderr

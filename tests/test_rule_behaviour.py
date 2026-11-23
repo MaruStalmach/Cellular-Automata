@@ -209,9 +209,7 @@ def test_diffusion_accounts_for_every_particle(seed, biofilm_key, periodicity):
     """Particles on the grid plus those waiting to be refilled stay constant."""
     geometry = _geometry(periodicity=periodicity)
     state = _diffusion_state(geometry, np.random.default_rng(seed))
-    rule = _seeded(
-        Diffusion(geometry, time_step=1, a=7.4, p=0.07, biofilm_key=biofilm_key), seed
-    )
+    rule = _seeded(Diffusion(geometry, time_step=1, a=7.4, p=0.07, biofilm_key=biofilm_key), seed)
     total = int(state["substrate"].sum())
 
     for _ in range(10):
@@ -260,7 +258,9 @@ def test_drift_moves_floating_cells_along_z():
     state["A"][1, 1, 1] = 1
     state["floating_bacteria"][1, 1, 1] = 1
 
-    state = GutDrift(geometry, time_step=1, drift_speed=2, species_keys=["A", "B"]).apply_state(state)
+    state = GutDrift(geometry, time_step=1, drift_speed=2, species_keys=["A", "B"]).apply_state(
+        state
+    )
 
     assert state["A"][1, 1, 3] == 1 and int(state["A"].sum()) == 1
     assert state["floating_bacteria"][1, 1, 3] == 1 and int(state["floating_bacteria"].sum()) == 1
@@ -271,7 +271,9 @@ def test_drift_leaves_attached_cells_in_place():
     state = _drift_state(geometry)
     state["B"][2, 2, 0] = 1  # not floating
 
-    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(state)
+    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(
+        state
+    )
 
     assert state["B"][2, 2, 0] == 1 and int(state["B"].sum()) == 1
 
@@ -282,7 +284,9 @@ def test_drift_off_a_closed_end_removes_the_cell():
     state["A"][0, 0, 4] = 1
     state["floating_bacteria"][0, 0, 4] = 1
 
-    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(state)
+    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(
+        state
+    )
 
     assert not state["A"].any() and not state["floating_bacteria"].any()
 
@@ -293,7 +297,9 @@ def test_drift_wraps_on_a_periodic_axis():
     state["A"][0, 0, 4] = 1
     state["floating_bacteria"][0, 0, 4] = 1
 
-    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(state)
+    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(
+        state
+    )
 
     assert state["A"][0, 0, 0] == 1 and state["floating_bacteria"][0, 0, 0] == 1
 
@@ -305,7 +311,9 @@ def test_drift_into_an_attached_cell_removes_the_floating_cell():
     state["floating_bacteria"][1, 1, 1] = 1
     state["B"][1, 1, 2] = 1  # attached, in the way
 
-    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(state)
+    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(
+        state
+    )
 
     assert not state["A"].any()
     assert state["B"][1, 1, 2] == 1
@@ -322,7 +330,9 @@ def test_drift_never_double_occupies(seed):
     state["B"][...] = (cells >= 0.2) & (cells < 0.4)
     state["floating_bacteria"][...] = (cells < 0.4) & (rng.random(geometry.size) < 0.5)
 
-    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(state)
+    state = GutDrift(geometry, time_step=1, drift_speed=1, species_keys=["A", "B"]).apply_state(
+        state
+    )
 
     assert not (state["A"].astype(bool) & state["B"].astype(bool)).any()
     occupied = state["A"].astype(bool) | state["B"].astype(bool)
@@ -386,8 +396,12 @@ def test_certain_attachment_attaches_a_bacterium_on_top_of_biofilm():
     state["B"][2, 3, 2] = 1  # nothing below it
     state["floating_bacteria"][2, 3, 2] = 1
     rule = BiofilmDetachment(
-        geometry, time_step=1, detachment_rate=0.0, scaling=1.0,
-        species_keys=["A", "B"], attachment_probability=1.0,
+        geometry,
+        time_step=1,
+        detachment_rate=0.0,
+        scaling=1.0,
+        species_keys=["A", "B"],
+        attachment_probability=1.0,
     )
 
     state = rule.apply_state(state)
@@ -405,7 +419,9 @@ def test_decay_at_the_extremes(probability, survivors):
     state = _state(geometry, ["A", "B"])
     state["A"][...] = np.random.default_rng(0).random(geometry.size) < 0.5
     before = state["A"].copy()
-    rule = BacteriaDecay(geometry, time_step=1, target_keys=["A", "B"], decay_probability=probability)
+    rule = BacteriaDecay(
+        geometry, time_step=1, target_keys=["A", "B"], decay_probability=probability
+    )
 
     state = _seeded(rule, 0).apply_state(state)
 
@@ -476,7 +492,10 @@ def test_utilization_picks_particles_not_cells():
         state["substrate"][0, 0, 2, 0] = 1
         rule = _utilization(geometry, substitute_constant=1.0, Sb=1e9)
         state = _seeded(rule, seed).apply_state(state)
-        picked += [3 - int(state["substrate"][0, 0, 0].sum()), 1 - int(state["substrate"][0, 0, 2].sum())]
+        picked += [
+            3 - int(state["substrate"][0, 0, 0].sum()),
+            1 - int(state["substrate"][0, 0, 2].sum()),
+        ]
 
     assert picked.sum() == 2000
     assert 1440 < picked[0] < 1560  # expected 1500, sd ~19

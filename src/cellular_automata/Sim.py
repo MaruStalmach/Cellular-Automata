@@ -59,7 +59,8 @@ def check_required_keys(rules: list[Rule], state: State) -> None:
     ]
     if missing:
         raise ValueError(
-            "state is missing keys the rules need: " + "; ".join(missing)
+            "state is missing keys the rules need: "
+            + "; ".join(missing)
             + f" (state keys: {list(state.keys)})"
         )
 
@@ -113,9 +114,7 @@ class CellularAutomaton:
             self.state = state
             check_required_keys(rules, state)
         else:
-            self.state = State(
-                geometry, random=True, cell_keys=keys, rng=state_rng(self.seed)
-            )
+            self.state = State(geometry, random=True, cell_keys=keys, rng=state_rng(self.seed))
 
         self.step_no = 0
         if self.tracker:
@@ -143,13 +142,13 @@ class CellularAutomaton:
         return int(np.clip(runs, 1, MAX_RUNS_PER_STEP))
 
     def step(self):
-        '''increments the timestep of the simulation and applies all '''
-        if self.step_no>=self.max_steps:
+        """increments the timestep of the simulation and applies all"""
+        if self.step_no >= self.max_steps:
             logger.info("simulation ended. time=%.2fs", time() - self.start_time)
             return -1
-        if self.step_no==0:
+        if self.step_no == 0:
             self.start_time = time()
-        
+
         ctx = StepContext(step_no=self.step_no, max_steps=self.max_steps)
         times_to_execute = self.rule_exec_n_times.copy()
         while sum(times_to_execute) > 0:
@@ -161,9 +160,7 @@ class CellularAutomaton:
 
         self.step_no += 1
         if self.tracker:
-            self.tracker.record_step(
-                self.state, self.step_no, final=self.step_no >= self.max_steps
-            )
+            self.tracker.record_step(self.state, self.step_no, final=self.step_no >= self.max_steps)
 
         if self.step_no >= self.max_steps:
             self.save_tracker()

@@ -45,7 +45,9 @@ class State:
         key_dtypes: Optional[dict[str, np.dtype | type]] = None,
         key_layers: Optional[Iterable] = None,
         random: bool = False,
-        random_func: Optional[Callable[..., object] | Iterable[Callable[..., object] | None]] = None,
+        random_func: Optional[
+            Callable[..., object] | Iterable[Callable[..., object] | None]
+        ] = None,
         random_args: Optional[Iterable[dict | None]] = None,
         dtype: np.dtype | type = np.uint8,
         rng: Optional[np.random.Generator] = None,
@@ -69,9 +71,7 @@ class State:
         else:
             self.key_layers = [1 for _ in self.keys]
         if len(self.key_layers) != len(self.keys):
-            raise ValueError(
-                f"{len(self.keys)} cell_keys but {len(self.key_layers)} key_layers"
-            )
+            raise ValueError(f"{len(self.keys)} cell_keys but {len(self.key_layers)} key_layers")
 
         # shape of the spatial grid and number of keys
         grid_dims = self.geometry.size
@@ -165,12 +165,12 @@ class State:
     def copy(self) -> "State":
         """Independent copy of the arrays."""
         new_state = State(
-            self.geometry, 
-            random=False, 
-            cell_keys=self.keys, 
-            dtype=self.dtype, 
-            key_dtypes=self.key_dtypes, 
-            key_layers=self.key_layers
+            self.geometry,
+            random=False,
+            cell_keys=self.keys,
+            dtype=self.dtype,
+            key_dtypes=self.key_dtypes,
+            key_layers=self.key_layers,
         )
         for key in self.keys:
             new_state._data[key] = self._data[key].copy()

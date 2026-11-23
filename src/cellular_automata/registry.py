@@ -21,10 +21,9 @@ T = TypeVar("T")
 
 def _same_definition(a: object, b: object) -> bool:
     """True if `a` and `b` come from the same source definition, e.g. after a reload."""
-    return (
-        getattr(a, "__module__", None) == getattr(b, "__module__", None)
-        and getattr(a, "__qualname__", None) == getattr(b, "__qualname__", None)
-    )
+    return getattr(a, "__module__", None) == getattr(b, "__module__", None) and getattr(
+        a, "__qualname__", None
+    ) == getattr(b, "__qualname__", None)
 
 
 class Registry(Generic[T]):

@@ -73,9 +73,7 @@ def test_adding_a_rule_does_not_change_earlier_rules_streams():
 def test_unseeded_simulation_records_a_seed_that_reproduces_it():
     geometry = _geometry()
     rules = [_DrawingRule(geometry) for _ in range(2)]
-    sim = CellularAutomaton(
-        geometry, rules, state=_empty_state(geometry), max_steps=3, seed=None
-    )
+    sim = CellularAutomaton(geometry, rules, state=_empty_state(geometry), max_steps=3, seed=None)
     for _ in range(3):
         sim.step()
 
@@ -121,9 +119,7 @@ def _write_config(tmp_path: Path, seed=None, random_func="np.random.choice") -> 
     if seed is not None:
         sim["seed"] = seed
     random_args = (
-        {"a": [0, 1], "p": [0.5, 0.5]}
-        if random_func.endswith("choice")
-        else {"n": 5, "value": 1}
+        {"a": [0, 1], "p": [0.5, 0.5]} if random_func.endswith("choice") else {"n": 5, "value": 1}
     )
     config = {
         "sim": sim,
@@ -190,8 +186,9 @@ def test_null_seed_in_config_is_reported(tmp_path: Path):
 def test_invalid_seed_is_rejected(bad_seed):
     geometry = _geometry()
     with pytest.raises(ValueError, match="seed"):
-        CellularAutomaton(geometry, [_DrawingRule(geometry)], state=_empty_state(geometry),
-                          seed=bad_seed)
+        CellularAutomaton(
+            geometry, [_DrawingRule(geometry)], state=_empty_state(geometry), seed=bad_seed
+        )
 
 
 @pytest.mark.parametrize("name", ["np.random.randint", "random.randint"])
@@ -215,7 +212,10 @@ def test_tracker_output_records_the_seed(tmp_path: Path):
     geometry = _geometry()
     tracker = StateTracker(keys=["alive"])
     sim = CellularAutomaton(
-        geometry, [_DrawingRule(geometry)], state=_empty_state(geometry), tracker=tracker,
+        geometry,
+        [_DrawingRule(geometry)],
+        state=_empty_state(geometry),
+        tracker=tracker,
         seed=5,
     )
     out = tmp_path / "run.npz"

@@ -93,9 +93,7 @@ class StateTracker:
             filename = f"{filename}_{timestamp}"
         file_path = self._normalize_file_path(filename)
 
-        stacked_history = {
-            key: np.stack(arrays, axis=0) for key, arrays in self.history.items()
-        }
+        stacked_history = {key: np.stack(arrays, axis=0) for key, arrays in self.history.items()}
 
         metadata = {
             "geometry_size": list(self.geometry.size) if self.geometry else None,
@@ -107,7 +105,7 @@ class StateTracker:
             "steps": self.steps,
             "record_every": self.record_every,
         }
-        
+
         file_path.parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(
             file_path,
@@ -144,9 +142,8 @@ class StateTracker:
         if metadata and metadata.get("geometry_size"):
             tracker.geometry = Geometry(
                 size=tuple(metadata["geometry_size"]),
-                axes=metadata.get("geometry_axes") or cls._default_axes(
-                    len(metadata["geometry_size"])
-                ),
+                axes=metadata.get("geometry_axes")
+                or cls._default_axes(len(metadata["geometry_size"])),
                 periodicity=metadata.get("geometry_periodicity", ""),
             )
 
@@ -182,9 +179,7 @@ class StateTracker:
                     periodicity=periodicity,
                 )
         elif self.geometry is not None and geometry.size != self.geometry.size:
-            raise ValueError(
-                "provided geometry does not match the tracked spatial shape"
-            )
+            raise ValueError("provided geometry does not match the tracked spatial shape")
 
         key_layers = []
         key_dtypes: dict[str, np.dtype | type] = {}
@@ -199,9 +194,7 @@ class StateTracker:
             elif values.ndim == spatial_rank + 1:
                 key_layers.append(values.shape[-1])
             else:
-                raise ValueError(
-                    f"tracked key '{key}' has unsupported shape {values.shape}"
-                )
+                raise ValueError(f"tracked key '{key}' has unsupported shape {values.shape}")
             key_dtypes[key] = values.dtype
 
         state = State(
@@ -246,7 +239,7 @@ class TrackedStatePlayback:
         geometry: Geometry | None = None,
         axes: str | None = None,
         periodicity: str = "",
-        stride : int = 1
+        stride: int = 1,
     ) -> None:
         self.tracker = tracker
         self.step_no = step_no
@@ -262,7 +255,5 @@ class TrackedStatePlayback:
                 self.step_no + self.stride, len(next(iter(self.tracker.history.values()))) - 1
             )
 
-        self.state = self.tracker.to_state(
-            self.step_no, self.geometry, self.axes, self.periodicity
-        )
+        self.state = self.tracker.to_state(self.step_no, self.geometry, self.axes, self.periodicity)
         return self.tracker.to_renderer_frame(self.step_no)

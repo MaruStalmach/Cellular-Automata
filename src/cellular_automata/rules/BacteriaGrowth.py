@@ -12,9 +12,9 @@ class BacteriaGrowth(Rule):
         time_step: float,
         bacteria_keys,
         substrate_key,
-        Yca = 6.94e-6,
-        base_prob = 0.02,
-        time_scale = 4320000,
+        Yca=6.94e-6,
+        base_prob=0.02,
+        time_scale=4320000,
     ):
         super().__init__(geometry, time_step)
         self.b_keys = bacteria_keys
@@ -22,9 +22,7 @@ class BacteriaGrowth(Rule):
 
         self.Yca = Yca
         self.base_prob = base_prob
-        self.time_scale = (
-            time_scale  # ratio between larger time step and smaller time step
-        )
+        self.time_scale = time_scale  # ratio between larger time step and smaller time step
 
         self.required_keys.extend([*bacteria_keys, substrate_key])
 
@@ -66,9 +64,7 @@ class BacteriaGrowth(Rule):
         keys_all = np.concatenate(keys)
         parents_all = np.concatenate(parents)
         targets_all = np.concatenate(targets)
-        winners = self._first_claims(
-            np.ravel_multi_index(tuple(targets_all.T), state.shape)
-        )
+        winners = self._first_claims(np.ravel_multi_index(tuple(targets_all.T), state.shape))
 
         for key_index, key in enumerate(bacteria_grids):
             won = winners[keys_all[winners] == key_index]
