@@ -21,7 +21,7 @@ class _DrawingRule(Rule):
         super().__init__(geometry, time_step)
         self.draws: list[float] = []
 
-    def apply_state(self, state):
+    def apply_state(self, state, ctx=None):
         self.draws.append(float(self.rng.random()))
         return state
 

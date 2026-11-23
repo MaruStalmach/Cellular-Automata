@@ -1,7 +1,7 @@
 import numpy as np
 
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule, require_3d
+from cellular_automata.Rule import Rule, StepContext, require_3d
 from cellular_automata.State import State
 
 
@@ -20,7 +20,7 @@ class BioreactorBiofilmDetachment(Rule):
         self.target_key = biofilm_key
         self.required_keys.append(self.target_key)
 
-    def apply_state(self, state: State) -> State:
+    def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
         biofilm_grid = state[self.target_key].copy()
         total_layers = biofilm_grid.shape[-1]
 

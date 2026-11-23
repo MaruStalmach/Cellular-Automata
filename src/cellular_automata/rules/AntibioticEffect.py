@@ -2,7 +2,7 @@ import numpy as np
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 
 # the time step base_prob was calibrated for (the bioreactor Diffusion dt)
@@ -73,10 +73,11 @@ class AntibioticEffect(Rule):
         protecting[..., 0] += self.wall_neighbours
         return self.base_prob * self.scale / (1 + protecting / self.neighbourhood_size)
 
-    def apply_state(self, state: State):
-        step_no = state.sim.step_no
-        end = state.sim.max_steps if self.end is None else self.end
-        if step_no < self.start or step_no >= end:
+    def apply_state(self, state: State, ctx: StepContext | None = None):
+        if ctx is None:
+            raise ValueError("AntibioticEffect needs the step context (ctx) to know the dose window")
+        end = ctx.max_steps if self.end is None else self.end
+        if ctx.step_no < self.start or ctx.step_no >= end:
             return state
         death_prob = self.death_probability(state[self.biofilm_key])
         for key, effectiveness in zip(self.bacteria_keys, self.effectiveness, strict=True):

@@ -1,7 +1,7 @@
 import numpy as np
 
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule, require_3d
+from cellular_automata.Rule import Rule, StepContext, require_3d
 from cellular_automata.State import State
 
 
@@ -50,7 +50,7 @@ class GutDrift(Rule):
 
 
 
-    def apply_state(self, state: State) -> State:
+    def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
         if self.drift_speed == 0:
             return state
 

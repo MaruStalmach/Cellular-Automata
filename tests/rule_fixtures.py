@@ -1,10 +1,9 @@
 """Each built-in rule with the keys (and layers) it uses, shared by the rule tests."""
 
-from types import SimpleNamespace
-
 import numpy as np
 
 from cellular_automata.Geometry import Geometry
+from cellular_automata.Rule import StepContext
 from cellular_automata.rules import (
     AntibioticEffect,
     BacteriaDecay,
@@ -22,6 +21,8 @@ from cellular_automata.rules import (
 from cellular_automata.State import State
 
 SIZE = (6, 6, 6)
+# the step context rules get from CellularAutomaton (AntibioticEffect needs it)
+CTX = StepContext(step_no=0, max_steps=10)
 
 
 def make_geometry():
@@ -35,8 +36,6 @@ def make_state(geometry, keys, layers=None):
     state = State(geometry, cell_keys=keys, key_layers=layers)
     for key in keys:
         state[key][...] = rng.integers(0, 2, size=state[key].shape)
-    # AntibioticEffect reads the step number through this back-reference (ARCH-5)
-    state.sim = SimpleNamespace(step_no=0, max_steps=10)
     return state
 
 
