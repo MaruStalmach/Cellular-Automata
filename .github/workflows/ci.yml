@@ -15,16 +15,36 @@ jobs:
         with:
           enable-cache: true
 
-      # the parser imports the renderer, and PyOpenGL loads libGL on import
-      # (drop once rendering is optional: ARCH-3 in docs/code-quality-plan.md)
-      - name: Install OpenGL runtime
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgl1 libglu1-mesa
-
+      # headless on purpose: no OpenGL packages or libGL, so tests prove the core
+      # doesn't need them (ARCH-3 in docs/code-quality-plan.md)
       - name: Install dependencies
-        run: uv sync --locked --all-extras
+        run: uv sync --locked --extra research
 
       - name: Tests
         run: uv run pytest -q
+
+  render-import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      # PyOpenGL loads libGL on import; there is no display, so this only checks imports
+      - name: Install OpenGL runtime
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgl1
+
+      - name: Install dependencies
+        run: uv sync --locked --extra render
+
+      - name: Renderer imports
+        run: uv run python -c "import cellular_automata.rendering.Renderer, cellular_automata.rendering.Shader"
+
+      # the parser imports the renderer lazily; check that path finds the real class
+      - name: Parser finds the renderer
+        run: uv run python -c "from cellular_automata.config.Parser import renderer_class; assert renderer_class().__name__ == 'CARenderer'"
 
   lint:
     runs-on: ubuntu-latest

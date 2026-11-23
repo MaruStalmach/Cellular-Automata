@@ -15,17 +15,19 @@ name = "cellular-automata"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "glfw" },
     { name = "h5py" },
     { name = "matplotlib" },
     { name = "numpy" },
-    { name = "pyglm" },
-    { name = "pyopengl" },
-    { name = "pyopengl-accelerate" },
     { name = "scipy" },
 ]
 
 [package.optional-dependencies]
+render = [
+    { name = "glfw" },
+    { name = "pyglm" },
+    { name = "pyopengl" },
+    { name = "pyopengl-accelerate" },
+]
 research = [
     { name = "imageio" },
     { name = "pandas" },
@@ -40,19 +42,19 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "glfw", specifier = ">=2.10.0" },
+    { name = "glfw", marker = "extra == 'render'", specifier = ">=2.10.0" },
     { name = "h5py", specifier = ">=3.16.0" },
     { name = "imageio", marker = "extra == 'research'", specifier = ">=2.34" },
     { name = "matplotlib", specifier = ">=3.11.1" },
     { name = "numpy", specifier = ">=2.4.6" },
     { name = "pandas", marker = "extra == 'research'", specifier = ">=2.2" },
     { name = "psutil", marker = "extra == 'research'", specifier = ">=5.9" },
-    { name = "pyglm", specifier = ">=2.8.3" },
-    { name = "pyopengl", specifier = ">=3.1.10" },
-    { name = "pyopengl-accelerate", specifier = ">=3.1.10" },
+    { name = "pyglm", marker = "extra == 'render'", specifier = ">=2.8.3" },
+    { name = "pyopengl", marker = "extra == 'render'", specifier = ">=3.1.10" },
+    { name = "pyopengl-accelerate", marker = "extra == 'render'", specifier = ">=3.1.10" },
     { name = "scipy", specifier = ">=1.17.1" },
 ]
-provides-extras = ["research"]
+provides-extras = ["render", "research"]
 
 [package.metadata.requires-dev]
 dev = [
