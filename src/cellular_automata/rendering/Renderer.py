@@ -59,6 +59,7 @@ from OpenGL.GL import (
     glBlendFunc,
     glBlendFunci,
     glBufferData,
+    glBufferSubData,
     glCheckFramebufferStatus,
     glClear,
     glClearBufferfv,
@@ -503,16 +504,8 @@ class CARenderer:
         self.transShader.use_program()
         # ssbo
         self.ssbo = glGenBuffers(1)
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-        glBufferData(
-            GL_SHADER_STORAGE_BUFFER,
-            self.ca_state.nbytes,
-            self.ca_state.flatten(),
-            GL_DYNAMIC_COPY,
-        )
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
-        # unbind
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
+        self._ssbo_bytes = 0
+        self._upload(self.ca_state)
 
         window_width = glGetUniformLocation(self.transShader.program, "window_width")
         glUniform1f(window_width, self.width)
@@ -581,106 +574,59 @@ class CARenderer:
 
         Args:
             state_array: 3D numpy array where True/non-zero = cell alive
-                        Shape: (depth, height, width) or similar
+                        Shape: (depth, height, width) or similar; with several keys,
+                        the keys are stacked on a leading axis
         """
         self.ca_state = state_array.astype(np.float32)
-        self.transShader.use_program()
+        self._show()
+
+    def _grid_shape(self) -> list[int]:
+        """Spatial shape of the state (without the leading key axis)."""
+        return list(self.ca_state.shape[-3:])
+
+    def _upload(self, data: np.ndarray) -> None:
+        """Copy `data` into the state SSBO, reallocating it only when its size changes."""
+        data = np.ascontiguousarray(data, dtype=np.float32)
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-        glBufferData(
-            GL_SHADER_STORAGE_BUFFER,
-            self.ca_state.nbytes,
-            self.ca_state.flatten(),
-            GL_DYNAMIC_COPY,
-        )
+        if data.nbytes != self._ssbo_bytes:
+            glBufferData(GL_SHADER_STORAGE_BUFFER, data.nbytes, data, GL_DYNAMIC_COPY)
+            self._ssbo_bytes = data.nbytes
+        else:
+            glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, data.nbytes, data)
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
         # unbind
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
+
+    def _show(self) -> None:
+        """Upload what is visible (the whole grid, or one cross-section layer) and set
+        the shader's grid size, alpha and instance count to match."""
+        self.transShader.use_program()
+        grid_shape = self._grid_shape()
+        if self.cross_section:
+            self.layer = int(np.clip(self.layer, 0, grid_shape[self.cs_axis] - 1))
+            # keys are stacked on a leading axis when there are several
+            sel = [slice(None)] * self.ca_state.ndim
+            sel[self.ca_state.ndim - 3 + self.cs_axis] = self.layer
+            visible = self.ca_state[tuple(sel)]
+            grid_shape[self.cs_axis] = 1
+            alpha = self.c_aplha
+        else:
+            visible = self.ca_state
+            alpha = self.alpha
+
+        glUniform3f(
+            glGetUniformLocation(self.transShader.program, "grid_size"), *grid_shape
+        )
+        glUniform1f(glGetUniformLocation(self.transShader.program, "Ualpha"), alpha)
+        self._upload(visible)
+        self.num_cells = int(np.prod(grid_shape))
 
     def _toggle_cross_section(self):
-        ### flip cross_section flag
         self.cross_section = not self.cross_section
-
-        self.transShader.use_program()
-
-        # tmp variable in case num keys is greter than one cause then ca_state is 4d
-        tmp = 1 if self.num_keys > 1 else 0
-        grid_shape = list(self.ca_state.shape[tmp:])
-        ### send new grid size, new ssbo, new alpha uniforms
-        if self.cross_section:
-            grid_shape[self.cs_axis] = 1
-
-            grid_size = glGetUniformLocation(self.transShader.program, "grid_size")
-            glUniform3f(
-                grid_size,
-                grid_shape[0],
-                grid_shape[1],
-                grid_shape[2],
-            )
-
-            alpha = glGetUniformLocation(self.transShader.program, "Ualpha")
-            glUniform1f(alpha, self.c_aplha)
-
-            sel = [slice(None)] * (3 + tmp)
-            sel[self.cs_axis + tmp] = self.layer
-
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-            glBufferData(
-                GL_SHADER_STORAGE_BUFFER,
-                self.ca_state[tuple(sel)][..., None].nbytes,
-                self.ca_state[tuple(sel)][..., None].flatten(),
-                GL_DYNAMIC_COPY,
-            )
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
-            # unbind
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
-
-            self.num_cells = (
-                np.prod(self.ca_state.shape) // self.num_keys // self.ca_state.shape[-1]
-            )
-        else:
-            ###restore normal values
-            grid_size = glGetUniformLocation(self.transShader.program, "grid_size")
-            glUniform3f(
-                grid_size,
-                self.ca_state.shape[-3],
-                self.ca_state.shape[-2],
-                self.ca_state.shape[-1],
-            )
-
-            alpha = glGetUniformLocation(self.transShader.program, "Ualpha")
-            glUniform1f(alpha, self.alpha)
-
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-            glBufferData(
-                GL_SHADER_STORAGE_BUFFER,
-                self.ca_state.nbytes,
-                self.ca_state.flatten(),
-                GL_DYNAMIC_COPY,
-            )
-
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
-            # unbind
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
-
-            self.num_cells = np.prod(self.ca_state.shape) // self.num_keys
+        self._show()
 
     def _update_cs(self):
-
-        # tmp variable in case num keys is greter than one cause then ca_state is 4d
-        tmp = 1 if self.num_keys > 1 else 0
-        sel = [slice(None)] * (3 + tmp)
-        sel[self.cs_axis + tmp] = self.layer
-
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-        glBufferData(
-            GL_SHADER_STORAGE_BUFFER,
-            self.ca_state[tuple(sel)][..., None].nbytes,
-            self.ca_state[tuple(sel)][..., None].flatten(),
-            GL_DYNAMIC_COPY,
-        )
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
-        # unbind
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
+        self._show()
 
     def render(self):
 
@@ -787,13 +733,11 @@ class CARenderer:
                     self.j_press = False
                     if self.cross_section:
                         self.layer -= 1
-                        self.layer = np.clip(self.layer, 0, self.ca_state.shape[-1] - 1)
                         self._update_cs()
                 if self.l_press:
                     self.l_press = False
                     if self.cross_section:
                         self.layer += 1
-                        self.layer = np.clip(self.layer, 0, self.ca_state.shape[-1] - 1)
                         self._update_cs()
                 if self.x_press:
                     self.x_press = False
