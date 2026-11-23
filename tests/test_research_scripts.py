@@ -6,6 +6,10 @@ import shutil
 import sys
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "research" / "bioreactor" / "scripts"
 
@@ -62,3 +66,72 @@ def test_bayesian_optimization_seeds_every_trial_through_the_config(monkeypatch,
             pass
 
     assert [call.get("seed") for call in calls] == [bo.RANDOM_SEED, bo.RANDOM_SEED]
+
+
+# --- calc_rmse maps measurement times to frames through the step length (RES-2) ---
+
+
+def _old_calc_rmse(screening, relative_sim, relative_data):
+    """calc_rmse before RES-2: assumed 1 step = 30 min and one frame per step."""
+    time_idx = np.asarray(relative_data["time"].values * 2, dtype=int)
+    sim = relative_sim[:, time_idx]
+    total = 0.0
+    for i in range(len(relative_data)):
+        errors = []
+        for j, name in enumerate(screening.BACTERIA_KEYS):
+            name = "Rest" if name == "Other_bacteria" else name
+            errors.append((relative_data.iloc[i][name] - sim[j, i]) ** 2)
+        total += np.mean(errors)
+    return float(np.sqrt(total / len(relative_data)))
+
+
+def _random_sim(screening, n_frames, seed=0):
+    sim = np.random.default_rng(seed).random((len(screening.BACTERIA_KEYS), n_frames))
+    return sim / sim.sum(axis=0)
+
+
+def test_calc_rmse_matches_the_old_result_at_30_minute_steps(monkeypatch, tmp_path):
+    screening = _screening(monkeypatch, tmp_path)
+    monkeypatch.setattr(screening, "STUDY_DIR", REPO_ROOT / "research" / "bioreactor")
+    data = screening.get_real_data()
+    sim = _random_sim(screening, n_frames=1249)
+
+    new = screening.calc_rmse(sim, data, step_seconds=1800)
+
+    assert new == pytest.approx(_old_calc_rmse(screening, sim, data), rel=1e-12)
+
+
+def test_calc_rmse_follows_the_step_length_and_recorded_steps(monkeypatch, tmp_path):
+    screening = _screening(monkeypatch, tmp_path)
+    data = pd.DataFrame({key: [0.5, 0.25] for key in screening.DATA_COLUMNS.values()})
+    data["time"] = [1.0, 2.0]  # hours
+    sim = _random_sim(screening, n_frames=5)
+
+    # 30-minute steps, every second one recorded: frames are steps 0, 2, 4, 6, 8,
+    # so hour 1 (step 2) is frame 1 and hour 2 (step 4) is frame 2
+    every_other = screening.calc_rmse(sim, data, step_seconds=1800, recorded_steps=[0, 2, 4, 6, 8])
+    # one-hour steps, all recorded: hour 1 is frame 1 and hour 2 is frame 2 as well
+    hourly = screening.calc_rmse(sim, data, step_seconds=3600)
+    # 30-minute steps, all recorded: hours 1 and 2 are frames 2 and 4
+    half_hourly = screening.calc_rmse(sim, data, step_seconds=1800)
+
+    assert every_other == pytest.approx(hourly)
+    assert half_hourly == pytest.approx(screening.calc_rmse(sim[:, [0, 2, 4]], data, 3600))
+
+
+def test_calc_rmse_rejects_a_run_shorter_than_the_data(monkeypatch, tmp_path):
+    screening = _screening(monkeypatch, tmp_path)
+    data = pd.DataFrame({key: [1.0] for key in screening.DATA_COLUMNS.values()})
+    data["time"] = [10.0]
+
+    with pytest.raises(ValueError, match=r"no recorded frame for steps \[20\]"):
+        screening.calc_rmse(_random_sim(screening, n_frames=5), data, step_seconds=1800)
+
+
+def test_calc_rmse_rejects_times_between_steps(monkeypatch, tmp_path):
+    screening = _screening(monkeypatch, tmp_path)
+    data = pd.DataFrame({key: [1.0] for key in screening.DATA_COLUMNS.values()})
+    data["time"] = [0.25]
+
+    with pytest.raises(ValueError, match="not whole steps"):
+        screening.calc_rmse(_random_sim(screening, n_frames=5), data, step_seconds=1800)
