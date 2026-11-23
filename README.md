@@ -264,7 +264,7 @@ Set `sim.seed` to a non-negative integer to make a run repeatable: the same conf
 With [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv sync                      # library + dev tools (pytest, ruff); headless only
+uv sync                      # library + dev tools (pytest, ruff, mypy); headless only
 uv sync --extra render       # also install the OpenGL renderer (glfw, PyOpenGL, PyGLM)
 uv sync --extra research     # also install pandas, imageio, psutil for examples/research/tools
 uv sync --all-extras         # everything
@@ -331,7 +331,9 @@ python examples/generate_gif.py -f demo -k bacteria --duration 8  # writes outpu
 ## Running Tests
 
 ```bash
-uv run pytest        # or: python -m pytest
+uv run pytest                    # or: python -m pytest
+uv run ruff check .              # lint
+uv run --extra render mypy       # type check (CI runs all three)
 ```
 
 ## Authors

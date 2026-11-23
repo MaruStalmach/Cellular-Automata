@@ -165,3 +165,17 @@ def test_more_than_three_dimensions_raises(tmp_path: Path):
 
     with pytest.raises(ValueError, match="1 to 3 dimensions"):
         Parser.parse_json(path)
+
+
+@pytest.mark.parametrize("window_size", [[1200], [1200, 800, 3]])
+def test_window_size_must_be_width_and_height(tmp_path: Path, window_size):
+    path = _write_config(tmp_path, {"window_size": window_size})
+
+    with pytest.raises(ValueError, match=r"window_size must be \[width, height\]"):
+        Parser.parse_json(path)
+
+
+def test_window_size_is_passed_as_width_and_height(tmp_path: Path):
+    _, renderer = Parser.parse_json(_write_config(tmp_path, {"window_size": [1200, 800]}))
+
+    assert renderer.window_size == (1200, 800)

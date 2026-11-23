@@ -23,7 +23,7 @@ class Diffusion(Rule):
         a: float,
         p: float,
         target_key: str = "substrate",
-        biofilm_key: str = None,
+        biofilm_key: str | None = None,
         biofilm_disruption: float = 0.8
     ):
         super().__init__(geometry, time_step)
@@ -113,7 +113,7 @@ class Diffusion(Rule):
             if ax not in state.geometry.periodic_dims:
                 forward_layer = -1 * ax + 2  # moving towards +ax
                 backward_layer = (forward_layer + 3) % 6  # moving towards -ax
-                sel = [slice(None)] * 4
+                sel: list[slice | int] = [slice(None)] * 4
                 sel[ax] = -1
                 self.rolls[tuple(sel)][self.rolls[tuple(sel)] == forward_layer] = backward_layer
                 sel[ax] = 0
@@ -145,11 +145,10 @@ class Diffusion(Rule):
             buffer[...] = layer
             layer.fill(0)
 
-            source_slices = [slice(None)] * layer.ndim
-            target_slices = [slice(None)] * layer.ndim
-            if periodic:
-                edge_target = [slice(None)] * layer.ndim
-                edge_source = [slice(None)] * layer.ndim
+            source_slices: list[slice | int] = [slice(None)] * layer.ndim
+            target_slices: list[slice | int] = [slice(None)] * layer.ndim
+            edge_target: list[slice | int] = [slice(None)] * layer.ndim
+            edge_source: list[slice | int] = [slice(None)] * layer.ndim
             if shift > 0:
                 source_slices[axis] = slice(None, -shift)
                 target_slices[axis] = slice(shift, None)

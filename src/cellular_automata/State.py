@@ -45,8 +45,8 @@ class State:
         key_dtypes: Optional[dict[str, np.dtype | type]] = None,
         key_layers: Optional[Iterable] = None,
         random: bool = False,
-        random_func: Optional[Iterable[Callable[..., object]]] = None,
-        random_args: Optional[Iterable[dict]] = None,
+        random_func: Optional[Callable[..., object] | Iterable[Callable[..., object] | None]] = None,
+        random_args: Optional[Iterable[dict | None]] = None,
         dtype: np.dtype | type = np.uint8,
         rng: Optional[np.random.Generator] = None,
     ) -> None:
@@ -60,10 +60,9 @@ class State:
         self.dtype = dtype
 
         # per-key dtypes
-        if key_dtypes is not None:
-            self.key_dtypes: dict[str, np.dtype | type] = key_dtypes.copy()
-        else:
-            self.key_dtypes: dict[str, np.dtype | type] = {}
+        self.key_dtypes: dict[str, np.dtype | type] = (
+            dict(key_dtypes) if key_dtypes is not None else {}
+        )
 
         if key_layers is not None:
             self.key_layers = list(key_layers)
@@ -95,18 +94,17 @@ class State:
                         0, 2, size=grid_dims + (self.key_layers[i],)
                     ).astype(kd)
             else:
-                if callable(random_func):
-                    random_func = [random_func] * len(self.keys)
-
-                rand_args = random_args or [{} for _ in range(len(self.keys))]
+                funcs: list[Callable[..., object] | None] = (
+                    [random_func] * len(self.keys) if callable(random_func) else list(random_func)
+                )
+                rand_args = list(random_args or [{} for _ in range(len(self.keys))])
                 for i, key in enumerate(self.keys):
                     kd = self.key_dtypes.get(key, self.dtype)
                     expected_shape = grid_dims + (self.key_layers[i],)
-                    if random_func[i] is None:
+                    func = funcs[i]
+                    if func is None:
                         continue
-                    generated = np.asarray(
-                        random_func[i](size=expected_shape, **(rand_args[i] or {}))
-                    )
+                    generated = np.asarray(func(size=expected_shape, **(rand_args[i] or {})))
                     if generated.shape != expected_shape:
                         generated = np.broadcast_to(generated, expected_shape)
                     _check_fits(key, generated, np.dtype(kd))
@@ -128,7 +126,7 @@ class State:
         if not self.keys:
             return np.empty(self.geometry.size + (0,), dtype=self.dtype)
         # had to change this since introducing the concept of layers per key - it should still return similiar output
-        list_to_stack = []
+        list_to_stack: list[np.ndarray] = []
         for k in self.keys:
             arr = self._data[k].copy()
             # keys with multiple layers will have dim + 1 dimensions
@@ -151,9 +149,8 @@ class State:
             layers = self.key_layers[key_cnt]
             # stack multiple layer keys
             if layers > 1:
-                self._data[key] = np.stack(
-                    arr[..., arr_cnt : arr_cnt + layers], axis=-1
-                ).astype(kd)
+                # the layers are already the last axis; np.stack would iterate the first
+                self._data[key] = arr[..., arr_cnt : arr_cnt + layers].astype(kd)
             else:
                 self._data[key] = arr[..., arr_cnt].astype(kd).copy()
             arr_cnt += layers

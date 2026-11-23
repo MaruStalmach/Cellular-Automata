@@ -134,11 +134,11 @@ def build_simulation(data: dict) -> CellularAutomaton:
 
     state_keys = data["state_keys"]
 
-    cell_keys = []
-    key_dtypes = {}
-    key_layers = []
-    random_func = []
-    random_args = []
+    cell_keys: list[str] = []
+    key_dtypes: dict[str, np.dtype | type] = {}
+    key_layers: list[int] = []
+    random_func: list[Callable | None] = []
+    random_args: list[dict | None] = []
 
     for sk in state_keys:
         cell_keys.append(sk["name"])
@@ -238,7 +238,9 @@ def build_renderer(
     renderer_data = data["renderer"]
     # TODO:multiple key rendering, will have to adjust renderer code also
     key = renderer_data.get("key", ca_sim.state.keys[0])
-    window_size = renderer_data.get("window_size", ())
+    window_size = tuple(renderer_data.get("window_size", ()))
+    if len(window_size) not in (0, 2):
+        raise ValueError(f"renderer window_size must be [width, height], got {list(window_size)}")
     callback_data = renderer_data.get("callback", None)
 
     if callback_data is None:
@@ -252,6 +254,9 @@ def build_renderer(
     else:
         keys_amt = 1
 
-    return renderer(
-        callback(False), *window_size, update_callback=callback, keys_to_render=keys_amt
-    )
+    if window_size:
+        width, height = window_size
+        return renderer(
+            callback(False), width, height, update_callback=callback, keys_to_render=keys_amt
+        )
+    return renderer(callback(False), update_callback=callback, keys_to_render=keys_amt)
