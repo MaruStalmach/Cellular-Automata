@@ -6,6 +6,9 @@ from cellular_automata.Rule import Rule, StepContext
 
 @register_rule
 class Utilization(Rule):
+    # consuming cells handled per batch, to bound memory on large grids
+    CHUNK = 65536
+
     def __init__(
         self,
         geometry,
@@ -27,31 +30,6 @@ class Utilization(Rule):
         self.Sb = Sb
 
         self.mask = np.zeros(shape=geometry.size, dtype=bool)
-
-    def _substrate_candidates_for_cell(
-        self,
-        substrate_grid: np.ndarray,
-        coords: tuple[int, ...],
-    ) -> list[tuple[tuple[int, ...], int]]:
-        candidates: list[tuple[tuple[int, ...], int]] = []
-        for neighbour_coords in self.geometry.neighbours_of(coords):
-            if substrate_grid.ndim == self.geometry.ndim + 1:
-                active_layers = np.flatnonzero(substrate_grid[neighbour_coords] > 0)
-                for layer in active_layers:
-                    candidates.append((neighbour_coords, int(layer)))
-            elif substrate_grid[neighbour_coords] > 0:
-                candidates.append((neighbour_coords, 0))
-
-        return candidates
-
-    def _consume_substrate_particle(
-        self, substrate_grid: np.ndarray, coords: tuple[int, ...]
-    ) -> None:
-        if substrate_grid.ndim == self.geometry.ndim + 1:
-            substrate_grid[coords] = 0
-            return
-
-        substrate_grid[coords[:-1]] = 0
 
     def apply_state(self, state, ctx: StepContext | None = None):
         # get data from simulation
@@ -84,21 +62,32 @@ class Utilization(Rule):
         consumption_draw = self.rng.random(state.shape)
         consumed_cells = self.mask & (consumption_draw < utilization_prob)
 
-        # each consuming cell picks one substrate particle next to it; a particle picked by
-        # several cells is eaten once, and the others go without this time
-        eaten: set[tuple[int, ...]] = set()
-        for coords in map(tuple, np.argwhere(consumed_cells)):
-            candidates = self._substrate_candidates_for_cell(substrate_grid, coords)
-            if not candidates:
-                continue
+        # each consuming cell picks one substrate particle next to it, uniformly over the
+        # particles (a neighbour with 3 particles is 3 times as likely); a particle picked
+        # by several cells is eaten once, and the others go without this time
+        layered = substrate_grid.ndim == self.geometry.ndim + 1
+        has_particle = substrate_grid > 0
+        if not layered:
+            has_particle = has_particle[..., None]
+        layers = has_particle.shape[-1]
 
-            target_cell, target_layer = candidates[
-                int(self.rng.integers(len(candidates)))
-            ]
-            eaten.add(target_cell + (target_layer,))
+        consumers = np.argwhere(consumed_cells)
+        eaten = []
+        for start in range(0, len(consumers), self.CHUNK):
+            chunk = consumers[start:start + self.CHUNK]
+            neighbours, valid = self._neighbour_coords(chunk)
+            slots = has_particle[tuple(np.moveaxis(neighbours, -1, 0))] & valid[..., None]
+            column, has_target = self._pick_uniform(slots.reshape(len(chunk), -1))
+            offset_index, layer = np.divmod(column[has_target], layers)
+            cells = neighbours[np.flatnonzero(has_target), offset_index]
+            eaten.append(np.column_stack([cells, layer]))
 
-        for substrate_coords in eaten:
-            self._consume_substrate_particle(substrate_grid, substrate_coords)
+        if eaten:
+            eaten_slots = np.concatenate(eaten)
+            if layered:
+                substrate_grid[tuple(eaten_slots.T)] = 0
+            else:
+                substrate_grid[tuple(eaten_slots[:, :-1].T)] = 0
 
         state[self.sub_key] = substrate_grid
 
