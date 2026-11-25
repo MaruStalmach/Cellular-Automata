@@ -639,6 +639,8 @@ A second full review of the code at [#65](https://github.com/MaruStalmach/Cellul
 <a id="bug-12"></a>
 ### BUG-12 - `BiofilmDetachment` re-attaches the cells it just detached (High ✅)
 
+> **Status:** In [#66](https://github.com/MaruStalmach/Cellular-Automata/pull/66) (open, draft).
+
 - **Where:** `rules/BiofilmDetachment.py:48-87`
 - **What:** the attachment pass runs after detachment and reads the biofilm grid that detachment has already changed. A cell that has just detached, and has biofilm below it, is an attachment candidate straight away, so it re-attaches and its `floating_bacteria` flag is cleared. With the default `attachment_probability=1.0`, a cell stays detached only if the cell below it detached in the same call, so `detachment_rate` has almost no effect.
 - **Reproduced:** 4×4×4 grid, biofilm and species A at y=0..1, `detachment_rate=1`, `scaling=1`, `species_keys=["A"]`. After one call, all 16 cells at y=1 were still biofilm and none were floating.
