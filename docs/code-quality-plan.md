@@ -2,7 +2,7 @@
 
 Branch: `refactor/code-quality-plan` (based on `refactor/repo-structure`, PR #33)
 Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch (reviewed at `e3d7313`).
-Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`; statuses updated through #65 on 2026-11-23)
+Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`; statuses updated through #65 on 2026-11-23; full re-review of the code at #65 and of the open PRs on 2026-11-25, with new findings in [section 10](#10-review-of-2026-11-25))
 Status: updated 2026-11-18 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36, #37 and #47 (landing them on `main`) are merged. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Bugs that need no modelling decision (BUG-7, BUG-8, BUG-9 and parts of ARCH-5) are in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48), stacked on #46. ARCH-6 part 1 (rules declare and validate their keys) is in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49), stacked on #48. ARCH-3 part 2 (shader errors raise) is in [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50), stacked on #49. ARCH-5 (initialiser contract, step context) is in [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51), stacked on #50. #39-#43 are on `main`; #44-#51 were merged into their parent branches instead of `main`, and [#52](https://github.com/MaruStalmach/Cellular-Automata/pull/52) lands them. Behaviour tests for six rules (TEST-2) are in [#53](https://github.com/MaruStalmach/Cellular-Automata/pull/53), stacked on #52. Dead code, duplication and `record_every` (BUG-10) are in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54), stacked on #53. Logging and error propagation (HYG-4) are in [#55](https://github.com/MaruStalmach/Cellular-Automata/pull/55), stacked on #54. `Rule` as an abstract base class (BUG-4) is in [#56](https://github.com/MaruStalmach/Cellular-Automata/pull/56), stacked on #55. Diffusion buffers (PERF-2) are in [#57](https://github.com/MaruStalmach/Cellular-Automata/pull/57), stacked on #56. The redundant `Utilization` claim ordering is removed in [#58](https://github.com/MaruStalmach/Cellular-Automata/pull/58), stacked on #57. The screening step-to-time mapping (RES-2) is in [#59](https://github.com/MaruStalmach/Cellular-Automata/pull/59), stacked on #58. Shared bioreactor script helpers are in [#60](https://github.com/MaruStalmach/Cellular-Automata/pull/60), stacked on #59. Vectorised growth and utilization (PERF-1) are in [#61](https://github.com/MaruStalmach/Cellular-Automata/pull/61), stacked on #60. Renderer uploads and cross-section fixes are in [#62](https://github.com/MaruStalmach/Cellular-Automata/pull/62), stacked on #61. Command-line options for the bioreactor scripts are in [#63](https://github.com/MaruStalmach/Cellular-Automata/pull/63), stacked on #62. `mypy` in CI is in [#64](https://github.com/MaruStalmach/Cellular-Automata/pull/64), stacked on #63. `ruff format` for the whole repo is in [#65](https://github.com/MaruStalmach/Cellular-Automata/pull/65), stacked on #64. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
 
 ---
@@ -38,6 +38,8 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 | 8 | [TEST-1](#test-1) | High ✅ | ~~4 tests fail because they are out of sync with the code (2 need a modelling decision)~~ | Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (2 tests xfail until D1) |
 | 9 | [HYG-1](#hyg-1) | High | No `LICENSE`, so nobody else may legally use the code | Open (needs D6) |
 | 10 | [ARCH-3](#arch-3) | High | ~~Rendering (OpenGL/GLFW) is a hard dependency of the config parser, and the renderer calls `quit()`~~ | Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36), [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50) |
+
+**New on 2026-11-25** (details in [section 10](#10-review-of-2026-11-25)): [BUG-12](#bug-12), where `BiofilmDetachment` re-attaches the cells it just detached (High ✅), and [RES-5](#res-5), where the BO surrogate isn't scaled to the scores, so BO behaves like random search (High ✅).
 
 ---
 
@@ -236,7 +238,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="repro-1"></a>
 ### REPRO-1 - No seeding; global `np.random` everywhere (Critical)
 
-> **Status:** Mostly fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): `sim.seed` in the config, a seeded generator per rule (`rule.rng`) and for the initial state, and every built-in rule draws from `self.rng`. The same seed gives identical tracker output (tiny-grid test). Unseeded runs report and save the seed they used, and the bioreactor scripts seed through the config. [#63](https://github.com/MaruStalmach/Cellular-Automata/pull/63): BO's `--seeds N` scores each point by the mean over N seeds (default 1); the GP noise term (`1e-6`) is still a modelling choice. Still open: `SeedSequence.spawn` for the gut MC search (step 21).
+> **Status:** Mostly fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): `sim.seed` in the config, a seeded generator per rule (`rule.rng`) and for the initial state, and every built-in rule draws from `self.rng`. The same seed gives identical tracker output (tiny-grid test). Unseeded runs report and save the seed they used. BO seeds its simulations through the config. **Correction (2026-11-25):** `screening.py` does not: `--seed` only seeds the perturbations, so each trial's simulation is unseeded and its saved config can't reproduce its RMSE ([RES-6](#res-6)). [#63](https://github.com/MaruStalmach/Cellular-Automata/pull/63): BO's `--seeds N` scores each point by the mean over N seeds (default 1); the GP noise term (`1e-6`) is still a modelling choice. Still open: `SeedSequence.spawn` for the gut MC search (step 21).
 
 - **Where:** every rule (including the new `SpontaneousSpawn`, which uses `np.random.shuffle` / `np.random.random`); `State.py:69`; `gut-experiments: experiments/data_preparation.py:264`
 - **What:**
@@ -401,7 +403,7 @@ All four fail identically on `main` and `bioreactor`; this branch didn't cause t
 <a id="test-2"></a>
 ### TEST-2 - Large coverage gaps (High)
 
-> **Status:** Partly fixed. [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): every config builds, every example imports and builds, parser renderer and neighbourhood handling, the README config. [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37): the scheduler, `BioreactorBiofilmDetachment`, the tracker key/path handling, and regression tests for BUG-1, BUG-2 and BUG-6. [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39)/[#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): seeded runs are reproducible and every rule draws from its own generator. [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `AntibioticEffect`, the Diffusion refill, `GameOfLife3D` keys, parser and `State` regressions. [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49): every rule's declared keys equal the keys it uses, and argument validation. [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50): shader errors with fake OpenGL. [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51): the initialiser contract and step context. [#53](https://github.com/MaruStalmach/Cellular-Automata/pull/53): behaviour and invariant tests for `BacteriaGrowth`, `Utilization`, `Diffusion`, `GutDrift`, `BiofilmDetachment` and `BacteriaDecay` (particles accounted for, no double occupancy, nothing created from nothing, forced outcomes at probabilities 0 and 1), checked by breaking the code by hand. Still open: `SpeciesInteraction` (after D1), `CreateBiofilm` beyond its current test, and `Inoculation`.
+> **Status:** Partly fixed. [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): every config builds, every example imports and builds, parser renderer and neighbourhood handling, the README config. [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37): the scheduler, `BioreactorBiofilmDetachment`, the tracker key/path handling, and regression tests for BUG-1, BUG-2 and BUG-6. [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39)/[#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): seeded runs are reproducible and every rule draws from its own generator. [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `AntibioticEffect`, the Diffusion refill, `GameOfLife3D` keys, parser and `State` regressions. [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49): every rule's declared keys equal the keys it uses, and argument validation. [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50): shader errors with fake OpenGL. [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51): the initialiser contract and step context. [#53](https://github.com/MaruStalmach/Cellular-Automata/pull/53): behaviour and invariant tests for `BacteriaGrowth`, `Utilization`, `Diffusion`, `GutDrift`, `BiofilmDetachment` and `BacteriaDecay` (particles accounted for, no double occupancy, nothing created from nothing, forced outcomes at probabilities 0 and 1), checked by breaking the code by hand. Still open: `SpeciesInteraction` (after D1), `CreateBiofilm` beyond its current test, and `Inoculation`. The gaps found on 2026-11-25 are listed in [TEST-4](#test-4).
 
 There are 28 test functions. **No tests** exist for:
 - rules: `Diffusion`, `Utilization`, `BacteriaDecay`, `AntibioticEffect`, `GutDrift`, `BiofilmDetachment`, `BioreactorBiofilmDetachment`, `Inoculation`
@@ -437,7 +439,7 @@ There are 28 test functions. **No tests** exist for:
 | Item | Where | Action | Status |
 |---|---|---|---|
 | `_shift_spatial`, a copy of `Rule._shift_for_offset` | `Utilization.py:29-57` | Delete (unused) | Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) |
-| `_neighbour_candidates` copied in 2 rules (unused in `Utilization`) | `BacteriaGrowth.py:29-46`, `Utilization.py:59-76` | Move to `Geometry.neighbours_of(coords)` or vectorise ([PERF-1](#perf-1)) | Fixed in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54): `Geometry.neighbours_of`, also used by `Utilization`'s substrate search |
+| `_neighbour_candidates` copied in 2 rules (unused in `Utilization`) | `BacteriaGrowth.py:29-46`, `Utilization.py:59-76` | Move to `Geometry.neighbours_of(coords)` or vectorise ([PERF-1](#perf-1)) | Fixed in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54) as `Geometry.neighbours_of`. Since [#61](https://github.com/MaruStalmach/Cellular-Automata/pull/61) no library code calls it (only tests do); see [HYG-6](#hyg-6) |
 | `_get_neighbour_counts`, a copy of `neighborhood_count` | `SpeciesInteraction.py:43-50` | Use the base method | Fixed in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54) |
 | Pointless `apply` override | `Utilization.py:118-119` | Delete | Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) |
 | `_restore_deterministic`, commented-out wall block, alternative collision code | `Diffusion.py:119-121`, `:162-177`, `:200-212` | Delete | Fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48) |
@@ -474,7 +476,7 @@ There are 28 test functions. **No tests** exist for:
 
 - ~~`Diffusion.py:96` re-allocates `self.rolls` every call (defeating the preallocated buffer), and `rolls` / `layers` are `float64` where `uint8` would do. That is 6 × grid × 8 bytes, twice.~~ Fixed in [#57](https://github.com/MaruStalmach/Cellular-Automata/pull/57): in-place rotation and `uint8` buffers, bit-identical output; on a 60³ grid 110 → 77 ms per call and 22.5 → 2.8 MB.
 - ~~`Renderer.set_ca_state` calls `glBufferData` with a fresh `flatten()` copy every frame; use `glBufferSubData` on a persistent buffer.~~ Fixed in [#62](https://github.com/MaruStalmach/Cellular-Automata/pull/62). Correction: uploads happen on key presses (step, cross-section), not every frame. The same PR fixes four cross-section bugs: stepping uploaded the whole grid, X left `grid_size` stale, and the instance count and layer limit used the last axis instead of the cut one.
-- `StateTracker` keeps every frame in RAM (see [BUG-10](#bug-10)); `record_every` ([#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54)) reduces this.
+- `StateTracker` keeps every frame in RAM (see [BUG-10](#bug-10)); `record_every` ([#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54)) reduces this. The bioreactor scoring runs don't use it yet: about 1.2 GB per run, see [RES-6](#res-6).
 
 ---
 
@@ -526,7 +528,7 @@ The commit message "first iteration of tests" is misleading: that commit adds no
 
 - ~~`screening.py:62-63`: `calc_rmse` assumes **1 step = 30 min** (`time * 2`), silently tied to `time_step: 1800` in the configs. It raises `IndexError` if a run is shorter than the data. Derive this from the config's `dt` and check the length.~~ Fixed in [#59](https://github.com/MaruStalmach/Cellular-Automata/pull/59): the step length comes from `ca_sim.max_dt` and frames from `tracker.steps`, with clear errors; same RMSE as before on the bioreactor data.
 - ~~`screening.py:70-71`: renames `Other_bacteria` to `"Rest"` inline. Put the mapping in one place, next to the data.~~ `DATA_COLUMNS` in `screening.py` since [#59](https://github.com/MaruStalmach/Cellular-Automata/pull/59); a per-dataset mapping file is still part of step 22.
-- `bayesian_optimization.py`: the hand-rolled GP/EI has a fixed length scale of 0.35, no hyperparameter fitting, and assumes RMSE is noiseless ([REPRO-1](#repro-1)). That's acceptable for exploration, but document it or use `scikit-optimize` / `optuna`.
+- `bayesian_optimization.py`: the hand-rolled GP/EI has a fixed length scale of 0.35, no hyperparameter fitting, and assumes RMSE is noiseless ([REPRO-1](#repro-1)). That's acceptable for exploration, but document it or use `scikit-optimize` / `optuna`. **2026-11-25:** it is worse than that. The scores aren't standardised, so the GP favours points far from the data. See [RES-5](#res-5).
 - ~~`bayesian_optimization.py:16` and `screening.py:10`: both define `STUDY_DIR`. Put shared helpers in `research/bioreactor/scripts/common.py`.~~ Fixed in [#60](https://github.com/MaruStalmach/Cellular-Automata/pull/60) as `bioreactor_common.py` (`common` could shadow another module on `sys.path`).
 - ~~Constants (`SAMPLE_RUNS`, `BIO_NUMBER`, `SELECTED_PAIRS`, bounds) are hard-coded. Move them to CLI arguments or an experiment config.~~ Command-line options in [#63](https://github.com/MaruStalmach/Cellular-Automata/pull/63), defaulting to the old values; `SELECTED_PAIRS` stays in the script (an experiment config would fit it, with [ARCH-4](#arch-4)).
 - ~~`analyze_screening.py` read `screening_result.csv`, but `screening.py` writes `screening_results.csv`, so the two scripts didn't connect. `screening.py` also crashed if `results/` didn't exist.~~ Fixed in #33: `analyze_screening.py` takes `--input`/`--output` and defaults to what `screening.py` writes, and both scripts create `results/`.
@@ -630,6 +632,141 @@ This is a breaking import change, so do it once, together with ARCH-1.
 
 ---
 
+## 10. Review of 2026-11-25
+
+A second full review of the code at [#65](https://github.com/MaruStalmach/Cellular-Automata/pull/65) (`chore/ruff-format`) and of the open PRs. At that commit: 440 tests pass, 2 xfail, and `ruff check`, `ruff format --check` and `mypy` are clean. ✅ means the finding was reproduced on a tiny grid (4×4×4 or smaller) or with a small snippet; no full simulations were run. Items already open above (D1-D10, ARCH-2, ARCH-4, BUG-3) are not repeated.
+
+<a id="bug-12"></a>
+### BUG-12 - `BiofilmDetachment` re-attaches the cells it just detached (High ✅)
+
+> **Status:** In [#66](https://github.com/MaruStalmach/Cellular-Automata/pull/66) (open, draft).
+
+- **Where:** `rules/BiofilmDetachment.py:48-87`
+- **What:** the attachment pass runs after detachment and reads the biofilm grid that detachment has already changed. A cell that has just detached, and has biofilm below it, is an attachment candidate straight away, so it re-attaches and its `floating_bacteria` flag is cleared. With the default `attachment_probability=1.0`, a cell stays detached only if the cell below it detached in the same call, so `detachment_rate` has almost no effect.
+- **Reproduced:** 4×4×4 grid, biofilm and species A at y=0..1, `detachment_rate=1`, `scaling=1`, `species_keys=["A"]`. After one call, all 16 cells at y=1 were still biofilm and none were floating.
+- **Who is affected:** no config on this branch uses the rule. The gut workflow on `gut-experiments` does (`data_preparation.build_rules` always passes `species_keys` and never sets `attachment_probability`), so gut results produced with it are affected. Fix this before the gut port ([step 19](#phase-4---bring-in-gut-experiments)).
+- **Why tests missed it:** the detachment tests run without `species_keys`, and the attachment test uses `detachment_rate=0`.
+- **Fix:** compute `below_is_biofilm` and the candidates from the biofilm grid as it was before detachment, and leave out cells that detached in this call (or run attachment first). Add a test with `rate=1`, `species_keys` set and full columns that asserts the y≥1 cells end up floating. Whether a detached cell may re-attach in the same step is a modelling choice, so record it in the docstring.
+
+<a id="bug-13"></a>
+### BUG-13 - `StateTracker` takes a frame index where it says step number (Medium ✅)
+
+- **Where:** `tracking/StateTracker.py` (`frame(step_no)`, `to_state(step_no)`), `tracking/playback.py` (`TrackedStatePlayback(step_no=..., stride=...)`)
+- **What:** since `record_every` ([#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54)), recorded frames are no longer one per step, but these functions still index the list of frames. With `steps=[0, 5, 10, 12]`, `to_state(step_no=2)` returns step 10. The replay `stride` also counts frames.
+- **Fix:** either rename the parameter to `frame_idx` and document it, or look the step up with `self.steps.index(step_no)` and raise if it wasn't recorded. Test with `record_every > 1` (the current test records only steps 0 and 1, where the two are the same).
+
+<a id="bug-14"></a>
+### BUG-14 - Multi-layer species or biofilm keys crash `GutDrift` and `Diffusion` (Medium ✅)
+
+- **Where:** `rules/GutDrift.py:61`, `rules/Diffusion.py:86-88`
+- **What:**
+  - `GutDrift`: `state[sp].astype(bool) & ~floating_mask` combines a 4D array with a 3D one, which raises `ValueError: operands could not be broadcast`, although lines 69-76 are written to handle layered species.
+  - `Diffusion`: `bio_mask[..., None]` on a layered biofilm key gives a 5D array, which also raises `ValueError`.
+- **Fix:** use `self._cell_mask(...)` in both places. Add fixtures with layered species and biofilm keys (today only substrate is layered in the tests).
+
+<a id="bug-15"></a>
+### BUG-15 - Values wrap silently when written to integer keys (Medium ✅)
+
+- **Where:** `State.py:96-100` (`_check_fits`), `State.py` `__setitem__`
+- **What:**
+  - `_check_fits` returns early for float results, so a float initialiser on a `uint8` key wraps (`-1.0 → 255`, `300.7 → 44`). The README and [ARCH-5](#arch-5) say overflow raises.
+  - `state[key] = arr` casts with `target[...] = arr`, so an `int64` value of 256 written to a `uint8` key becomes 0.
+- **Fix:** for floats, check for NaN and for the target range before casting. In `__setitem__`, use `np.copyto(..., casting="same_kind")` plus a range check, or document that writes wrap.
+
+<a id="bug-16"></a>
+### BUG-16 - Inputs that are never validated (Medium ✅)
+
+Each of these fails late, with a confusing error, or silently does the wrong thing:
+
+| Where | Input | What happens | Fix |
+|---|---|---|---|
+| `Rule.__init__` | `time_step <= 0` or not finite | `0` → bare `ZeroDivisionError` in the scheduler; negative → silently one run per step | Raise `ValueError` unless finite and > 0 |
+| `Sim.py` `check_required_keys` | State or rule built for a different grid size | A 2×2×2 state is accepted by a 4×4×4 sim | Compare `state.geometry.size` and each `rule.geometry.size` with the sim's |
+| `Geometry.__init__` | `periodicity` letters, `len(axes) != len(size)` | `periodicity="true"` silently gives a closed box | Reject unknown letters and length mismatches |
+| `Diffusion.__init__` | `p > 0.25` (or a bad `_calc_a_prim` result) | Negative probabilities; `rng.choice` raises on the first step | Check every entry is ≥ 0 and the sum is 1 |
+| `Inoculation.__init__` | A box partly or fully outside the grid | `location=[-1,0,0]` writes nothing; a box past the edge is clipped | Raise unless the box fits the grid |
+| `Callback.__init__` | A list of keys with no callback block in the config | Accepted, then `TypeError` on the first frame | Reject non-`str` keys or build a `MultiKeyCallback` |
+| `screening.get_real_data` | `--bio-number` with no data | `IndexError: arrays used as indices must be of integer type` in `calc_rmse` | Raise `ValueError` when no rows match |
+
+<a id="bug-17"></a>
+### BUG-17 - Tracker save/load edge cases (Low ✅)
+
+- `Sim.step()` returns `-1` immediately when `max_steps=0` and never calls `save_tracker()`, so no file is written.
+- `StateTracker.save()` adds a timestamp when no name is given, but `load()` with no name looks for `tracked_simulation.npz`, which gives `FileNotFoundError`. Drop the default in `load()`.
+- `StateTracker.load()` rebuilds the geometry without its neighbourhood (always Moore). Save the neighbourhood name in the metadata.
+
+<a id="bug-18"></a>
+### BUG-18 - GIFs are written with 0 ms frames (Low ✅)
+
+- **Where:** `examples/generate_gif.py:88-96`
+- **What:** the frame duration is computed in seconds (`1 / fps`), but the imageio pillow GIF writer expects milliseconds, so `duration=0.1` is stored as 0 ms and the GIF plays as fast as the viewer allows.
+- **Fix:** multiply by 1000; add a test that reads back the frame duration.
+
+<a id="res-5"></a>
+### RES-5 - Bayesian optimisation behaves like random search (High ✅)
+
+- **Where:** `research/bioreactor/scripts/bayesian_optimization.py:98-113` (GP/EI), `:252-253` (initial points), `:155-170` (configs), `:231-249` (resume)
+- **What:**
+  - **Unscaled surrogate:** the GP assumes the scores have mean 0 and variance 1, with a fixed length scale of 0.35 in 10 dimensions, but RMSE sits around 0.2. Far from the data the predicted RMSE is about 0, so expected improvement is highest at the points furthest from the data. With 15 observations scoring 0.20-0.25, EI next to the best point was 0.036 and at a far corner 0.507. `--bo-runs` therefore buys about the same as random sampling.
+  - **Initial points:** every Sobol point comes from a new sampler (`seed=args.seed + len(results)`), so each is a single uniform random point and the even coverage that Sobol is used for is lost.
+  - **Configs:** all seeds of one trial write to the same `bo_{run_no}.json`, so the `config_path` in the CSV holds only the last seed's config.
+  - **Resume:** resuming never compares `--seeds`, `--config`, `--bio-number` or `--radius` with the existing CSV, so one GP can mix 1-seed and 3-seed means, or fits to different bioreactors.
+- **Fix:** standardise the scores before fitting and scale back afterwards, and fit the length scale and the noise. Alternatively, replace the hand-rolled GP with `optuna` or `scikit-optimize` (this also covers the [RES-2](#res-2---bioreactor-scripts-medium) bullet). Use one Sobol sampler and draw from it with `fast_forward`. Put the seed in the config name. Store the run settings next to the CSV and refuse to resume when they differ. Results from earlier BO runs are already treated as invalid, so no comparison is needed.
+
+<a id="res-6"></a>
+### RES-6 - Screening runs: reproducibility, memory and generated files (Medium)
+
+- **No simulation seed** (`screening.py:214`): `run_screening_trial` calls `save_screening_config` without `seed=`, so each simulation draws a new seed. Re-running a saved `config_path` gives a different RMSE, and simulation noise is mixed into the ranking that `analyze_screening.py` makes. Fix: pass one fixed seed for all trials (as BO does) or derive one per trial from `rng`.
+- **Memory** ✅ (`screening.py:116-121`, `configs/bo.json`): the tracker records all 14 keys at all 1249 steps (about 593 MB, then `np.stack` copies it, so about 1.2 GB peak) in order to use 12 keys at 25 steps. Fix: set the tracker `keys` to `BACTERIA_KEYS` and `record_every: 2` (every measurement time is a multiple of 2 steps), or count abundances during the run.
+- **Generated configs in git** ✅: `research/bioreactor/configs/screening_runs/` holds two tracked generated files (`bo_9.json`, `full18_8.json`) and isn't git-ignored, so every script run dirties the tree. Fix: ignore the folder and `git rm --cached` the two files. If they are worth keeping, they belong on the `results` branch ([HYG-5](#hyg-5)).
+
+<a id="hyg-6"></a>
+### HYG-6 - Unused code and dependencies (Low ✅)
+
+- `Geometry.neighbours_of` (`Geometry.py:37`) and `Geometry.generate_neighbourhood_matrix` (`:76`) are used only by tests since [#61](https://github.com/MaruStalmach/Cellular-Automata/pull/61). `generate_neighbourhood_matrix` is the only reason `Geometry` imports `scipy`. Delete them with their tests, or mark them as public API on purpose.
+- `pyproject.toml`: nothing imports `h5py`, and only `tools/profiling/monitoring_sim.py` uses `matplotlib`. Drop `h5py` and move `matplotlib` to the `research` extra.
+
+<a id="hyg-7"></a>
+### HYG-7 - `Renderer.py` does too much (Low)
+
+- **Where:** `rendering/Renderer.py` (745 lines)
+- **What:**
+  - One class holds about 200 lines of cube vertex data, the transparency framebuffer setup, uniforms, key handling and the main loop.
+  - `__init__` repeats the `grid_size`/`Ualpha` setup that `_show()` now does.
+  - The C/J/L/X/G keys only work when an `update_callback` is set; every current caller sets one, so nothing breaks today.
+- **Fix:**
+  - Move the vertex data to a module constant.
+  - Move the framebuffer setup into a helper.
+  - Make the slice and grid-shape computation in `_show` a pure function so it can be tested without OpenGL.
+  - Call `_show()` from `__init__`.
+  - Handle the keys whether or not there is a callback.
+
+<a id="test-4"></a>
+### TEST-4 - Test gaps found on 2026-11-25 (Medium)
+
+- `BiofilmDetachment` with detachment and `species_keys` together ([BUG-12](#bug-12)).
+- Layered species and biofilm keys in the rule fixtures ([BUG-14](#bug-14)).
+- `StateTracker` lookups with `record_every > 1` ([BUG-13](#bug-13)).
+- The scheduler's order, not only its counts: `test_rules_run_max_dt_over_dt_times_per_step` checks `(1, 5)`, but running all of one rule's runs in a block would still pass. Record the order and assert `[slow, fast, fast, fast, fast, fast]`.
+- The neighbour-count asymmetry (single-layer keys are summed by value, multi-layer keys count occupied layers) is pinned by `test_neighborhood_count_does_not_overflow_on_single_layer_values` but not documented. Add a docstring to `Rule._layer_count`.
+- The suite gives 106 warnings, mostly from `build_simulation` without a seed. Seed the fixtures or filter that warning, so real warnings aren't buried.
+- The statistical fairness tests use small seed sets; a mild bias (for example 55/45) could pass. Tighten the tolerances, or document how much bias they can detect.
+
+<a id="proc-1"></a>
+### PROC-1 - Open pull requests and the stack (Medium)
+
+- **#52 is behind `main`:** it lacks `7127cd5` (`.gitattributes`). It merges cleanly, but bring `main` in before landing.
+- **Plan commits in every PR:** each of #53-#65 ends with a commit to this file, on the same lines (header, summary table, steps, PR tree). Amending a lower PR means a conflicting rebase up to 13 PRs deep, and the plan already marks unmerged PRs as fixed. From now on, update the plan once per landing, in its own PR (like this one), and mark unmerged fixes as "in #N (open)".
+- **#65 must land with a merge commit** all the way to `main`. A squash or rebase changes the hash in `.git-blame-ignore-revs`, and it stops working.
+- **Labels:** #62's commit is tagged PERF-2 but is mostly cross-section fixes; HYG-4 is used by both #55 and #64; #54 and #64 each bundle a second topic. All of this is disclosed in the descriptions, so nothing needs to change; keep it to one topic per PR from now on.
+- **#42 needs changes:**
+  - Its title says "update code", but it adds only two raw gut TSVs (about 1.6 MB, no code).
+  - The files sit in `research/gut/` instead of `research/gut/data/`.
+  - There's no note of where the data comes from or its licence (D6, [RES-4](#res-4)), and no LFS rule.
+  - Either rename and move it, add a data README and link RES-4, or close it and bring the data in with step 19.
+
+---
+
 ## Decisions needed before fixing
 
 These are modelling or product choices, not code questions.
@@ -674,6 +811,21 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 11. **[BUG-4](#bug-4) / [BUG-5](#bug-5):** remove the cell-wise path; abstract `apply_state`; warn when the 500 cap is hit; validate `dt` ratios. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37).*
 12. **[BUG-10](#bug-10):** tracker records only the selected keys; `record_every`; save on interrupt; symmetric paths. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37); `record_every` in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54). Step done.*
 
+### Phase 2b - Fixes from the 2026-11-25 review
+
+These are numbered after the existing steps so earlier references stay valid. None of them needs a decision, and they can be done before Phase 3. Steps 27-29 come first: they change results or block the gut work.
+
+27. **[BUG-12](#bug-12):** `BiofilmDetachment` attachment reads the biofilm as it was before detachment, plus a test with species and rate 1. Do this before step 19. *Done when:* the new test fails on the old code and passes.
+28. **[RES-5](#res-5):** standardise the GP scores and fit the length scale and noise (or switch to `optuna`/`scikit-optimize`), use one Sobol sampler, put the seed in the config name, and check settings on resume. *Done when:* a test on a toy function shows EI is highest near the best observed point.
+29. **[RES-6](#res-6):** seeded screening trials, a tracker limited to the bacteria keys with `record_every: 2`, and `configs/screening_runs/` git-ignored.
+30. **[BUG-14](#bug-14) + [TEST-4](#test-4) layered-key fixtures:** `_cell_mask` in `GutDrift` and `Diffusion`; rule fixtures with layered species and biofilm keys.
+31. **[BUG-13](#bug-13) + [BUG-17](#bug-17):** tracker step lookup, saving when `max_steps=0`, the `load()` default, and the neighbourhood in the metadata.
+32. **[BUG-15](#bug-15) + [BUG-16](#bug-16):** range checks on writes and initialisers; input validation in `Rule`, `Sim`, `Geometry`, `Diffusion`, `Inoculation`, `Callback` and `get_real_data`. One PR per class if it gets large.
+33. **Small items:** [BUG-18](#bug-18) GIF duration, [HYG-6](#hyg-6) unused code and dependencies, and the rest of [TEST-4](#test-4) (scheduler order, seeded fixtures, the `_layer_count` docstring).
+34. **[HYG-7](#hyg-7):** split `Renderer.py`. Low priority; best done with the [HYG-3](#hyg-3---naming--layout-medium) rename.
+
+Process for these PRs ([PROC-1](#proc-1)): one topic per PR, and update this plan once per landing rather than in every PR.
+
 ### Phase 3 - Architecture for extensibility (unblocks gut work)
 
 13. **[ARCH-1](#arch-1): registry.** `@register_rule` plus registries for neighbourhoods, trackers, callbacks and init functions; remove wildcard imports and `globals()` lookups. *Done when:* adding a rule needs only a new file, and `ruff` F403/F405 is zero. *Status: rules and neighbourhoods in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), so a new rule needs only a new file; trackers, callbacks, initialisers and dtypes in [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43). F403/F405 is zero after [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44). Step done.*
@@ -714,7 +866,7 @@ main
              └─ fix/repro-seeding (PR #39: REPRO-1 part 1)
                  └─ fix/repro-rules-rng (PR #40: REPRO-1 part 2, TEST-3)
                      └─ refactor/rule-registry (PR #41: ARCH-1 part 1)
-                         ├─ feat/phase-4-gut-experiments (PR #42: gut datasets, merges on its own)
+                         ├─ feat/phase-4-gut-experiments (PR #42: gut datasets, merges on its own; needs changes, see PROC-1)
                          └─ refactor/config-registries (PR #43: ARCH-1 part 2)
                              └─ refactor/explicit-gl-imports (PR #44: ARCH-1 part 3)
                                  └─ refactor/optional-rendering (PR #46: ARCH-3 part 1)
@@ -735,6 +887,8 @@ main
                                                                                              └─ feat/script-cli (PR #63: script options, BO seeds)
                                                                                                  └─ chore/mypy (PR #64: mypy in CI)
                                                                                                      └─ chore/ruff-format (PR #65: ruff format, enforced)
+                                                                                                         ├─ docs/plan-review-2026-11-25 (this review)
+                                                                                                         │   └─ (Phase 2b fixes, steps 27-34)
                                                                                                          └─ refactor/phase-3-geometry
                                                                                                              └─ (Phase 4 code)
                                                                                                                  └─ refactor/phase-5-naming-perf
