@@ -38,55 +38,45 @@ class BiofilmDetachment(Rule):
     def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
         biofilm_grid = state["biofilm"]
         floating_bact_grid = state["floating_bacteria"]
+        biofilm_at_start = biofilm_grid.astype(bool)
 
-        active_coords = np.nonzero(biofilm_grid)
-        num_active = len(active_coords[0])
-
-        if num_active == 0:
-            return state
-
-        if num_active > 0:
-            active_y_indices = active_coords[1]
-            active_probs = self.y_probabilities[active_y_indices]
-
-            randoms = self.rng.random(num_active)
-            detach_mask = randoms < active_probs
-
-            detached_coords = (
-                active_coords[0][detach_mask],
-                active_coords[1][detach_mask],
-                active_coords[2][detach_mask],
-            )
-
-            biofilm_grid[detached_coords] = False
-            floating_bact_grid[detached_coords] = True
+        detached = self._detach(biofilm_at_start)
+        biofilm_grid[detached] = False
+        floating_bact_grid[detached] = True
 
         if self.species_keys and self.attachment_probability > 0.0:
-            biofilm_bool = biofilm_grid.astype(bool)
-
-            occupied = np.zeros(self.geometry.size, dtype=bool)
-            for sp in self.species_keys:
-                occupied |= state[sp].astype(bool)
-
-            below_is_biofilm = np.zeros_like(biofilm_bool)
-            below_is_biofilm[:, 1:, :] = biofilm_bool[:, :-1, :]
-
-            attach_candidates = occupied & ~biofilm_bool & below_is_biofilm
-
-            cand_coords = np.nonzero(attach_candidates)
-            num_cand = len(cand_coords[0])
-
-            if num_cand > 0:
-                if self.attachment_probability >= 1.0:
-                    attach_mask = np.ones(num_cand, dtype=bool)
-                else:
-                    attach_mask = self.rng.random(num_cand) < self.attachment_probability
-
-                attached_coords = tuple(c[attach_mask] for c in cand_coords)
-                biofilm_grid[attached_coords] = True
-                floating_bact_grid[attached_coords] = False
+            attached = self._attach(state, biofilm_at_start, detached)
+            biofilm_grid[attached] = True
+            floating_bact_grid[attached] = False
 
         state["biofilm"] = biofilm_grid
         state["floating_bacteria"] = floating_bact_grid
 
         return state
+
+    def _detach(self, biofilm: np.ndarray) -> np.ndarray:
+        detached = np.zeros_like(biofilm)
+        active_coords = np.nonzero(biofilm)
+        active_probs = self.y_probabilities[active_coords[self.y_axis]]
+        detach_mask = self.rng.random(len(active_probs)) < active_probs
+        detached[tuple(c[detach_mask] for c in active_coords)] = True
+        return detached
+
+    def _attach(
+        self, state: State, biofilm_at_start: np.ndarray, detached: np.ndarray
+    ) -> np.ndarray:
+        # attachment sees the biofilm as it was at the start of the step, so a cell that
+        # detached in this call can't re-attach until the next one
+        occupied = np.zeros(self.geometry.size, dtype=bool)
+        for sp in self.species_keys:
+            occupied |= self._cell_mask(state[sp])
+
+        below_is_biofilm = np.zeros_like(biofilm_at_start)
+        below_is_biofilm[:, 1:, :] = biofilm_at_start[:, :-1, :]
+
+        candidates = occupied & ~biofilm_at_start & ~detached & below_is_biofilm
+        if self.attachment_probability < 1.0:
+            cand_coords = np.nonzero(candidates)
+            rejected = self.rng.random(len(cand_coords[0])) >= self.attachment_probability
+            candidates[tuple(c[rejected] for c in cand_coords)] = False
+        return candidates

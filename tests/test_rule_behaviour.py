@@ -410,6 +410,54 @@ def test_certain_attachment_attaches_a_bacterium_on_top_of_biofilm():
     assert state["biofilm"][2, 3, 2] == 0 and state["floating_bacteria"][2, 3, 2] == 1
 
 
+def test_cells_detached_this_step_do_not_reattach():
+    geometry = _geometry()
+    state = _detachment_state(geometry)
+    state["biofilm"][:, :2, :] = 1
+    state["A"][:, :2, :] = 1
+    huge_rate_detaches_every_cell_above_the_wall = 1e6
+    rule = _seeded(
+        BiofilmDetachment(
+            geometry,
+            time_step=1,
+            detachment_rate=huge_rate_detaches_every_cell_above_the_wall,
+            scaling=1.0,
+            species_keys=["A"],
+            attachment_probability=1.0,
+        ),
+        0,
+    )
+
+    state = rule.apply_state(state)
+
+    assert state["biofilm"][:, 0, :].all()
+    assert not state["biofilm"][:, 1, :].any()
+    assert state["floating_bacteria"][:, 1, :].all()
+
+
+def test_floating_bacterium_on_biofilm_that_stays_still_attaches():
+    geometry = _geometry()
+    state = _detachment_state(geometry)
+    state["biofilm"][2, 0, 2] = 1  # the wall layer never detaches
+    state["A"][2, 1, 2] = 1
+    state["floating_bacteria"][2, 1, 2] = 1
+    rule = _seeded(
+        BiofilmDetachment(
+            geometry,
+            time_step=1,
+            detachment_rate=1e6,
+            scaling=1.0,
+            species_keys=["A"],
+            attachment_probability=1.0,
+        ),
+        0,
+    )
+
+    state = rule.apply_state(state)
+
+    assert state["biofilm"][2, 1, 2] == 1 and state["floating_bacteria"][2, 1, 2] == 0
+
+
 # --- BacteriaDecay -----------------------------------------------------------------
 
 
