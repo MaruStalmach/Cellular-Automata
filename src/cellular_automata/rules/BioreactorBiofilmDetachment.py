@@ -1,7 +1,7 @@
 import numpy as np
 
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext, require_3d
 from cellular_automata.State import State
 
 
@@ -14,15 +14,13 @@ class BioreactorBiofilmDetachment(Rule):
         self, geometry, time_step: float, biofilm_key : str, detachment_rate: float, scaling: float
     ):
         super().__init__(geometry, time_step)
+        require_3d(type(self).__name__, geometry)
         self.detachment_probability = detachment_rate * scaling
 
         self.target_key = biofilm_key
         self.required_keys.append(self.target_key)
 
-    def apply_state(self, state: State) -> State:
-
-        assert self.geometry.ndim == 3  # only works for 3D
-
+    def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
         biofilm_grid = state[self.target_key].copy()
         total_layers = biofilm_grid.shape[-1]
 

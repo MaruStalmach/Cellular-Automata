@@ -2,7 +2,7 @@ import numpy as np
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 
 
@@ -13,10 +13,11 @@ class BacteriaDecay(Rule):
     ):
         super().__init__(geometry, time_step)
         self.target_keys = target_keys
+        self.required_keys.extend(target_keys)
         self.decay_probability = decay_probability
         self.buff = np.zeros(geometry.size, dtype=np.float32)
 
-    def apply_state(self, state: State):
+    def apply_state(self, state: State, ctx: StepContext | None = None):
 
         for key in self.target_keys:
             grid = state[key].copy()

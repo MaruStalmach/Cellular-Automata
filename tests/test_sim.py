@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from cellular_automata.Geometry import Geometry
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.rules.BacteriaGrowth import BacteriaGrowth
 from cellular_automata.rules.GameOfLife3D import GameOfLife3D
 from cellular_automata.rules.Utilization import Utilization
@@ -230,7 +230,7 @@ class _CountingRule(Rule):
         super().__init__(geometry, time_step)
         self.calls = 0
 
-    def apply_state(self, state):
+    def apply_state(self, state, ctx=None):
         self.calls += 1
         return state
 
@@ -289,3 +289,25 @@ def test_float_time_step_ratio_is_not_floored_down():
     ca.step()
 
     assert fast.calls == 100
+
+
+class _ContextRule(Rule):
+    def __init__(self, geometry, time_step):
+        super().__init__(geometry, time_step)
+        self.contexts = []
+
+    def apply_state(self, state, ctx=None):
+        self.contexts.append(ctx)
+        return state
+
+
+def test_rules_get_the_step_context_instead_of_a_state_back_reference():
+    g = _geometry()
+    rule = _ContextRule(g, time_step=1)
+    ca = CellularAutomaton(g, [rule], state=State(g, cell_keys=["x"]), max_steps=5)
+
+    ca.step()
+    ca.step()
+
+    assert rule.contexts == [StepContext(0, 5), StepContext(1, 5)]
+    assert not hasattr(ca.state, "sim")

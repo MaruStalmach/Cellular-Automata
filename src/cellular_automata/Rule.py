@@ -1,7 +1,23 @@
+from dataclasses import dataclass
+
 import numpy as np
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.State import State
+
+
+@dataclass(frozen=True)
+class StepContext:
+    """What a rule may know about the run it is part of, passed to apply_state."""
+
+    step_no: int
+    max_steps: int
+
+
+def require_3d(rule_name: str, geometry: Geometry) -> None:
+    """Raise ValueError unless `geometry` is 3D (for rules written for 3D grids only)."""
+    if geometry.ndim != 3:
+        raise ValueError(f"{rule_name} only works on 3D grids, got {geometry.ndim}D")
 
 
 class Rule:
@@ -69,6 +85,10 @@ class Rule:
             )
         return count
 
-    def apply_state(self, state: State) -> State:
-        """Apply the rule to the whole state and return it. Every rule must implement this."""
+    def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
+        """Apply the rule to the whole state and return it. Every rule must implement this.
+
+        `ctx` describes the current step; CellularAutomaton always passes it, and rules
+        that don't need it may be called without it (e.g. in tests).
+        """
         raise NotImplementedError()

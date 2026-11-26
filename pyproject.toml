@@ -9,17 +9,20 @@ description = "Configurable 3D cellular automaton for simulating microbial commu
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "glfw>=2.10.0",
     "h5py>=3.16.0",
     "matplotlib>=3.11.1",
     "numpy>=2.4.6",
-    "pyglm>=2.8.3",
-    "pyopengl>=3.1.10",
-    "pyopengl-accelerate>=3.1.10",
     "scipy>=1.17.1",
 ]
 
 [project.optional-dependencies]
+# interactive OpenGL renderer (needs OpenGL >= 4.3); headless runs don't need it
+render = [
+    "glfw>=2.10.0",
+    "pyglm>=2.8.3",
+    "pyopengl>=3.1.10",
+    "pyopengl-accelerate>=3.1.10",
+]
 # extra packages used by examples/, research/ and tools/ (not needed by the library itself)
 research = [
     "imageio>=2.34",
@@ -51,7 +54,3 @@ extend-exclude = ["*.ipynb"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B"]
 ignore = ["E501"]
-
-[tool.ruff.lint.per-file-ignores]
-# wildcard imports go away with the rule registry (ARCH-1 in docs/code-quality-plan.md)
-"src/cellular_automata/rendering/*.py" = ["F403", "F405"]

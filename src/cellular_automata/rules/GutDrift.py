@@ -1,7 +1,7 @@
 import numpy as np
 
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext, require_3d
 from cellular_automata.State import State
 
 
@@ -18,14 +18,13 @@ class GutDrift(Rule):
         target_key: str = "floating_bacteria",
     ):
         super().__init__(geometry, time_step)
+        require_3d(type(self).__name__, geometry)
         self.drift_speed = drift_speed
         self.species_keys = species_keys
         self.target_key = target_key # target key for the layer to be drifted
 
         self.required_keys.append(target_key)
         self.required_keys.extend(species_keys)
-
-        assert self.geometry.ndim == 3  # only works for 3D
 
     def _shift_z(self, grid: np.ndarray) -> np.ndarray:
         axis = self.geometry.ndim - 1
@@ -51,7 +50,7 @@ class GutDrift(Rule):
 
 
 
-    def apply_state(self, state: State) -> State:
+    def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
         if self.drift_speed == 0:
             return state
 

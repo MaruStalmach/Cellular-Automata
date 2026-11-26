@@ -2,8 +2,8 @@
 
 Branch: `refactor/code-quality-plan` (based on `refactor/repo-structure`, PR #33)
 Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch (reviewed at `e3d7313`).
-Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`)
-Status: updated 2026-11-06 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). Both PRs are open, stacked on #33. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in progress: [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41) and [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43), stacked on #40. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
+Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`; statuses updated through #51 on 2026-11-18)
+Status: updated 2026-11-18 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36, #37 and #47 (landing them on `main`) are merged. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Bugs that need no modelling decision (BUG-7, BUG-8, BUG-9 and parts of ARCH-5) are in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48), stacked on #46. ARCH-6 part 1 (rules declare and validate their keys) is in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49), stacked on #48. ARCH-3 part 2 (shader errors raise) is in [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50), stacked on #49. ARCH-5 (initialiser contract, step context) is in [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51), stacked on #50. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
 
 ---
 
@@ -32,12 +32,12 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 | 2 | [BROKEN-2](#broken-2) | Critical ✅ | ~~3 of 8 example configs are missing the required `time_step` and fail to parse~~ | Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) |
 | 3 | [BUG-1](#bug-1) | Critical ✅ | ~~`int8` overflow in `Rule.neighborhood_count`: dense substrate gives **negative** neighbour counts~~ | Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) |
 | 4 | [REPRO-1](#repro-1) | Critical | No RNG seeding anywhere in the library, so runs can't be reproduced; parallel MC search likely reuses identical random streams | Mostly fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39), [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) |
-| 5 | [ARCH-1](#arch-1) | High | Rules are looked up through `globals()` + wildcard imports, which has no validation and hides typos | Partly fixed in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) |
-| 6 | [ARCH-2](#arch-2) | High | State keys (`"biofilm"`, `"floating_bacteria"`, `"alive"`) and the "wall" axis are hard-coded inside rules, and gut and bioreactor rules disagree on which axis is the wall | Open (needs D2) |
+| 5 | [ARCH-1](#arch-1) | High | ~~Rules are looked up through `globals()` + wildcard imports, which has no validation and hides typos~~ | Fixed in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43), [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44) |
+| 6 | [ARCH-2](#arch-2) | High | State keys (`"biofilm"`, `"floating_bacteria"`) and the "wall" axis are hard-coded inside rules, and gut and bioreactor rules disagree on which axis is the wall | Open (needs D2); `"alive"` fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48) |
 | 7 | [ARCH-4](#arch-4) / [RES-1](#res-1) | High | Two incompatible config formats (Parser vs `gut-experiments`), and the README documents the wrong one. `gut-experiments` no longer merges cleanly (12 conflicts) | Open |
 | 8 | [TEST-1](#test-1) | High ✅ | ~~4 tests fail because they are out of sync with the code (2 need a modelling decision)~~ | Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (2 tests xfail until D1) |
 | 9 | [HYG-1](#hyg-1) | High | No `LICENSE`, so nobody else may legally use the code | Open (needs D6) |
-| 10 | [ARCH-3](#arch-3) | High | Rendering (OpenGL/GLFW) is a hard dependency of the config parser, and the renderer calls `quit()` | Partly fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) |
+| 10 | [ARCH-3](#arch-3) | High | ~~Rendering (OpenGL/GLFW) is a hard dependency of the config parser, and the renderer calls `quit()`~~ | Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36), [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50) |
 
 ---
 
@@ -167,6 +167,8 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="bug-7"></a>
 ### BUG-7 - Diffusion mass "restoration" is non-physical and can crash (Medium)
 
+> **Status:** Partly fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): the refill places only as many particles as there are empty slots (the rest stay pending) instead of raising, and the dead code is deleted. **Open, needs D4:** the boundary/source model itself, and the hard-coded `RESTORE_THRESHOLD`.
+
 - **Where:** `rules/Diffusion.py:186-195`, `:214-231`
 - **What:**
   - Colliding particles are deleted. Once 100 are lost (`RESTORE_THRESHOLD`, hard-coded), 100 new ones are placed at random in the top z-layer. Mass is conserved only on average, and the source location is fixed to "max z" regardless of the experiment.
@@ -177,6 +179,8 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 
 <a id="bug-8"></a>
 ### BUG-8 - `AntibioticEffect` has hidden constants and odd maths (Medium)
+
+> **Status:** Mostly fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): float64 probabilities, the time scale is `time_step / reference_time_step` (not floored), the wall and neighbourhood constants come from the geometry, `effectiveness` scales the probability explicitly, the dosing end is no longer stored lazily, and arguments are validated. float16 had stored `base_prob` 1.041e-6 as 1.013e-6, so 13 bioreactor configs now kill ~2.7% more per dosed step. Still open: the wall axis comes from [ARCH-2](#arch-2) (D2), and the `dose_start`/`dose_end` rename. `required_keys` is declared in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49).
 
 - **Where:** `rules/AntibioticEffect.py:6`, `:18`, `:32-36`, `:40-41`
 - **What:**
@@ -193,7 +197,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="bug-9"></a>
 ### BUG-9 - Parser config handling hides errors (Medium)
 
-> **Status:** Partly fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): an unknown `neighbourhood` raises `ValueError` listing the known names. Still open: hard-coded `axes`, required `sim.render`, `RuntimeError` without a message, `random: true` without `random_func`.
+> **Status:** Mostly fixed. [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): an unknown `neighbourhood` raises `ValueError` listing the known names. [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `sim.render` defaults to false, `"random"` must be a boolean and come with `"random_func"`, and the axes follow `sim.size`, so 1D and 2D configs build (rules written for 3D still need 3D). The bare `RuntimeError` is already gone. Still open: up-front validation of the whole config ([ARCH-4](#arch-4)).
 
 - **Where:** `config/Parser.py:73-77`, `:80`, `:99`, `:132-138`, `:165`
 - **What:**
@@ -249,12 +253,13 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 ## 4. Architecture & design
 
 <a id="arch-1"></a>
-### ARCH-1 - Rule lookup through `globals()` and wildcard imports (High)
+### ~~ARCH-1 - Rule lookup through `globals()` and wildcard imports (High)~~
 
-> **Status:** Mostly fixed in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41) and [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43).
+> **Status:** Fixed in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44).
 > - [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41): `cellular_automata.registry` with `@register_rule` / `@register_neighbourhood`. The `rules` and `neighbourhoods` packages import every module in them, so a new rule needs only a new file. Unknown names raise `ValueError` listing the known ones.
 > - [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43): trackers, callbacks and `random_func` initialisers go through registries, and `dtype` through `parse_dtype` ([BUG-11](#bug-11)). The parser has no wildcard imports or `globals()` lookups left.
-> - Still open: explicit OpenGL imports in `rendering/` (part 3), after which `ruff` F403/F405 is zero.
+> - [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44): explicit OpenGL imports in `rendering/`; no per-file ruff ignores remain and `ruff` F403/F405 is zero.
+> - Trackers, callbacks and initialisers still have to live in, or be imported by, a module the parser imports; "only a new file" covers rules and neighbourhoods.
 
 - **Where:** `config/Parser.py:6-30` (21 `import *`; `BacteriaDecay` imported twice), `:34-45`, `:73`, `:132`, `:150`, `:181`
 - **What:**
@@ -281,7 +286,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 | `GutDrift` | - | flow along **z** (last axis, `:29`) |
 | `AntibioticEffect` | - | wall at **z = 0** (`:32`) |
 | `SpeciesInteraction` | clears `"biofilm"`, `"floating_bacteria"` on death (`:113`) | - |
-| `GameOfLife3D` | ignores `target_key`, uses `"alive"` (`:41-47`) | - |
+| `GameOfLife3D` | ~~ignores `target_key`, uses `"alive"`~~ fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48) | - |
 | `util.random_seeds` | 3D only, seeds at z = 0 | **z** |
 | `gut-experiments` `seed_biofilm` | - | **z** |
 
@@ -290,9 +295,12 @@ Gut and bioreactor code don't agree on where the wall is: y in `BiofilmDetachmen
 - **Fix:** add `wall_axis` and `wall_side` (and optionally `flow_axis`) to `Geometry`, set in the config. Every rule that needs a wall reads them from there. All key names become constructor parameters with today's names as defaults, so existing configs keep working.
 
 <a id="arch-3"></a>
-### ARCH-3 - Simulation core is coupled to rendering (High)
+### ~~ARCH-3 - Simulation core is coupled to rendering (High)~~
 
-> **Status:** Partly fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): `quit()` is gone from the renderer, a failed window creation raises, and the examples import the renderer lazily. Still open: the parser split, the optional `render` extra, and shader errors. CI installs `libgl1` until then.
+> **Status:** Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36), [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46) and [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50).
+> - [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): `quit()` is gone from the renderer, a failed window creation raises, and the examples import the renderer lazily.
+> - [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46): `parse_json` is split into `build_simulation` and `build_renderer`, which imports the renderer lazily and explains how to install it. glfw, PyOpenGL and PyGLM are in an optional `render` extra. CI runs the tests without OpenGL or libGL and checks renderer imports in a separate job. The README documents the OpenGL 4.3 requirement.
+> - [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50): shader compile and link errors (and unreadable shader files) raise `ShaderError` naming the stage, file and log, instead of being printed; the renderer terminates GLFW before re-raising.
 
 - **Where:** `config/Parser.py:29` imports `CARenderer` (`glfw`, `OpenGL`) at module level; `Renderer.py:113-115`, `:736-737`; `Shader.py:86-107`
 - **What:**
@@ -324,6 +332,11 @@ Gut and bioreactor code don't agree on where the wall is: y in `BiofilmDetachmen
 <a id="arch-5"></a>
 ### ARCH-5 - `State` API is fragile (Medium)
 
+> **Status:** Mostly fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48) and [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51).
+> - [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `key_layers` accepts any iterable and must match the keys, and `copy()` is tested (its TODO is gone).
+> - [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51): every `random_func` is called as `func(size=shape, **random_args)` and cast to the key's dtype (no `TypeError` guessing; integer overflow raises); rules get a `StepContext` as `apply_state(state, ctx)` instead of the `state.sim` back-reference; `_pad_data` is deleted. The `== None` was already gone.
+> - Still open: the `data` property copies on every access (performance), and the `ndim` branching for single- vs multi-layer keys.
+
 - **Where:** `State.py`
 - **What:**
   - `:47-48`: `key_layers.copy()` fails for tuples.
@@ -343,6 +356,15 @@ Gut and bioreactor code don't agree on where the wall is: y in `BiofilmDetachmen
 
 <a id="arch-6"></a>
 ### ARCH-6 - Rule interface is inconsistent (Medium)
+
+> **Status:** Partly fixed in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49):
+> - Every rule declares `required_keys`; a test runs all 13 built-in rules on a key-recording state and checks declared == used.
+> - `CellularAutomaton` raises `ValueError` naming each rule and missing key (the always-printed "soft error" is gone).
+> - `ValueError`/`TypeError` instead of `assert` in the library, with a test that keeps asserts out.
+> - 3D-only rules reject other grids when built.
+> - `Inoculation` takes a `layer` and works on any number of axes.
+>
+> Still open: consistent parameter names (breaks configs, so with [ARCH-4](#arch-4)/D5), docstrings with units, the magic `27` in `Utilization`, and an `Inoculation` interval or dosing window (`time_step` can't space it out: every rule runs at least once per step).
 
 - **What:**
   - Parameter names vary for the same concept: `bacteria_keys` / `species_keys` / `target_keys` / `b_keys`, and `target_key` / `biofilm_key` / `sub_key`.
@@ -378,7 +400,7 @@ All four fail identically on `main` and `bioreactor`; this branch didn't cause t
 <a id="test-2"></a>
 ### TEST-2 - Large coverage gaps (High)
 
-> **Status:** Partly fixed. [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): every config builds, every example imports and builds, parser renderer and neighbourhood handling, the README config. [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37): the scheduler, `BioreactorBiofilmDetachment`, the tracker key/path handling, and regression tests for BUG-1, BUG-2 and BUG-6. Still open: tests for the other rules and seeded invariant tests (after REPRO-1).
+> **Status:** Partly fixed. [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): every config builds, every example imports and builds, parser renderer and neighbourhood handling, the README config. [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37): the scheduler, `BioreactorBiofilmDetachment`, the tracker key/path handling, and regression tests for BUG-1, BUG-2 and BUG-6. [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39)/[#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): seeded runs are reproducible and every rule draws from its own generator. [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `AntibioticEffect`, the Diffusion refill, `GameOfLife3D` keys, parser and `State` regressions. [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49): every rule's declared keys equal the keys it uses, and argument validation. [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50): shader errors with fake OpenGL. [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51): the initialiser contract and step context. Still open: behavioural tests for `BacteriaGrowth`, `Utilization`, `Diffusion` (beyond the refill), `GutDrift` and `BiofilmDetachment`, and invariant tests (e.g. particle counts, no double occupancy).
 
 There are 28 test functions. **No tests** exist for:
 - rules: `Diffusion`, `Utilization`, `BacteriaDecay`, `AntibioticEffect`, `GutDrift`, `BiofilmDetachment`, `BioreactorBiofilmDetachment`, `Inoculation`
@@ -417,8 +439,8 @@ There are 28 test functions. **No tests** exist for:
 | `_neighbour_candidates` copied in 2 rules (unused in `Utilization`) | `BacteriaGrowth.py:29-46`, `Utilization.py:59-76` | Move to `Geometry.neighbours_of(coords)` or vectorise ([PERF-1](#perf-1)) | Open |
 | `_get_neighbour_counts`, a copy of `neighborhood_count` | `SpeciesInteraction.py:43-50` | Use the base method | Open |
 | Pointless `apply` override | `Utilization.py:118-119` | Delete | Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) |
-| `_restore_deterministic`, commented-out wall block, alternative collision code | `Diffusion.py:119-121`, `:162-177`, `:200-212` | Delete | Open |
-| Unused `self.buff` | `BacteriaDecay.py:14,21-23`, `AntibioticEffect.py:20` | Delete | Open |
+| `_restore_deterministic`, commented-out wall block, alternative collision code | `Diffusion.py:119-121`, `:162-177`, `:200-212` | Delete | Fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48) |
+| Unused `self.buff` | `BacteriaDecay.py:14,21-23`, `AntibioticEffect.py:20` | Delete | `AntibioticEffect` fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48); `BacteriaDecay` open |
 | `_apply_cellwise`, `Rule.apply` | `Sim.py:71-98`, `Rule.py:63-64` | See [BUG-4](#bug-4) | Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) |
 | Unused `shifted` parameter | `Geometry.py:42,46` | Remove | Open |
 | `_parse_keys` / `_frame_for_keys` duplicated | `examples/Replay_sim.py`, `examples/generate_gif.py` | Move into `tracking/playback.py` | Open |
@@ -646,11 +668,11 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 
 ### Phase 3 - Architecture for extensibility (unblocks gut work)
 
-13. **[ARCH-1](#arch-1): registry.** `@register_rule` plus registries for neighbourhoods, trackers, callbacks and init functions; remove wildcard imports and `globals()` lookups. *Done when:* adding a rule needs only a new file, and `ruff` F403/F405 is zero. *Status: rules and neighbourhoods in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), so a new rule needs only a new file; trackers, callbacks, initialisers and dtypes in [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43). F403/F405 left only in `rendering/` (part 3).*
-14. **[ARCH-3](#arch-3): decouple rendering.** `build_simulation` vs `build_renderer`; lazy GL import; `render` optional extra. *Done when:* `pytest` passes in an environment without `glfw`/`pyopengl`.
+13. **[ARCH-1](#arch-1): registry.** `@register_rule` plus registries for neighbourhoods, trackers, callbacks and init functions; remove wildcard imports and `globals()` lookups. *Done when:* adding a rule needs only a new file, and `ruff` F403/F405 is zero. *Status: rules and neighbourhoods in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), so a new rule needs only a new file; trackers, callbacks, initialisers and dtypes in [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43). F403/F405 is zero after [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44). Step done.*
+14. **[ARCH-3](#arch-3): decouple rendering.** `build_simulation` vs `build_renderer`; lazy GL import; `render` optional extra. *Done when:* `pytest` passes in an environment without `glfw`/`pyopengl`. *Status: done in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46); CI runs the tests that way. Shader errors raise since [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50). Step done.*
 15. **[ARCH-2](#arch-2): geometry wall/flow axis + parameterised keys** (after **D2**). Update `BiofilmDetachment`, `BioreactorBiofilmDetachment`, `GutDrift`, `AntibioticEffect`, `SpeciesInteraction`, `GameOfLife3D`, `random_seeds`. Then decide **D3**.
-16. **[ARCH-6](#arch-6): rule interface cleanup.** Consistent parameter names, `required_keys` everywhere, `ValueError` instead of `assert`, docstrings with units. Add a rule-authoring guide in the README.
-17. **[ARCH-5](#arch-5): State cleanup.** Explicit initialisers, a `ctx` argument replacing `state.sim`, a fixed `copy()`.
+16. **[ARCH-6](#arch-6): rule interface cleanup.** Consistent parameter names, `required_keys` everywhere, `ValueError` instead of `assert`, docstrings with units. Add a rule-authoring guide in the README. *Status: `required_keys`, key validation and `ValueError` in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49); names, docstrings, the guide and the `Inoculation` window remain.*
+17. **[ARCH-5](#arch-5): State cleanup.** Explicit initialisers, a `ctx` argument replacing `state.sim`, a fixed `copy()`. *Status: done in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48) and [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51); the `data` copy and the layer-axis question remain as later polish.*
 18. **[ARCH-4](#arch-4): config schema.** Dataclass/pydantic model, validation errors, `extends` support; migrate configs (after **D5**).
 
 ### Phase 4 - Bring in `gut-experiments`
@@ -663,7 +685,7 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
     - `output.json`: not ported, already archived on the `results` branch ([HYG-5](#hyg-5))
 
     Rewrite imports to `cellular_automata.` and keep the restructure version of every shared file. Commit `experiment.py` (**D8**). *Done when:* the branch can be deleted with nothing lost.
-20. **`SpontaneousSpawn` in the library** ([RES-3](#res-3)): register it, add the injected `rng`, tests and an example gut config. Fix `CA_neighbourhoods.py` with the other examples.
+20. **`SpontaneousSpawn` in the library** ([RES-3](#res-3)): register it, add the injected `rng`, declare `required_keys`, give `apply_state` the `ctx` parameter ([#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51)), tests and an example gut config. Fix `CA_neighbourhoods.py` with the other examples.
 21. **Gut search on the shared stack:** rewrite `data_preparation.py` → `mc_search.py` on the registry + unified config. Fix the RNG under multiprocessing with `SeedSequence.spawn`. Move `build_species_grid` into the library as an initialiser.
 22. **Shared analysis + metrics** ([RES-2](#res-2---bioreactor-scripts-medium), [RES-4](#res-4)): one tracker → abundance-table function, one metrics module (RMSE/MSE per species and over time, explicit step→time mapping from the config `dt`), and per-dataset species-name mapping files. Port `check_occupancy`, `compare_to_reference` and `print_ratios` onto it, and the bioreactor `screening.py` / `bayesian_optimization.py` too. Decide **D7** before calibrating against `dynamo_data`.
 
@@ -671,7 +693,7 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 
 23. **[HYG-3](#hyg-3---naming--layout-medium):** snake_case modules, public `__init__` exports, a `ca-sim` CLI entry point. One breaking release; note it in a CHANGELOG.
 24. **[PERF-1](#perf-1):** vectorise `BacteriaGrowth` / `Utilization` conflict resolution; profile before and after with `tools/profiling`.
-25. **[PERF-2](#perf-2---smaller-items), [BUG-7](#bug-7), [BUG-8](#bug-8)** (after **D4**): Diffusion buffers and boundary model; antibiotic maths and constants.
+25. **[PERF-2](#perf-2---smaller-items), [BUG-7](#bug-7), [BUG-8](#bug-8)** (after **D4**): Diffusion buffers and boundary model; antibiotic maths and constants. *Status: everything that needs no decision is in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48); the boundary model (D4) and the wall axis (D2) remain.*
 26. **[HYG-4](#hyg-4---logging-typing-docs-low)** and the dead-code table in [section 6](#6-duplication--dead-code-medium): logging, type hints, `mypy`, make `ruff` blocking in CI.
 
 ### Suggested branch / PR sequence
@@ -684,11 +706,17 @@ main
              └─ fix/repro-seeding (PR #39: REPRO-1 part 1)
                  └─ fix/repro-rules-rng (PR #40: REPRO-1 part 2, TEST-3)
                      └─ refactor/rule-registry (PR #41: ARCH-1 part 1)
+                         ├─ feat/phase-4-gut-experiments (PR #42: gut datasets, merges on its own)
                          └─ refactor/config-registries (PR #43: ARCH-1 part 2)
-                             └─ refactor/explicit-gl-imports (ARCH-1 part 3, next)
-                             └─ refactor/phase-3-geometry
-                                 └─ feat/phase-4-gut-experiments
-                                     └─ refactor/phase-5-naming-perf
+                             └─ refactor/explicit-gl-imports (PR #44: ARCH-1 part 3)
+                                 └─ refactor/optional-rendering (PR #46: ARCH-3 part 1)
+                                     └─ fix/model-config-bugs (PR #48: bugs needing no decision)
+                                         └─ refactor/rule-validation (PR #49: ARCH-6 part 1)
+                                             └─ fix/shader-errors (PR #50: ARCH-3 part 2)
+                                                 └─ refactor/state-cleanup (PR #51: ARCH-5)
+                                                     └─ refactor/phase-3-geometry
+                                                         └─ (Phase 4 code)
+                                                             └─ refactor/phase-5-naming-perf
 ```
 
 Gut-feature work can start **after step 15**. From then on, a new rule is one file with configurable keys and wall axis, and the explicit registry picks it up automatically.

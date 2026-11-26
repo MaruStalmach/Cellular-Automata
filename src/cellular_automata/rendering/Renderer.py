@@ -1,14 +1,96 @@
 import ctypes
-from pathlib import Path
 
 import glfw
 import glm
 import numpy as np
-from OpenGL.GL import *
-from OpenGL.GLU import *
+from OpenGL.GL import (
+    GL_ALWAYS,
+    GL_ARRAY_BUFFER,
+    GL_BACK,
+    GL_BLEND,
+    GL_COLOR,
+    GL_COLOR_ATTACHMENT0,
+    GL_COLOR_ATTACHMENT1,
+    GL_COLOR_BUFFER_BIT,
+    GL_CULL_FACE,
+    GL_DEPTH_ATTACHMENT,
+    GL_DEPTH_BUFFER_BIT,
+    GL_DEPTH_COMPONENT,
+    GL_DEPTH_TEST,
+    GL_DYNAMIC_COPY,
+    GL_FALSE,
+    GL_FLOAT,
+    GL_FRAMEBUFFER,
+    GL_FRAMEBUFFER_COMPLETE,
+    GL_FUNC_ADD,
+    GL_HALF_FLOAT,
+    GL_LESS,
+    GL_LINEAR,
+    GL_ONE,
+    GL_ONE_MINUS_SRC_ALPHA,
+    GL_ONE_MINUS_SRC_COLOR,
+    GL_PACK_ALIGNMENT,
+    GL_R8,
+    GL_RED,
+    GL_RGB,
+    GL_RGBA,
+    GL_RGBA16F,
+    GL_SHADER_STORAGE_BUFFER,
+    GL_SRC_ALPHA,
+    GL_STATIC_DRAW,
+    GL_STENCIL_BUFFER_BIT,
+    GL_TEXTURE0,
+    GL_TEXTURE1,
+    GL_TEXTURE_2D,
+    GL_TEXTURE_MAG_FILTER,
+    GL_TEXTURE_MIN_FILTER,
+    GL_TRIANGLES,
+    GL_TRUE,
+    GL_UNSIGNED_BYTE,
+    GL_ZERO,
+    glActiveTexture,
+    glBindBuffer,
+    glBindBufferBase,
+    glBindFramebuffer,
+    glBindTexture,
+    glBindVertexArray,
+    glBlendEquation,
+    glBlendFunc,
+    glBlendFunci,
+    glBufferData,
+    glCheckFramebufferStatus,
+    glClear,
+    glClearBufferfv,
+    glClearColor,
+    glCullFace,
+    glDepthFunc,
+    glDepthMask,
+    glDisable,
+    glDrawArrays,
+    glDrawArraysInstanced,
+    glDrawBuffers,
+    glEnable,
+    glEnableVertexAttribArray,
+    glFramebufferTexture2D,
+    glGenBuffers,
+    glGenFramebuffers,
+    glGenTextures,
+    glGenVertexArrays,
+    glGetUniformLocation,
+    glPixelStorei,
+    glReadPixels,
+    glTexImage2D,
+    glTexParameteri,
+    glUniform1f,
+    glUniform1i,
+    glUniform3f,
+    glUniformMatrix4fv,
+    glVertexAttribPointer,
+    glViewport,
+)
 
 from cellular_automata.rendering.Camera import Camera
-from cellular_automata.rendering.Shader import Shader
+from cellular_automata.rendering.Shader import ShaderError, build_shader
 
 
 class CARenderer:
@@ -123,28 +205,14 @@ class CARenderer:
         glfw.set_input_mode(self.window, glfw.STICKY_KEYS, True)
         glfw.set_key_callback(self.window, self._key_callback)
 
-        # compile shaders
-        shader_dir = Path(__file__).resolve().parent / "shaders"
-
-        self.solidShader = Shader()
-        self.solidShader.add_vertex(str(shader_dir / "solid.vert"))
-        self.solidShader.add_fragment(str(shader_dir / "solid.frag"))
-        self.solidShader.link_program()
-
-        self.transShader = Shader()
-        self.transShader.add_vertex(str(shader_dir / "vertex.vert"))
-        self.transShader.add_fragment(str(shader_dir / "transparent.frag"))
-        self.transShader.link_program()
-
-        self.compShader = Shader()
-        self.compShader.add_vertex(str(shader_dir / "composite.vert"))
-        self.compShader.add_fragment(str(shader_dir / "composite.frag"))
-        self.compShader.link_program()
-
-        self.screenShader = Shader()
-        self.screenShader.add_vertex(str(shader_dir / "screen.vert"))
-        self.screenShader.add_fragment(str(shader_dir / "screen.frag"))
-        self.screenShader.link_program()
+        try:
+            self.solidShader = build_shader("solid.vert", "solid.frag")
+            self.transShader = build_shader("vertex.vert", "transparent.frag")
+            self.compShader = build_shader("composite.vert", "composite.frag")
+            self.screenShader = build_shader("screen.vert", "screen.frag")
+        except ShaderError:
+            glfw.terminate()
+            raise
 
         glViewport(0, 0, width, height)
         glEnable(GL_CULL_FACE)

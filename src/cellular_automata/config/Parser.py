@@ -4,6 +4,7 @@ import warnings
 from collections.abc import Callable
 from functools import partial
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -20,9 +21,17 @@ from cellular_automata.registry import (
     RULES,
     TRACKERS,
 )
-from cellular_automata.rendering.Renderer import CARenderer
 from cellular_automata.Sim import CellularAutomaton, resolve_seed, state_rng
 from cellular_automata.State import State
+
+if TYPE_CHECKING:
+    from cellular_automata.rendering.Renderer import CARenderer
+
+RENDER_PACKAGES = {"glfw", "OpenGL", "OpenGL_accelerate", "glm"}
+RENDER_INSTALL_HINT = (
+    "Rendering needs the optional OpenGL packages: run `uv sync --extra render` "
+    "(or `pip install 'cellular-automata[render]'`), or set sim.render to false"
+)
 
 
 def parse_dtype(name: str) -> np.dtype:
@@ -64,11 +73,12 @@ def resolve_random_func(name: str, rng: np.random.Generator) -> Callable:
     return func
 
 
-def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
-    """Build a simulation from a JSON config.
+def parse_json(filename) -> tuple[CellularAutomaton, "CARenderer | None"]:
+    """Build a simulation, and its renderer if `sim.render` is true, from a JSON config.
 
     `filename` is a path to the config file, absolute or relative to the
-    current working directory (e.g. `configs/examples/demo.json`).
+    current working directory (e.g. `configs/examples/demo.json`). Headless
+    configs never import OpenGL.
     """
     config_path = Path(filename)
     if not config_path.is_file():
@@ -80,10 +90,22 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     with open(config_path, "r") as file:
         data = json.load(file)
 
+    if not data["sim"].get("render", False):
+        return build_simulation(data), None
+    # check for the renderer first, so a missing extra doesn't cost a full build
+    renderer = renderer_class()
+    ca_sim = build_simulation(data)
+    return ca_sim, build_renderer(data, ca_sim, renderer)
+
+
+def build_simulation(data: dict) -> CellularAutomaton:
+    """Build the simulation from a loaded config. Needs no OpenGL."""
     sim_data = data["sim"]
 
     ### first setup geometry
-    size = sim_data["size"]  # string of a tuple
+    size = tuple(sim_data["size"])
+    if not 1 <= len(size) <= 3:
+        raise ValueError(f"sim.size must have 1 to 3 dimensions, got {list(size)}")
     period = sim_data["periodicity"]
     max_steps = sim_data["max_steps"]
     seed = resolve_seed(sim_data.get("seed"))
@@ -102,7 +124,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         neighborhood = NEIGHBOURHOODS.get(n_n)()
 
     geometry = Geometry(
-        size=tuple(size), axes="xyz", periodicity=period, neighbourhood=neighborhood
+        size=size, axes="xyz"[: len(size)], periodicity=period, neighbourhood=neighborhood
     )
 
     ### next create State obj
@@ -112,19 +134,27 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     cell_keys = []
     key_dtypes = {}
     key_layers = []
-    random = []
     random_func = []
     random_args = []
 
     for sk in state_keys:
         cell_keys.append(sk["name"])
         key_layers.append(sk.get("layers", 1))
-        random.append(sk.get("random", False))
-        random_args.append(sk.get("random_args",None))
+        random_args.append(sk.get("random_args", None))
         key_dtypes[sk["name"]] = parse_dtype(
             sk.get("dtype", sim_data.get("dtype", "np.uint8"))
         )
         func_name = sk.get("random_func", None)
+        is_random = sk.get("random", False)
+        if not isinstance(is_random, bool):
+            raise ValueError(
+                f"state key '{sk['name']}': \"random\" must be true or false, got {is_random!r}"
+            )
+        if is_random != (func_name is not None):
+            raise ValueError(
+                f"state key '{sk['name']}': \"random\": true and \"random_func\" go "
+                "together; set both to fill the key at random, or neither to start at 0"
+            )
         if func_name is None:
             random_func.append(None)
         else:
@@ -135,7 +165,7 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         cell_keys=cell_keys,
         key_layers=key_layers,
         key_dtypes=key_dtypes,
-        random=random,
+        random=any(func is not None for func in random_func),
         random_func=random_func,
         random_args=random_args,
         rng=init_rng,
@@ -181,14 +211,29 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
         output_filename=output_filename,
         seed=seed,
     )
+    return ca_sim
 
-    ### if no rendering then its done
-    if not sim_data["render"]:
-        return ca_sim, None
 
-    ### next setup renderer
+def renderer_class() -> type["CARenderer"]:
+    """Import the OpenGL renderer, which is an optional dependency.
 
-    ### get update_callback
+    Only a missing OpenGL package gets the install hint; any other import
+    error (e.g. libGL not found) propagates unchanged.
+    """
+    try:
+        from cellular_automata.rendering.Renderer import CARenderer
+    except ModuleNotFoundError as error:
+        if (error.name or "").split(".")[0] in RENDER_PACKAGES:
+            raise ModuleNotFoundError(RENDER_INSTALL_HINT, name=error.name) from error
+        raise
+    return CARenderer
+
+
+def build_renderer(
+    data: dict, ca_sim: CellularAutomaton, renderer: type["CARenderer"] | None = None
+) -> "CARenderer":
+    """Build the renderer described by the config's `renderer` block for `ca_sim`."""
+    renderer = renderer or renderer_class()
     renderer_data = data["renderer"]
     # TODO:multiple key rendering, will have to adjust renderer code also
     key = renderer_data.get("key", ca_sim.state.keys[0])
@@ -206,8 +251,6 @@ def parse_json(filename) -> tuple[CellularAutomaton, CARenderer]:
     else:
         keys_amt = 1
 
-    renderer = CARenderer(
+    return renderer(
         callback(False), *window_size, update_callback=callback, keys_to_render=keys_amt
     )
-
-    return ca_sim, renderer

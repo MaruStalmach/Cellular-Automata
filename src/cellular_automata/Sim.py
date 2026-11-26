@@ -8,7 +8,7 @@ from time import time
 import numpy as np
 
 from cellular_automata.Geometry import Geometry
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 from cellular_automata.tracking.StateTracker import StateTracker
 
@@ -40,6 +40,25 @@ def state_rng(seed: int) -> np.random.Generator:
 def rule_rng(seed: int, index: int) -> np.random.Generator:
     """Generator for the rule at `index`; independent of the other rules' streams."""
     return np.random.default_rng(np.random.SeedSequence(seed, spawn_key=(1, index)))
+
+
+def check_required_keys(rules: list[Rule], state: State) -> None:
+    """Raise ValueError naming every rule key missing from `state`.
+
+    Keys in the state that no rule declares are fine (e.g. keys only tracked
+    or rendered).
+    """
+    missing = [
+        f"{type(rule).__name__} needs '{key}'"
+        for rule in rules
+        for key in rule.required_keys
+        if key not in state.keys
+    ]
+    if missing:
+        raise ValueError(
+            "state is missing keys the rules need: " + "; ".join(missing)
+            + f" (state keys: {list(state.keys)})"
+        )
 
 
 class CellularAutomaton:
@@ -89,18 +108,11 @@ class CellularAutomaton:
 
         if state is not None:
             self.state = state
-            # TODO: check if state keys are the same as rule keys
-            try:
-                assert keys == tuple(self.state.keys)
-            except AssertionError:
-                print(
-                    "key mismatch between rules and state arrays (soft error)"
-                )  # TODO: comparing tuple to list will always thorw a mismacth
+            check_required_keys(rules, state)
         else:
             self.state = State(
                 geometry, random=True, cell_keys=keys, rng=state_rng(self.seed)
             )
-        self.state._get_sim_reference(self)
 
         self.step_no = 0
         if self.tracker:
@@ -135,12 +147,13 @@ class CellularAutomaton:
         if self.step_no==0:
             self.start_time = time()
         
+        ctx = StepContext(step_no=self.step_no, max_steps=self.max_steps)
         times_to_execute = self.rule_exec_n_times.copy()
         while sum(times_to_execute) > 0:
             for i, rule in enumerate(self.rules):
                 if times_to_execute[i] <= 0:
                     continue
-                self.state = rule.apply_state(self.state)
+                self.state = rule.apply_state(self.state, ctx)
                 times_to_execute[i] -= 1
 
         self.step_no += 1

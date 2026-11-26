@@ -6,7 +6,7 @@ import numpy as np
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 
 InteractionConfig = Dict[str, Dict[str, float]]
@@ -51,7 +51,7 @@ class SpeciesInteraction(Rule):
 
         return neighbour_counts
 
-    def apply_state(self, state: State) -> State:
+    def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
 
         bacteria_types = list(self._interactions.keys())
 

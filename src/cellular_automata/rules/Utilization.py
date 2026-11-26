@@ -3,7 +3,7 @@ from operator import itemgetter
 import numpy as np
 
 from cellular_automata.registry import register_rule
-from cellular_automata.Rule import Rule
+from cellular_automata.Rule import Rule, StepContext
 
 
 @register_rule
@@ -89,7 +89,7 @@ class Utilization(Rule):
 
         substrate_grid[coords[:-1]] = 0
 
-    def apply_state(self, state):
+    def apply_state(self, state, ctx: StepContext | None = None):
         # get data from simulation
         substrate_grid = state[self.sub_key].copy()
         bacteria_grids = {key: state[key].copy() for key in self.b_keys}
