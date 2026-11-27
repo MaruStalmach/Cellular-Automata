@@ -2,8 +2,8 @@
 
 Branch: `refactor/code-quality-plan` (based on `refactor/repo-structure`, PR #33)
 Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch (reviewed at `e3d7313`).
-Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`; statuses updated through #54 on 2026-11-23)
-Status: updated 2026-11-18 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36, #37 and #47 (landing them on `main`) are merged. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Bugs that need no modelling decision (BUG-7, BUG-8, BUG-9 and parts of ARCH-5) are in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48), stacked on #46. ARCH-6 part 1 (rules declare and validate their keys) is in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49), stacked on #48. ARCH-3 part 2 (shader errors raise) is in [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50), stacked on #49. ARCH-5 (initialiser contract, step context) is in [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51), stacked on #50. #39-#43 are on `main`; #44-#51 were merged into their parent branches instead of `main`, and [#52](https://github.com/MaruStalmach/Cellular-Automata/pull/52) lands them. Behaviour tests for six rules (TEST-2) are in [#53](https://github.com/MaruStalmach/Cellular-Automata/pull/53), stacked on #52. Dead code, duplication and `record_every` (BUG-10) are in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54), stacked on #53. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
+Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`; statuses updated through #55 on 2026-11-23)
+Status: updated 2026-11-18 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36, #37 and #47 (landing them on `main`) are merged. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Bugs that need no modelling decision (BUG-7, BUG-8, BUG-9 and parts of ARCH-5) are in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48), stacked on #46. ARCH-6 part 1 (rules declare and validate their keys) is in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49), stacked on #48. ARCH-3 part 2 (shader errors raise) is in [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50), stacked on #49. ARCH-5 (initialiser contract, step context) is in [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51), stacked on #50. #39-#43 are on `main`; #44-#51 were merged into their parent branches instead of `main`, and [#52](https://github.com/MaruStalmach/Cellular-Automata/pull/52) lands them. Behaviour tests for six rules (TEST-2) are in [#53](https://github.com/MaruStalmach/Cellular-Automata/pull/53), stacked on #52. Dead code, duplication and `record_every` (BUG-10) are in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54), stacked on #53. Logging and error propagation (HYG-4) are in [#55](https://github.com/MaruStalmach/Cellular-Automata/pull/55), stacked on #54. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
 
 ---
 
@@ -613,6 +613,8 @@ This is a breaking import change, so do it once, together with ARCH-1.
 
 ### HYG-4 - Logging, typing, docs (Low)
 
+> **Status:** Partly fixed in [#55](https://github.com/MaruStalmach/Cellular-Automata/pull/55): no `print` in the library (a test keeps it that way); callbacks check their keys when built and let errors propagate; an incomplete framebuffer raises; the end-of-run and no-tracker messages use `logging`. Still open: type hints and `mypy`/`pyright`.
+
 - `print` is used throughout the library (including `"RENDERER ERROR"` and `"ERROR IN MULTICALLBACK"`, which swallow exceptions in `Callback.py:25-29`, `:52-55`, `:76-80`). Use `logging`, and let real errors propagate.
 - Type hints are partial; some are wrong (`state: State = None`, `callable` instead of `Callable`). Add hints and consider `mypy` or `pyright` in CI later.
 - README items (**fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36)**, including a test that keeps the example config valid):
@@ -695,7 +697,7 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 23. **[HYG-3](#hyg-3---naming--layout-medium):** snake_case modules, public `__init__` exports, a `ca-sim` CLI entry point. One breaking release; note it in a CHANGELOG.
 24. **[PERF-1](#perf-1):** vectorise `BacteriaGrowth` / `Utilization` conflict resolution; profile before and after with `tools/profiling`.
 25. **[PERF-2](#perf-2---smaller-items), [BUG-7](#bug-7), [BUG-8](#bug-8)** (after **D4**): Diffusion buffers and boundary model; antibiotic maths and constants. *Status: everything that needs no decision is in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48); the boundary model (D4) and the wall axis (D2) remain.*
-26. **[HYG-4](#hyg-4---logging-typing-docs-low)** and the dead-code table in [section 6](#6-duplication--dead-code-medium): logging, type hints, `mypy`, make `ruff` blocking in CI.
+26. **[HYG-4](#hyg-4---logging-typing-docs-low)** and the dead-code table in [section 6](#6-duplication--dead-code-medium): logging, type hints, `mypy`, make `ruff` blocking in CI. *Status: `ruff` has been blocking since [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36); the section 6 table is done in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54) except the gut `sys.path` hack, `BASE_INTERACTIONS` in `screening.py` and the redundant `Utilization` check; logging and error propagation in [#55](https://github.com/MaruStalmach/Cellular-Automata/pull/55). Type hints and `mypy` remain.*
 
 ### Suggested branch / PR sequence
 
@@ -717,9 +719,10 @@ main
                                                  └─ refactor/state-cleanup (PR #51: ARCH-5; PR #52 lands #44-#51 on main)
                                                      └─ test/rule-behaviour (PR #53: TEST-2)
                                                          └─ refactor/dead-code (PR #54: section 6, BUG-10 record_every)
-                                                             └─ refactor/phase-3-geometry
-                                                                 └─ (Phase 4 code)
-                                                                     └─ refactor/phase-5-naming-perf
+                                                             └─ refactor/logging (PR #55: HYG-4 logging and errors)
+                                                                 └─ refactor/phase-3-geometry
+                                                                     └─ (Phase 4 code)
+                                                                         └─ refactor/phase-5-naming-perf
 ```
 
 Gut-feature work can start **after step 15**. From then on, a new rule is one file with configurable keys and wall axis, and the explicit registry picks it up automatically.

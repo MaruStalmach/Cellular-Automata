@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import operator
 import secrets
 import warnings
@@ -11,6 +12,8 @@ from cellular_automata.Geometry import Geometry
 from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 from cellular_automata.tracking.StateTracker import StateTracker
+
+logger = logging.getLogger(__name__)
 
 # upper bound on how often one rule runs per step, to keep a step's cost bounded
 MAX_RUNS_PER_STEP = 500
@@ -142,7 +145,7 @@ class CellularAutomaton:
     def step(self):
         '''increments the timestep of the simulation and applies all '''
         if self.step_no>=self.max_steps:
-            print(f'simulation ended. time={time()-self.start_time:.2f}s')
+            logger.info("simulation ended. time=%.2fs", time() - self.start_time)
             return -1
         if self.step_no==0:
             self.start_time = time()

@@ -1,4 +1,5 @@
 import ctypes
+from collections.abc import Callable
 
 import glfw
 import glm
@@ -147,9 +148,9 @@ class CARenderer:
         init_state: np.ndarray,
         width=1000,
         height=600,
-        update_callback: callable = None,
-        frame_callback: callable = None,
-        gif_callback: callable = None,
+        update_callback: Callable | None = None,
+        frame_callback: Callable | None = None,
+        gif_callback: Callable | None = None,
         keys_to_render: int = 1,
     ):
 
@@ -443,8 +444,7 @@ class CARenderer:
             GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0
         )
 
-        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
-            print("something wrong with the opaque framebuffer")
+        self._check_framebuffer("opaque")
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
         # attachments for transparent fbo
@@ -487,8 +487,7 @@ class CARenderer:
 
         glDrawBuffers(2, [GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1])
 
-        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
-            print("transparent fbo failed")
+        self._check_framebuffer("transparent")
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
         m = glm.identity(glm.mat4)
@@ -559,6 +558,14 @@ class CARenderer:
         p_loc = glGetUniformLocation(self.solidShader.program, "projection")
         glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
 
+
+    @staticmethod
+    def _check_framebuffer(name: str) -> None:
+        """Raise RuntimeError (after terminating GLFW) if the bound framebuffer is incomplete."""
+        status = glCheckFramebufferStatus(GL_FRAMEBUFFER)
+        if status != GL_FRAMEBUFFER_COMPLETE:
+            glfw.terminate()
+            raise RuntimeError(f"The {name} framebuffer is incomplete (status {status!r})")
 
     def _capture_frame(self) -> np.ndarray:
         glPixelStorei(GL_PACK_ALIGNMENT, 1)
