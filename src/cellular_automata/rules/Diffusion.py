@@ -102,7 +102,7 @@ class Diffusion(Rule):
                 [0, 1, 2, 3, 4, 5], size=(roll_amt,), p=self.p
             ).astype(np.uint8)
         
-        # in place: a new array here would defeat the preallocated buffer
+        # in place operation equivalent to self.rolls = (self.rolls + np.arange(6, dtype=self.rolls.dtype)) % 6
         np.add(self.rolls, self._slot_index, out=self.rolls)
         np.remainder(self.rolls, 6, out=self.rolls)
         # set empty cells as invalid value
