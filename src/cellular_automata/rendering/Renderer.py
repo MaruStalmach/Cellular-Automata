@@ -1,4 +1,5 @@
 import ctypes
+from collections.abc import Callable
 
 import glfw
 import glm
@@ -58,6 +59,7 @@ from OpenGL.GL import (
     glBlendFunc,
     glBlendFunci,
     glBufferData,
+    glBufferSubData,
     glCheckFramebufferStatus,
     glClear,
     glClearBufferfv,
@@ -127,7 +129,6 @@ class CARenderer:
             self.x_press = True
         elif key == glfw.KEY_G and action == glfw.PRESS:
             self.g_press = True
-        
 
         # Map GLFW keys to camera keys
         key_map = {
@@ -147,9 +148,9 @@ class CARenderer:
         init_state: np.ndarray,
         width=1000,
         height=600,
-        update_callback: callable = None,
-        frame_callback: callable = None,
-        gif_callback: callable = None,
+        update_callback: Callable | None = None,
+        frame_callback: Callable | None = None,
+        gif_callback: Callable | None = None,
         keys_to_render: int = 1,
     ):
 
@@ -179,7 +180,7 @@ class CARenderer:
         self.gif_callback = gif_callback
 
         self.ca_state = init_state.astype(dtype=np.float32)
-        self.num_cells = np.prod(self.ca_state.shape) // self.num_keys
+        self.num_cells = int(np.prod(self.ca_state.shape)) // self.num_keys
         self.cell_size = 1.0
         self.alpha = 0.2
         self.running = True
@@ -197,7 +198,7 @@ class CARenderer:
             glfw.terminate()
             raise RuntimeError(
                 "Could not create a GLFW window. Rendering needs a display and "
-                "OpenGL >= 4.3; set \"render\": false in the config to run headless."
+                'OpenGL >= 4.3; set "render": false in the config to run headless.'
             )
 
         glfw.set_window_pos(self.window, 400, 200)
@@ -436,15 +437,10 @@ class CARenderer:
         glBindTexture(GL_TEXTURE_2D, 0)
 
         glBindFramebuffer(GL_FRAMEBUFFER, self.opqFBO)
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self.opqTex, 0
-        )
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0
-        )
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self.opqTex, 0)
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0)
 
-        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
-            print("something wrong with the opaque framebuffer")
+        self._check_framebuffer("opaque")
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
         # attachments for transparent fbo
@@ -467,9 +463,7 @@ class CARenderer:
 
         self.revealTex = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self.revealTex)
-        glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_R8, self.width, self.height, 0, GL_RED, GL_FLOAT, None
-        )
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, self.width, self.height, 0, GL_RED, GL_FLOAT, None)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glBindTexture(GL_TEXTURE_2D, 0)
@@ -481,14 +475,11 @@ class CARenderer:
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, self.revealTex, 0
         )
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0
-        )
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0)
 
         glDrawBuffers(2, [GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1])
 
-        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
-            print("transparent fbo failed")
+        self._check_framebuffer("transparent")
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
         m = glm.identity(glm.mat4)
@@ -504,16 +495,8 @@ class CARenderer:
         self.transShader.use_program()
         # ssbo
         self.ssbo = glGenBuffers(1)
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-        glBufferData(
-            GL_SHADER_STORAGE_BUFFER,
-            self.ca_state.nbytes,
-            self.ca_state.flatten(),
-            GL_DYNAMIC_COPY,
-        )
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
-        # unbind
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
+        self._ssbo_bytes = 0
+        self._upload(self.ca_state)
 
         window_width = glGetUniformLocation(self.transShader.program, "window_width")
         glUniform1f(window_width, self.width)
@@ -548,7 +531,7 @@ class CARenderer:
         self.solidShader.use_program()
 
         # make smaller cube
-        m = glm.scale(glm.vec3(0.3, 0.3, 0.3)) * m
+        m = glm.scale(glm.vec3(0.3, 0.3, 0.3)) * m  # type: ignore[attr-defined]  # missing from PyGLM's stubs
 
         m_loc = glGetUniformLocation(self.solidShader.program, "model")
         glUniformMatrix4fv(m_loc, 1, GL_FALSE, glm.value_ptr(m))
@@ -559,6 +542,13 @@ class CARenderer:
         p_loc = glGetUniformLocation(self.solidShader.program, "projection")
         glUniformMatrix4fv(p_loc, 1, GL_FALSE, glm.value_ptr(p))
 
+    @staticmethod
+    def _check_framebuffer(name: str) -> None:
+        """Raise RuntimeError (after terminating GLFW) if the bound framebuffer is incomplete."""
+        status = glCheckFramebufferStatus(GL_FRAMEBUFFER)
+        if status != GL_FRAMEBUFFER_COMPLETE:
+            glfw.terminate()
+            raise RuntimeError(f"The {name} framebuffer is incomplete (status {status!r})")
 
     def _capture_frame(self) -> np.ndarray:
         glPixelStorei(GL_PACK_ALIGNMENT, 1)
@@ -566,114 +556,63 @@ class CARenderer:
         frame = np.frombuffer(pixels, dtype=np.uint8).reshape(self.height, self.width, 3)
         return np.flipud(frame).copy()
 
-        
-
     def set_ca_state(self, state_array):
         """
         Set the cellular automaton state.
 
         Args:
             state_array: 3D numpy array where True/non-zero = cell alive
-                        Shape: (depth, height, width) or similar
+                        Shape: (depth, height, width) or similar; with several keys,
+                        the keys are stacked on a leading axis
         """
         self.ca_state = state_array.astype(np.float32)
-        self.transShader.use_program()
+        self._show()
+
+    def _grid_shape(self) -> list[int]:
+        """Spatial shape of the state (without the leading key axis)."""
+        return list(self.ca_state.shape[-3:])
+
+    def _upload(self, data: np.ndarray) -> None:
+        """Copy `data` into the state SSBO, reallocating it only when its size changes."""
+        data = np.ascontiguousarray(data, dtype=np.float32)
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-        glBufferData(
-            GL_SHADER_STORAGE_BUFFER,
-            self.ca_state.nbytes,
-            self.ca_state.flatten(),
-            GL_DYNAMIC_COPY,
-        )
+        if data.nbytes != self._ssbo_bytes:
+            glBufferData(GL_SHADER_STORAGE_BUFFER, data.nbytes, data, GL_DYNAMIC_COPY)
+            self._ssbo_bytes = data.nbytes
+        else:
+            glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, data.nbytes, data)
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
         # unbind
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
+
+    def _show(self) -> None:
+        """Upload what is visible (the whole grid, or one cross-section layer) and set
+        the shader's grid size, alpha and instance count to match."""
+        self.transShader.use_program()
+        grid_shape = self._grid_shape()
+        if self.cross_section:
+            self.layer = int(np.clip(self.layer, 0, grid_shape[self.cs_axis] - 1))
+            # keys are stacked on a leading axis when there are several
+            sel: list[slice | int] = [slice(None)] * self.ca_state.ndim
+            sel[self.ca_state.ndim - 3 + self.cs_axis] = self.layer
+            visible = self.ca_state[tuple(sel)]
+            grid_shape[self.cs_axis] = 1
+            alpha = self.c_aplha
+        else:
+            visible = self.ca_state
+            alpha = self.alpha
+
+        glUniform3f(glGetUniformLocation(self.transShader.program, "grid_size"), *grid_shape)
+        glUniform1f(glGetUniformLocation(self.transShader.program, "Ualpha"), alpha)
+        self._upload(visible)
+        self.num_cells = int(np.prod(grid_shape))
 
     def _toggle_cross_section(self):
-        ### flip cross_section flag
         self.cross_section = not self.cross_section
-
-        self.transShader.use_program()
-
-        # tmp variable in case num keys is greter than one cause then ca_state is 4d
-        tmp = 1 if self.num_keys > 1 else 0
-        grid_shape = list(self.ca_state.shape[tmp:])
-        ### send new grid size, new ssbo, new alpha uniforms
-        if self.cross_section:
-            grid_shape[self.cs_axis] = 1
-
-            grid_size = glGetUniformLocation(self.transShader.program, "grid_size")
-            glUniform3f(
-                grid_size,
-                grid_shape[0],
-                grid_shape[1],
-                grid_shape[2],
-            )
-
-            alpha = glGetUniformLocation(self.transShader.program, "Ualpha")
-            glUniform1f(alpha, self.c_aplha)
-
-            sel = [slice(None)] * (3 + tmp)
-            sel[self.cs_axis + tmp] = self.layer
-
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-            glBufferData(
-                GL_SHADER_STORAGE_BUFFER,
-                self.ca_state[tuple(sel)][..., None].nbytes,
-                self.ca_state[tuple(sel)][..., None].flatten(),
-                GL_DYNAMIC_COPY,
-            )
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
-            # unbind
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
-
-            self.num_cells = (
-                np.prod(self.ca_state.shape) // self.num_keys // self.ca_state.shape[-1]
-            )
-        else:
-            ###restore normal values
-            grid_size = glGetUniformLocation(self.transShader.program, "grid_size")
-            glUniform3f(
-                grid_size,
-                self.ca_state.shape[-3],
-                self.ca_state.shape[-2],
-                self.ca_state.shape[-1],
-            )
-
-            alpha = glGetUniformLocation(self.transShader.program, "Ualpha")
-            glUniform1f(alpha, self.alpha)
-
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-            glBufferData(
-                GL_SHADER_STORAGE_BUFFER,
-                self.ca_state.nbytes,
-                self.ca_state.flatten(),
-                GL_DYNAMIC_COPY,
-            )
-
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
-            # unbind
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
-
-            self.num_cells = np.prod(self.ca_state.shape) // self.num_keys
+        self._show()
 
     def _update_cs(self):
-
-        # tmp variable in case num keys is greter than one cause then ca_state is 4d
-        tmp = 1 if self.num_keys > 1 else 0
-        sel = [slice(None)] * (3 + tmp)
-        sel[self.cs_axis + tmp] = self.layer
-
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.ssbo)
-        glBufferData(
-            GL_SHADER_STORAGE_BUFFER,
-            self.ca_state[tuple(sel)][..., None].nbytes,
-            self.ca_state[tuple(sel)][..., None].flatten(),
-            GL_DYNAMIC_COPY,
-        )
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.ssbo)
-        # unbind
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0)
+        self._show()
 
     def render(self):
 
@@ -780,13 +719,11 @@ class CARenderer:
                     self.j_press = False
                     if self.cross_section:
                         self.layer -= 1
-                        self.layer = np.clip(self.layer, 0, self.ca_state.shape[-1] - 1)
                         self._update_cs()
                 if self.l_press:
                     self.l_press = False
                     if self.cross_section:
                         self.layer += 1
-                        self.layer = np.clip(self.layer, 0, self.ca_state.shape[-1] - 1)
                         self._update_cs()
                 if self.x_press:
                     self.x_press = False
@@ -798,7 +735,7 @@ class CARenderer:
                     self.g_press = False
                     if self.gif_callback:
                         self.gif_callback()
-                    
+
                 if new_state is not None:
                     self.set_ca_state(new_state)
 
@@ -806,18 +743,3 @@ class CARenderer:
             glfw.poll_events()
 
         glfw.terminate()
-
-
-# Example usage
-if __name__ == "__main__":
-    renderer = CARenderer(
-        width=1200,
-        height=800,
-        init_state=np.random.choice([0, 1], size=(100, 100, 100), p=[0.999, 0.001]),
-    )
-    renderer.run()
-
-    # np.array([
-    #     [[0.1,0.5,1.0],[0.0,0.0,0.0],[0.0,0.0,0.0]],
-    #     [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]],
-    #     [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]]],dtype=np.float32)

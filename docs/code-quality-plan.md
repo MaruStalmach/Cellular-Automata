@@ -2,8 +2,8 @@
 
 Branch: `refactor/code-quality-plan` (based on `refactor/repo-structure`, PR #33)
 Scope: `src/cellular_automata/`, `tests/`, `examples/`, `research/bioreactor/scripts/`, `tools/`, all configs, and the unmerged `gut-experiments` branch (reviewed at `e3d7313`).
-Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`; statuses updated through #51 on 2026-11-18)
-Status: updated 2026-11-18 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36, #37 and #47 (landing them on `main`) are merged. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Bugs that need no modelling decision (BUG-7, BUG-8, BUG-9 and parts of ARCH-5) are in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48), stacked on #46. ARCH-6 part 1 (rules declare and validate their keys) is in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49), stacked on #48. ARCH-3 part 2 (shader errors raise) is in [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50), stacked on #49. ARCH-5 (initialiser contract, step context) is in [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51), stacked on #50. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
+Date: 2026-11-06 (updated the same day for `gut-experiments` commit `e3d7313`; statuses updated through #65 on 2026-11-23)
+Status: updated 2026-11-18 with the fixes in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) (Phase 0-1) and [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) (Phase 2). #36, #37 and #47 (landing them on `main`) are merged. REPRO-1 and TEST-3 are in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) (seed plumbing) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40) (rules use the seeded generator), stacked on #37. ARCH-1 is in [#41](https://github.com/MaruStalmach/Cellular-Automata/pull/41), [#43](https://github.com/MaruStalmach/Cellular-Automata/pull/43) and [#44](https://github.com/MaruStalmach/Cellular-Automata/pull/44), stacked on #40. ARCH-3 part 1 (optional rendering) is in [#46](https://github.com/MaruStalmach/Cellular-Automata/pull/46), stacked on #44. Bugs that need no modelling decision (BUG-7, BUG-8, BUG-9 and parts of ARCH-5) are in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48), stacked on #46. ARCH-6 part 1 (rules declare and validate their keys) is in [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49), stacked on #48. ARCH-3 part 2 (shader errors raise) is in [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50), stacked on #49. ARCH-5 (initialiser contract, step context) is in [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51), stacked on #50. #39-#43 are on `main`; #44-#51 were merged into their parent branches instead of `main`, and [#52](https://github.com/MaruStalmach/Cellular-Automata/pull/52) lands them. Behaviour tests for six rules (TEST-2) are in [#53](https://github.com/MaruStalmach/Cellular-Automata/pull/53), stacked on #52. Dead code, duplication and `record_every` (BUG-10) are in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54), stacked on #53. Logging and error propagation (HYG-4) are in [#55](https://github.com/MaruStalmach/Cellular-Automata/pull/55), stacked on #54. `Rule` as an abstract base class (BUG-4) is in [#56](https://github.com/MaruStalmach/Cellular-Automata/pull/56), stacked on #55. Diffusion buffers (PERF-2) are in [#57](https://github.com/MaruStalmach/Cellular-Automata/pull/57), stacked on #56. The redundant `Utilization` claim ordering is removed in [#58](https://github.com/MaruStalmach/Cellular-Automata/pull/58), stacked on #57. The screening step-to-time mapping (RES-2) is in [#59](https://github.com/MaruStalmach/Cellular-Automata/pull/59), stacked on #58. Shared bioreactor script helpers are in [#60](https://github.com/MaruStalmach/Cellular-Automata/pull/60), stacked on #59. Vectorised growth and utilization (PERF-1) are in [#61](https://github.com/MaruStalmach/Cellular-Automata/pull/61), stacked on #60. Renderer uploads and cross-section fixes are in [#62](https://github.com/MaruStalmach/Cellular-Automata/pull/62), stacked on #61. Command-line options for the bioreactor scripts are in [#63](https://github.com/MaruStalmach/Cellular-Automata/pull/63), stacked on #62. `mypy` in CI is in [#64](https://github.com/MaruStalmach/Cellular-Automata/pull/64), stacked on #63. `ruff format` for the whole repo is in [#65](https://github.com/MaruStalmach/Cellular-Automata/pull/65), stacked on #64. Experiment results were moved off the code branches to the orphan [`results`](https://github.com/MaruStalmach/Cellular-Automata/tree/results) branch in #33 ([HYG-5](#hyg-5)).
 
 ---
 
@@ -134,7 +134,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="bug-4"></a>
 ### ~~BUG-4 - Cell-wise rule path is dead and would crash (Medium)~~
 
-> **Status:** Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37). `_apply_cellwise` and `Rule.apply` are deleted; `apply_state` still raises `NotImplementedError` rather than being an `abc` abstract method.
+> **Status:** Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37). `_apply_cellwise` and `Rule.apply` are deleted. [#56](https://github.com/MaruStalmach/Cellular-Automata/pull/56): `Rule` is an `abc.ABC` and `apply_state` is abstract, so a rule without it fails when built.
 
 - **Where:** `Sim.py:113-116`, `Rule.py:63-68`
 - **What:** `hasattr(rule, "apply_state")` is always `True`, because the base class defines it (raising `NotImplementedError`). So `_apply_cellwise` is never used, and a rule that only implements `apply()` crashes.
@@ -209,9 +209,9 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 - **Fix:** validate the config up front with clear messages ([ARCH-4](#arch-4)).
 
 <a id="bug-10"></a>
-### BUG-10 - `StateTracker` ignores its `keys` argument and loses data on interrupt (Medium)
+### ~~BUG-10 - `StateTracker` ignores its `keys` argument and loses data on interrupt (Medium)~~
 
-> **Status:** Mostly fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37): the tracker records only its keys, `save`/`load` resolve paths the same way, and `CellularAutomaton.save_tracker()` (called by `CA_sim.py` when a run stops early) saves partial history. Still open: `record_every`.
+> **Status:** Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) and [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54). [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37): the tracker records only its keys, `save`/`load` resolve paths the same way, and `CellularAutomaton.save_tracker()` (called by `CA_sim.py` when a run stops early) saves partial history. [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54): `record_every` (plus the first and last step), and saved runs list the step number of each frame. Streaming to disk remains a possible later improvement.
 
 - **Where:** `tracking/StateTracker.py:57-63` (`record_step`), `:65-91` (`save`), `:96-128` (`load`); `Sim.py:123-124`
 - **What:**
@@ -236,7 +236,7 @@ Each finding has an **ID** (e.g. `BUG-3`), a **severity**, a location, and a fix
 <a id="repro-1"></a>
 ### REPRO-1 - No seeding; global `np.random` everywhere (Critical)
 
-> **Status:** Mostly fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): `sim.seed` in the config, a seeded generator per rule (`rule.rng`) and for the initial state, and every built-in rule draws from `self.rng`. The same seed gives identical tracker output (tiny-grid test). Unseeded runs report and save the seed they used, and the bioreactor scripts seed through the config. Still open: BO scores one realisation with noise `1e-6`, and `SeedSequence.spawn` for the gut MC search (step 21).
+> **Status:** Mostly fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): `sim.seed` in the config, a seeded generator per rule (`rule.rng`) and for the initial state, and every built-in rule draws from `self.rng`. The same seed gives identical tracker output (tiny-grid test). Unseeded runs report and save the seed they used, and the bioreactor scripts seed through the config. [#63](https://github.com/MaruStalmach/Cellular-Automata/pull/63): BO's `--seeds N` scores each point by the mean over N seeds (default 1); the GP noise term (`1e-6`) is still a modelling choice. Still open: `SeedSequence.spawn` for the gut MC search (step 21).
 
 - **Where:** every rule (including the new `SpontaneousSpawn`, which uses `np.random.shuffle` / `np.random.random`); `State.py:69`; `gut-experiments: experiments/data_preparation.py:264`
 - **What:**
@@ -335,6 +335,7 @@ Gut and bioreactor code don't agree on where the wall is: y in `BiofilmDetachmen
 > **Status:** Mostly fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48) and [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51).
 > - [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `key_layers` accepts any iterable and must match the keys, and `copy()` is tested (its TODO is gone).
 > - [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51): every `random_func` is called as `func(size=shape, **random_args)` and cast to the key's dtype (no `TypeError` guessing; integer overflow raises); rules get a `StepContext` as `apply_state(state, ctx)` instead of the `state.sim` back-reference; `_pad_data` is deleted. The `== None` was already gone.
+> - [#64](https://github.com/MaruStalmach/Cellular-Automata/pull/64): the `data` setter scrambled layered keys (it moved the first grid axis to the end); fixed, with a round-trip test. Nothing in the repo used it.
 > - Still open: the `data` property copies on every access (performance), and the `ndim` branching for single- vs multi-layer keys.
 
 - **Where:** `State.py`
@@ -400,7 +401,7 @@ All four fail identically on `main` and `bioreactor`; this branch didn't cause t
 <a id="test-2"></a>
 ### TEST-2 - Large coverage gaps (High)
 
-> **Status:** Partly fixed. [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): every config builds, every example imports and builds, parser renderer and neighbourhood handling, the README config. [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37): the scheduler, `BioreactorBiofilmDetachment`, the tracker key/path handling, and regression tests for BUG-1, BUG-2 and BUG-6. [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39)/[#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): seeded runs are reproducible and every rule draws from its own generator. [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `AntibioticEffect`, the Diffusion refill, `GameOfLife3D` keys, parser and `State` regressions. [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49): every rule's declared keys equal the keys it uses, and argument validation. [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50): shader errors with fake OpenGL. [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51): the initialiser contract and step context. Still open: behavioural tests for `BacteriaGrowth`, `Utilization`, `Diffusion` (beyond the refill), `GutDrift` and `BiofilmDetachment`, and invariant tests (e.g. particle counts, no double occupancy).
+> **Status:** Partly fixed. [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): every config builds, every example imports and builds, parser renderer and neighbourhood handling, the README config. [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37): the scheduler, `BioreactorBiofilmDetachment`, the tracker key/path handling, and regression tests for BUG-1, BUG-2 and BUG-6. [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39)/[#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40): seeded runs are reproducible and every rule draws from its own generator. [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48): `AntibioticEffect`, the Diffusion refill, `GameOfLife3D` keys, parser and `State` regressions. [#49](https://github.com/MaruStalmach/Cellular-Automata/pull/49): every rule's declared keys equal the keys it uses, and argument validation. [#50](https://github.com/MaruStalmach/Cellular-Automata/pull/50): shader errors with fake OpenGL. [#51](https://github.com/MaruStalmach/Cellular-Automata/pull/51): the initialiser contract and step context. [#53](https://github.com/MaruStalmach/Cellular-Automata/pull/53): behaviour and invariant tests for `BacteriaGrowth`, `Utilization`, `Diffusion`, `GutDrift`, `BiofilmDetachment` and `BacteriaDecay` (particles accounted for, no double occupancy, nothing created from nothing, forced outcomes at probabilities 0 and 1), checked by breaking the code by hand. Still open: `SpeciesInteraction` (after D1), `CreateBiofilm` beyond its current test, and `Inoculation`.
 
 There are 28 test functions. **No tests** exist for:
 - rules: `Diffusion`, `Utilization`, `BacteriaDecay`, `AntibioticEffect`, `GutDrift`, `BiofilmDetachment`, `BioreactorBiofilmDetachment`, `Inoculation`
@@ -436,24 +437,27 @@ There are 28 test functions. **No tests** exist for:
 | Item | Where | Action | Status |
 |---|---|---|---|
 | `_shift_spatial`, a copy of `Rule._shift_for_offset` | `Utilization.py:29-57` | Delete (unused) | Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) |
-| `_neighbour_candidates` copied in 2 rules (unused in `Utilization`) | `BacteriaGrowth.py:29-46`, `Utilization.py:59-76` | Move to `Geometry.neighbours_of(coords)` or vectorise ([PERF-1](#perf-1)) | Open |
-| `_get_neighbour_counts`, a copy of `neighborhood_count` | `SpeciesInteraction.py:43-50` | Use the base method | Open |
+| `_neighbour_candidates` copied in 2 rules (unused in `Utilization`) | `BacteriaGrowth.py:29-46`, `Utilization.py:59-76` | Move to `Geometry.neighbours_of(coords)` or vectorise ([PERF-1](#perf-1)) | Fixed in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54): `Geometry.neighbours_of`, also used by `Utilization`'s substrate search |
+| `_get_neighbour_counts`, a copy of `neighborhood_count` | `SpeciesInteraction.py:43-50` | Use the base method | Fixed in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54) |
 | Pointless `apply` override | `Utilization.py:118-119` | Delete | Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) |
 | `_restore_deterministic`, commented-out wall block, alternative collision code | `Diffusion.py:119-121`, `:162-177`, `:200-212` | Delete | Fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48) |
-| Unused `self.buff` | `BacteriaDecay.py:14,21-23`, `AntibioticEffect.py:20` | Delete | `AntibioticEffect` fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48); `BacteriaDecay` open |
+| Unused `self.buff` | `BacteriaDecay.py:14,21-23`, `AntibioticEffect.py:20` | Delete | `AntibioticEffect` fixed in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48); `BacteriaDecay` in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54) |
 | `_apply_cellwise`, `Rule.apply` | `Sim.py:71-98`, `Rule.py:63-64` | See [BUG-4](#bug-4) | Fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) |
-| Unused `shifted` parameter | `Geometry.py:42,46` | Remove | Open |
-| `_parse_keys` / `_frame_for_keys` duplicated | `examples/Replay_sim.py`, `examples/generate_gif.py` | Move into `tracking/playback.py` | Open |
+| Unused `shifted` parameter | `Geometry.py:42,46` | Remove | Fixed in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54) |
+| `_parse_keys` / `_frame_for_keys` duplicated | `examples/Replay_sim.py`, `examples/generate_gif.py` | Move into `tracking/playback.py` | Fixed in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54) |
 | `sys.path` hack (no longer needed with an installed package) | `examples/CA_drift_sim.py:1-7`, `gut-experiments: data_preparation.py:11-17` | Delete | `CA_drift_sim.py` fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36); gut file open |
-| `BASE_INTERACTIONS` hard-coded in the script, duplicating config content | `research/bioreactor/scripts/screening.py:32-45` | Read from the base config | Open |
-| `Renderer` `__main__` demo + commented arrays | `Renderer.py:741-752` | Move to `examples/` or delete | Open |
+| `BASE_INTERACTIONS` hard-coded in the script, duplicating config content | `research/bioreactor/scripts/screening.py:32-45` | Read from the base config | Fixed in [#60](https://github.com/MaruStalmach/Cellular-Automata/pull/60) (it was identical to `configs/screen.json`) |
+| `Renderer` `__main__` demo + commented arrays | `Renderer.py:741-752` | Move to `examples/` or delete | Deleted in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54) |
+| Claimed-particle check, redundant: eating a particle twice sets the same slot to 0 twice (found by [#53](https://github.com/MaruStalmach/Cellular-Automata/pull/53)) | `Utilization.py` (`claimed_substrate_targets`) | Delete, or keep only if consumption gets a per-bacterium effect | Fixed in [#58](https://github.com/MaruStalmach/Cellular-Automata/pull/58) (same statistics; seeded runs differ draw-for-draw) |
 
 ---
 
 ## 7. Performance (Medium)
 
 <a id="perf-1"></a>
-### PERF-1 - Python loops over cells in hot rules
+### ~~PERF-1 - Python loops over cells in hot rules~~
+
+> **Status:** Fixed in [#61](https://github.com/MaruStalmach/Cellular-Automata/pull/61): neighbour choice and conflict resolution are array operations (`Rule._neighbour_coords`, `_pick_uniform`, `_first_claims`) with the same probabilities, checked against the old code over 300 seeds per case and by fairness tests. 40³ grid: growth 1411 → 32 ms, utilization 889 → 21 ms per call. Seeded runs differ draw-for-draw.
 
 - **Where:**
   - `BacteriaGrowth.py:74-98`: per dividing cell, it builds a Python list of neighbours and sorts the proposals.
@@ -468,9 +472,9 @@ There are 28 test functions. **No tests** exist for:
 
 ### PERF-2 - Smaller items
 
-- `Diffusion.py:96` re-allocates `self.rolls` every call (defeating the preallocated buffer), and `rolls` / `layers` are `float64` where `uint8` would do. That is 6 × grid × 8 bytes, twice.
-- `Renderer.set_ca_state` calls `glBufferData` with a fresh `flatten()` copy every frame; use `glBufferSubData` on a persistent buffer.
-- `StateTracker` keeps every frame in RAM (see [BUG-10](#bug-10)).
+- ~~`Diffusion.py:96` re-allocates `self.rolls` every call (defeating the preallocated buffer), and `rolls` / `layers` are `float64` where `uint8` would do. That is 6 × grid × 8 bytes, twice.~~ Fixed in [#57](https://github.com/MaruStalmach/Cellular-Automata/pull/57): in-place rotation and `uint8` buffers, bit-identical output; on a 60³ grid 110 → 77 ms per call and 22.5 → 2.8 MB.
+- ~~`Renderer.set_ca_state` calls `glBufferData` with a fresh `flatten()` copy every frame; use `glBufferSubData` on a persistent buffer.~~ Fixed in [#62](https://github.com/MaruStalmach/Cellular-Automata/pull/62). Correction: uploads happen on key presses (step, cross-section), not every frame. The same PR fixes four cross-section bugs: stepping uploaded the whole grid, X left `grid_size` stale, and the instance count and layer limit used the last axis instead of the cut one.
+- `StateTracker` keeps every frame in RAM (see [BUG-10](#bug-10)); `record_every` ([#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54)) reduces this.
 
 ---
 
@@ -520,11 +524,11 @@ The commit message "first iteration of tests" is misleading: that commit adds no
 
 ### RES-2 - Bioreactor scripts (Medium)
 
-- `screening.py:62-63`: `calc_rmse` assumes **1 step = 30 min** (`time * 2`), silently tied to `time_step: 1800` in the configs. It raises `IndexError` if a run is shorter than the data. Derive this from the config's `dt` and check the length.
-- `screening.py:70-71`: renames `Other_bacteria` to `"Rest"` inline. Put the mapping in one place, next to the data.
+- ~~`screening.py:62-63`: `calc_rmse` assumes **1 step = 30 min** (`time * 2`), silently tied to `time_step: 1800` in the configs. It raises `IndexError` if a run is shorter than the data. Derive this from the config's `dt` and check the length.~~ Fixed in [#59](https://github.com/MaruStalmach/Cellular-Automata/pull/59): the step length comes from `ca_sim.max_dt` and frames from `tracker.steps`, with clear errors; same RMSE as before on the bioreactor data.
+- ~~`screening.py:70-71`: renames `Other_bacteria` to `"Rest"` inline. Put the mapping in one place, next to the data.~~ `DATA_COLUMNS` in `screening.py` since [#59](https://github.com/MaruStalmach/Cellular-Automata/pull/59); a per-dataset mapping file is still part of step 22.
 - `bayesian_optimization.py`: the hand-rolled GP/EI has a fixed length scale of 0.35, no hyperparameter fitting, and assumes RMSE is noiseless ([REPRO-1](#repro-1)). That's acceptable for exploration, but document it or use `scikit-optimize` / `optuna`.
-- `bayesian_optimization.py:16` and `screening.py:10`: both define `STUDY_DIR`. Put shared helpers in `research/bioreactor/scripts/common.py`.
-- Constants (`SAMPLE_RUNS`, `BIO_NUMBER`, `SELECTED_PAIRS`, bounds) are hard-coded. Move them to CLI arguments or an experiment config.
+- ~~`bayesian_optimization.py:16` and `screening.py:10`: both define `STUDY_DIR`. Put shared helpers in `research/bioreactor/scripts/common.py`.~~ Fixed in [#60](https://github.com/MaruStalmach/Cellular-Automata/pull/60) as `bioreactor_common.py` (`common` could shadow another module on `sys.path`).
+- ~~Constants (`SAMPLE_RUNS`, `BIO_NUMBER`, `SELECTED_PAIRS`, bounds) are hard-coded. Move them to CLI arguments or an experiment config.~~ Command-line options in [#63](https://github.com/MaruStalmach/Cellular-Automata/pull/63), defaulting to the old values; `SELECTED_PAIRS` stays in the script (an experiment config would fit it, with [ARCH-4](#arch-4)).
 - ~~`analyze_screening.py` read `screening_result.csv`, but `screening.py` writes `screening_results.csv`, so the two scripts didn't connect. `screening.py` also crashed if `results/` didn't exist.~~ Fixed in #33: `analyze_screening.py` takes `--input`/`--output` and defaults to what `screening.py` writes, and both scripts create `results/`.
 
 <a id="res-3"></a>
@@ -573,9 +577,9 @@ The commit message "first iteration of tests" is misleading: that commit adds no
 
 Without a licence nobody else may legally use, modify or redistribute the code. Add `LICENSE` (MIT or BSD-3 are common for research code; check AGH/co-author requirements) and `license` in `pyproject.toml`. Also check that the OTU/ASV data in `research/bioreactor/data/` may be redistributed, and cite its source in the study README.
 
-### HYG-2 - No CI, no lint configuration (High)
+### ~~HYG-2 - No CI, no lint configuration (High)~~
 
-> **Status:** Mostly fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): GitHub Actions runs `pytest` and `ruff check` (`E,F,I,B`), both blocking, and all ruff findings are fixed. Still open: `ruff format --check` (adopting it reformats about 30 files, so it needs its own PR).
+> **Status:** Fixed in [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36) and [#65](https://github.com/MaruStalmach/Cellular-Automata/pull/65). [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36): GitHub Actions runs `pytest` and `ruff check` (`E,F,I,B`), both blocking, and all ruff findings are fixed. [#65](https://github.com/MaruStalmach/Cellular-Automata/pull/65): the repo is `ruff format`ted (43 files, same syntax trees), CI runs `ruff format --check`, and `.git-blame-ignore-revs` hides the formatting commit. `mypy` runs in CI since [#64](https://github.com/MaruStalmach/Cellular-Automata/pull/64).
 
 There is no `.github/workflows`. `ruff` is a dev dependency but has no config, and it reports **374** findings. Most are `import *` (F403/F405), plus a bare `except`, `== None`, `== True`, unused imports and a redefinition.
 
@@ -590,6 +594,8 @@ There is no `.github/workflows`. `ruff` is a dev dependency but has no config, a
 **Fix:** rename modules (`sim.py`, `state.py`, `rules/gut_drift.py`, …), add `__init__.py` files that re-export the public classes (`from cellular_automata import CellularAutomaton, Geometry, State`), and add a CLI entry point `ca-sim = cellular_automata.cli:main` to replace `examples/CA_sim.py`.
 
 This is a breaking import change, so do it once, together with ARCH-1.
+
+**Found 2026-11-23:** the root re-exports can't be added before the rename. A module named like its class (`Geometry.py`, `State.py`, `Rule.py`, `Neighbourhood.py`) becomes the package attribute of that name as soon as it is imported, so `from cellular_automata import Geometry` would return the module instead of the class. Add the exports in the same PR as the snake_case rename.
 
 <a id="hyg-5"></a>
 ### ~~HYG-5 - Experiment results committed next to the code (High)~~
@@ -611,6 +617,8 @@ This is a breaking import change, so do it once, together with ARCH-1.
 - **Rule from now on:** scripts write to `research/<study>/results/` (ignored). Results worth keeping go on the `results` branch, with a provenance row: commit, config, seed and date.
 
 ### HYG-4 - Logging, typing, docs (Low)
+
+> **Status:** Partly fixed in [#55](https://github.com/MaruStalmach/Cellular-Automata/pull/55): no `print` in the library (a test keeps it that way); callbacks check their keys when built and let errors propagate; an incomplete framebuffer raises; the end-of-run and no-tracker messages use `logging`. [#64](https://github.com/MaruStalmach/Cellular-Automata/pull/64): `mypy` runs on the library in CI and its 26 errors are fixed (one was a real `State.data` bug). Still open: type-checking scripts and tests, and stricter settings after the [HYG-3](#hyg-3---naming--layout-medium) rename.
 
 - `print` is used throughout the library (including `"RENDERER ERROR"` and `"ERROR IN MULTICALLBACK"`, which swallow exceptions in `Callback.py:25-29`, `:52-55`, `:76-80`). Use `logging`, and let real errors propagate.
 - Type hints are partial; some are wrong (`state: State = None`, `callable` instead of `Callable`). Add hints and consider `mypy` or `pyright` in CI later.
@@ -664,7 +672,7 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 9. **[REPRO-1](#repro-1):** `sim.seed` in the config, a `Generator` in `CellularAutomaton`, `rule.rng` in every rule, and tests switched to an injected rng ([TEST-3](#test-3)). *Done when:* two runs with the same seed produce identical tracker output (tiny grid test). *Status: fixed in [#39](https://github.com/MaruStalmach/Cellular-Automata/pull/39) and [#40](https://github.com/MaruStalmach/Cellular-Automata/pull/40), including the done-when test. BO noise and the gut search's `SeedSequence.spawn` (step 21) remain.*
 10. **[BUG-2](#bug-2), [BUG-3](#bug-3), [BUG-6](#bug-6):** shift convention, Moore radius, bioreactor detachment keys, each with a test. *Status: BUG-2 and BUG-6 fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37); BUG-3 partly fixed (needs D9).*
 11. **[BUG-4](#bug-4) / [BUG-5](#bug-5):** remove the cell-wise path; abstract `apply_state`; warn when the 500 cap is hit; validate `dt` ratios. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37).*
-12. **[BUG-10](#bug-10):** tracker records only the selected keys; `record_every`; save on interrupt; symmetric paths. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37) except `record_every`.*
+12. **[BUG-10](#bug-10):** tracker records only the selected keys; `record_every`; save on interrupt; symmetric paths. *Status: fixed in [#37](https://github.com/MaruStalmach/Cellular-Automata/pull/37); `record_every` in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54). Step done.*
 
 ### Phase 3 - Architecture for extensibility (unblocks gut work)
 
@@ -692,9 +700,9 @@ Each step is meant to be **one small PR** that keeps tests green. Steps within a
 ### Phase 5 - Naming, performance, polish
 
 23. **[HYG-3](#hyg-3---naming--layout-medium):** snake_case modules, public `__init__` exports, a `ca-sim` CLI entry point. One breaking release; note it in a CHANGELOG.
-24. **[PERF-1](#perf-1):** vectorise `BacteriaGrowth` / `Utilization` conflict resolution; profile before and after with `tools/profiling`.
-25. **[PERF-2](#perf-2---smaller-items), [BUG-7](#bug-7), [BUG-8](#bug-8)** (after **D4**): Diffusion buffers and boundary model; antibiotic maths and constants. *Status: everything that needs no decision is in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48); the boundary model (D4) and the wall axis (D2) remain.*
-26. **[HYG-4](#hyg-4---logging-typing-docs-low)** and the dead-code table in [section 6](#6-duplication--dead-code-medium): logging, type hints, `mypy`, make `ruff` blocking in CI.
+24. **[PERF-1](#perf-1):** vectorise `BacteriaGrowth` / `Utilization` conflict resolution; profile before and after with `tools/profiling`. *Status: done in [#61](https://github.com/MaruStalmach/Cellular-Automata/pull/61) (micro-benchmarks instead of full-run profiling).*
+25. **[PERF-2](#perf-2---smaller-items), [BUG-7](#bug-7), [BUG-8](#bug-8)** (after **D4**): Diffusion buffers and boundary model; antibiotic maths and constants. *Status: Diffusion buffers done in [#57](https://github.com/MaruStalmach/Cellular-Automata/pull/57), renderer uploads in [#62](https://github.com/MaruStalmach/Cellular-Automata/pull/62). everything that needs no decision is in [#48](https://github.com/MaruStalmach/Cellular-Automata/pull/48); the boundary model (D4) and the wall axis (D2) remain.*
+26. **[HYG-4](#hyg-4---logging-typing-docs-low)** and the dead-code table in [section 6](#6-duplication--dead-code-medium): logging, type hints, `mypy`, make `ruff` blocking in CI. *Status: `ruff` has been blocking since [#36](https://github.com/MaruStalmach/Cellular-Automata/pull/36); the section 6 table is done in [#54](https://github.com/MaruStalmach/Cellular-Automata/pull/54) except the gut `sys.path` hack, `BASE_INTERACTIONS` in `screening.py` (fixed in [#60](https://github.com/MaruStalmach/Cellular-Automata/pull/60)) and the redundant `Utilization` check (fixed in [#58](https://github.com/MaruStalmach/Cellular-Automata/pull/58)); logging and error propagation in [#55](https://github.com/MaruStalmach/Cellular-Automata/pull/55). `mypy` in CI in [#64](https://github.com/MaruStalmach/Cellular-Automata/pull/64); stricter typing remains.*
 
 ### Suggested branch / PR sequence
 
@@ -713,10 +721,23 @@ main
                                      └─ fix/model-config-bugs (PR #48: bugs needing no decision)
                                          └─ refactor/rule-validation (PR #49: ARCH-6 part 1)
                                              └─ fix/shader-errors (PR #50: ARCH-3 part 2)
-                                                 └─ refactor/state-cleanup (PR #51: ARCH-5)
-                                                     └─ refactor/phase-3-geometry
-                                                         └─ (Phase 4 code)
-                                                             └─ refactor/phase-5-naming-perf
+                                                 └─ refactor/state-cleanup (PR #51: ARCH-5; PR #52 lands #44-#51 on main)
+                                                     └─ test/rule-behaviour (PR #53: TEST-2)
+                                                         └─ refactor/dead-code (PR #54: section 6, BUG-10 record_every)
+                                                             └─ refactor/logging (PR #55: HYG-4 logging and errors)
+                                                                 └─ refactor/abstract-rule (PR #56: BUG-4 abstract Rule)
+                                                                     └─ perf/diffusion-buffers (PR #57: PERF-2 Diffusion)
+                                                                         └─ refactor/utilization-claims (PR #58: redundant claim ordering)
+                                                                             └─ fix/screening-time-mapping (PR #59: RES-2 step length)
+                                                                                 └─ refactor/bioreactor-common (PR #60: shared script helpers)
+                                                                                     └─ perf/vectorise-growth (PR #61: PERF-1)
+                                                                                         └─ perf/renderer-buffer (PR #62: renderer uploads, cross-section fixes)
+                                                                                             └─ feat/script-cli (PR #63: script options, BO seeds)
+                                                                                                 └─ chore/mypy (PR #64: mypy in CI)
+                                                                                                     └─ chore/ruff-format (PR #65: ruff format, enforced)
+                                                                                                         └─ refactor/phase-3-geometry
+                                                                                                             └─ (Phase 4 code)
+                                                                                                                 └─ refactor/phase-5-naming-perf
 ```
 
 Gut-feature work can start **after step 15**. From then on, a new rule is one file with configurable keys and wall axis, and the explicit registry picks it up automatically.

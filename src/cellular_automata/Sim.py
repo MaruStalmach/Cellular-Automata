@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import operator
 import secrets
 import warnings
@@ -11,6 +12,8 @@ from cellular_automata.Geometry import Geometry
 from cellular_automata.Rule import Rule, StepContext
 from cellular_automata.State import State
 from cellular_automata.tracking.StateTracker import StateTracker
+
+logger = logging.getLogger(__name__)
 
 # upper bound on how often one rule runs per step, to keep a step's cost bounded
 MAX_RUNS_PER_STEP = 500
@@ -56,7 +59,8 @@ def check_required_keys(rules: list[Rule], state: State) -> None:
     ]
     if missing:
         raise ValueError(
-            "state is missing keys the rules need: " + "; ".join(missing)
+            "state is missing keys the rules need: "
+            + "; ".join(missing)
             + f" (state keys: {list(state.keys)})"
         )
 
@@ -76,7 +80,7 @@ class CellularAutomaton:
         self,
         geometry: Geometry,
         rules: list[Rule],
-        state: State = None,
+        state: State | None = None,
         max_steps: int = 100,
         tracker: StateTracker | None = None,
         output_filename: str | None = None,
@@ -90,7 +94,7 @@ class CellularAutomaton:
         self.output_filename = output_filename
         self.start_time = 0.0
         self._saved_at_step: int | None = None
-        self.max_dt = 0
+        self.max_dt = 0.0
 
         # collect the keys the rules need; one step lasts as long as the largest rule dt
         keys: list[str] = []
@@ -110,9 +114,7 @@ class CellularAutomaton:
             self.state = state
             check_required_keys(rules, state)
         else:
-            self.state = State(
-                geometry, random=True, cell_keys=keys, rng=state_rng(self.seed)
-            )
+            self.state = State(geometry, random=True, cell_keys=keys, rng=state_rng(self.seed))
 
         self.step_no = 0
         if self.tracker:
@@ -140,13 +142,13 @@ class CellularAutomaton:
         return int(np.clip(runs, 1, MAX_RUNS_PER_STEP))
 
     def step(self):
-        '''increments the timestep of the simulation and applies all '''
-        if self.step_no>=self.max_steps:
-            print(f'simulation ended. time={time()-self.start_time:.2f}s')
+        """increments the timestep of the simulation and applies all"""
+        if self.step_no >= self.max_steps:
+            logger.info("simulation ended. time=%.2fs", time() - self.start_time)
             return -1
-        if self.step_no==0:
+        if self.step_no == 0:
             self.start_time = time()
-        
+
         ctx = StepContext(step_no=self.step_no, max_steps=self.max_steps)
         times_to_execute = self.rule_exec_n_times.copy()
         while sum(times_to_execute) > 0:
@@ -158,7 +160,7 @@ class CellularAutomaton:
 
         self.step_no += 1
         if self.tracker:
-            self.tracker.record_step(self.state, self.step_no)
+            self.tracker.record_step(self.state, self.step_no, final=self.step_no >= self.max_steps)
 
         if self.step_no >= self.max_steps:
             self.save_tracker()
@@ -174,5 +176,7 @@ class CellularAutomaton:
             return
         if self._saved_at_step == self.step_no:
             return
+        # an interrupted run may stop between recorded steps
+        self.tracker.record_step(self.state, self.step_no, final=True)
         self.tracker.save(self.output_filename)
         self._saved_at_step = self.step_no

@@ -184,7 +184,7 @@ Simulations are configured with JSON files and built by `cellular_automata.confi
 | `sim` | yes | `size`, `periodicity` (axes that wrap around, e.g. `"xy"`), `max_steps`, `render`; optional `neighbourhood` (`MooreNeighbourhood` by default), `dtype` and `seed` (see [Reproducibility](#reproducibility)) |
 | `state_keys` | yes | One entry per state variable: `name`, `layers`, `dtype` (a numpy type name, e.g. `"np.uint8"` or `"float32"`), and optional random initialisation (`random`, `random_func`, `random_args`); `random_func` is `np.random.<method>` or a registered initialiser (`init_block`, `random_seeds`) |
 | `rules` | yes | One entry per rule: `name` (the rule class) and `args` (constructor arguments; every rule needs `time_step`) |
-| `tracker` | no | Records the state each step and saves it to `output_files/tracked_simulations/<save_as>.npz` at `max_steps` |
+| `tracker` | no | Records the state and saves it to `output_files/tracked_simulations/<save_as>.npz` at `max_steps`. `args.keys` picks the keys (default: all); `args.record_every: N` records every Nth step (default 1), plus the first and last |
 | `renderer` | when `render` is true | `key` to display, `window_size`, and an optional `callback` (`Callback`, `ReduceCallback`, `MultiKeyCallback`) with `args` |
 
 Example configuration:
@@ -264,7 +264,7 @@ Set `sim.seed` to a non-negative integer to make a run repeatable: the same conf
 With [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv sync                      # library + dev tools (pytest, ruff); headless only
+uv sync                      # library + dev tools (pytest, ruff, mypy); headless only
 uv sync --extra render       # also install the OpenGL renderer (glfw, PyOpenGL, PyGLM)
 uv sync --extra research     # also install pandas, imageio, psutil for examples/research/tools
 uv sync --all-extras         # everything
@@ -331,7 +331,10 @@ python examples/generate_gif.py -f demo -k bacteria --duration 8  # writes outpu
 ## Running Tests
 
 ```bash
-uv run pytest        # or: python -m pytest
+uv run pytest                    # or: python -m pytest
+uv run ruff check .              # lint
+uv run ruff format .             # format (CI checks it with --check)
+uv run --extra render mypy       # type check (CI runs all three)
 ```
 
 ## Authors

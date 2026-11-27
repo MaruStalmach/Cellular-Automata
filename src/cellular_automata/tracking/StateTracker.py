@@ -11,8 +11,18 @@ from cellular_automata.State import State
 
 @register_tracker
 class StateTracker:
-    def __init__(self, keys: list[str]) -> None:
+    """Records the chosen keys of a run, every `record_every` steps.
+
+    The first and last step are always recorded; `steps` lists the step number of
+    each recorded frame.
+    """
+
+    def __init__(self, keys: list[str], record_every: int = 1) -> None:
+        if isinstance(record_every, bool) or not isinstance(record_every, int) or record_every < 1:
+            raise ValueError(f"record_every must be a positive integer, got {record_every!r}")
+        self.record_every = record_every
         self.history: dict[str, list[np.ndarray]] = {key: [] for key in keys}
+        self.steps: list[int] = []
         self.geometry: Geometry | None = None
         self.key_layers: dict[str, int] = {}
         # set by CellularAutomaton so saved runs record the seed that produced them
@@ -58,10 +68,19 @@ class StateTracker:
 
         return tuple(spatial_shape)
 
-    def record_step(self, state: State, step_no: int) -> None:
+    def record_step(self, state: State, step_no: int, final: bool = False) -> None:
+        """Record `state` if `step_no` is a multiple of `record_every`, or if `final`.
+
+        A step that is already recorded is not recorded twice.
+        """
+        if self.steps and self.steps[-1] == step_no:
+            return
+        if step_no % self.record_every != 0 and not final:
+            return
         if self.geometry is None:
             self.geometry = state.geometry
 
+        self.steps.append(step_no)
         for key in self.history:
             self.history[key].append(state[key].copy())
             self.key_layers[key] = state.key_layers[state.key_to_index[key]]
@@ -74,9 +93,7 @@ class StateTracker:
             filename = f"{filename}_{timestamp}"
         file_path = self._normalize_file_path(filename)
 
-        stacked_history = {
-            key: np.stack(arrays, axis=0) for key, arrays in self.history.items()
-        }
+        stacked_history = {key: np.stack(arrays, axis=0) for key, arrays in self.history.items()}
 
         metadata = {
             "geometry_size": list(self.geometry.size) if self.geometry else None,
@@ -85,13 +102,15 @@ class StateTracker:
             "keys": list(self.history.keys()),
             "key_layers": [self.key_layers.get(key, 1) for key in self.history],
             "seed": self.seed,
+            "steps": self.steps,
+            "record_every": self.record_every,
         }
-        
+
         file_path.parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(
             file_path,
             __state_tracker_metadata__=np.array(json.dumps(metadata)),
-            **stacked_history,
+            **stacked_history,  # type: ignore[arg-type]  # numpy's stubs reject **arrays
         )
 
     def get_history(self) -> dict[str, list[np.ndarray]]:
@@ -112,17 +131,19 @@ class StateTracker:
                 if key != "__state_tracker_metadata__"
             }
 
-        tracker = cls(list(history.keys()))
+        tracker = cls(list(history.keys()), record_every=(metadata or {}).get("record_every", 1))
         tracker.history = history
+        frames = len(next(iter(history.values()), []))
+        # files saved before record_every recorded every step
+        tracker.steps = list((metadata or {}).get("steps") or range(frames))
         if metadata:
             tracker.seed = metadata.get("seed")
 
         if metadata and metadata.get("geometry_size"):
             tracker.geometry = Geometry(
                 size=tuple(metadata["geometry_size"]),
-                axes=metadata.get("geometry_axes") or cls._default_axes(
-                    len(metadata["geometry_size"])
-                ),
+                axes=metadata.get("geometry_axes")
+                or cls._default_axes(len(metadata["geometry_size"])),
                 periodicity=metadata.get("geometry_periodicity", ""),
             )
 
@@ -158,9 +179,7 @@ class StateTracker:
                     periodicity=periodicity,
                 )
         elif self.geometry is not None and geometry.size != self.geometry.size:
-            raise ValueError(
-                "provided geometry does not match the tracked spatial shape"
-            )
+            raise ValueError("provided geometry does not match the tracked spatial shape")
 
         key_layers = []
         key_dtypes: dict[str, np.dtype | type] = {}
@@ -175,9 +194,7 @@ class StateTracker:
             elif values.ndim == spatial_rank + 1:
                 key_layers.append(values.shape[-1])
             else:
-                raise ValueError(
-                    f"tracked key '{key}' has unsupported shape {values.shape}"
-                )
+                raise ValueError(f"tracked key '{key}' has unsupported shape {values.shape}")
             key_dtypes[key] = values.dtype
 
         state = State(
@@ -222,7 +239,7 @@ class TrackedStatePlayback:
         geometry: Geometry | None = None,
         axes: str | None = None,
         periodicity: str = "",
-        stride : int = 1
+        stride: int = 1,
     ) -> None:
         self.tracker = tracker
         self.step_no = step_no
@@ -238,7 +255,5 @@ class TrackedStatePlayback:
                 self.step_no + self.stride, len(next(iter(self.tracker.history.values()))) - 1
             )
 
-        self.state = self.tracker.to_state(
-            self.step_no, self.geometry, self.axes, self.periodicity
-        )
+        self.state = self.tracker.to_state(self.step_no, self.geometry, self.axes, self.periodicity)
         return self.tracker.to_renderer_frame(self.step_no)

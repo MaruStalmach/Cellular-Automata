@@ -211,6 +211,161 @@ def test_renderer_terminates_glfw_when_a_shader_fails(monkeypatch, fresh_renderi
     sys.modules["glfw"].terminate.assert_called_once_with()
 
 
+@pytest.fixture
+def mocked_renderer(monkeypatch, fresh_rendering_modules):
+    """The renderer module imported against mocked glfw, glm and OpenGL."""
+    from unittest import mock
+
+    for name in ["glfw", "glm", "OpenGL", "OpenGL.GL"]:
+        monkeypatch.setitem(sys.modules, name, mock.MagicMock(name=name))
+    return importlib.import_module("cellular_automata.rendering.Renderer")
+
+
+def test_incomplete_framebuffer_raises_and_terminates_glfw(mocked_renderer, monkeypatch):
+    monkeypatch.setattr(mocked_renderer, "glCheckFramebufferStatus", lambda target: 0x8CD6)
+    monkeypatch.setattr(mocked_renderer, "GL_FRAMEBUFFER_COMPLETE", 0x8CD5)
+
+    with pytest.raises(RuntimeError, match="opaque framebuffer is incomplete"):
+        mocked_renderer.CARenderer._check_framebuffer("opaque")
+
+    mocked_renderer.glfw.terminate.assert_called_once_with()
+
+
+def test_complete_framebuffer_passes(mocked_renderer, monkeypatch):
+    monkeypatch.setattr(mocked_renderer, "glCheckFramebufferStatus", lambda target: 0x8CD5)
+    monkeypatch.setattr(mocked_renderer, "GL_FRAMEBUFFER_COMPLETE", 0x8CD5)
+
+    mocked_renderer.CARenderer._check_framebuffer("opaque")
+
+    mocked_renderer.glfw.terminate.assert_not_called()
+
+
+# --- state uploads and cross-sections (PERF-2) ---------------------------------------
+
+
+@pytest.fixture
+def built_renderer(mocked_renderer, monkeypatch):
+    """A CARenderer for a 4x5x6 grid built against mocks.
+
+    Returns (renderer, uploads, module); `uploads` lists ("alloc" | "update", array) for
+    every shader-storage upload, in order.
+    """
+    from unittest import mock
+
+    import numpy as np
+
+    uploads = []
+    storage = mocked_renderer.GL_SHADER_STORAGE_BUFFER
+
+    def buffer_data(target, size, data, usage):
+        if target is storage:
+            uploads.append(("alloc", np.array(data)))
+
+    def buffer_sub_data(target, offset, size, data):
+        assert target is storage and offset == 0 and size == data.nbytes
+        uploads.append(("update", data))
+
+    monkeypatch.setattr(mocked_renderer, "build_shader", lambda vertex, fragment: mock.MagicMock())
+    monkeypatch.setattr(mocked_renderer, "glCheckFramebufferStatus", lambda target: 1)
+    monkeypatch.setattr(mocked_renderer, "GL_FRAMEBUFFER_COMPLETE", 1)
+    monkeypatch.setattr(mocked_renderer, "glBufferData", buffer_data)
+    monkeypatch.setattr(mocked_renderer, "glBufferSubData", buffer_sub_data)
+    monkeypatch.setattr(mocked_renderer, "glUniform3f", mock.MagicMock(name="glUniform3f"))
+    state = np.arange(4 * 5 * 6, dtype=np.uint8).reshape(4, 5, 6)
+    renderer = mocked_renderer.CARenderer(state, 64, 64)
+    return renderer, uploads, mocked_renderer
+
+
+def test_stepping_reuses_the_buffer_and_uploads_contiguous_float32(built_renderer):
+    import numpy as np
+
+    renderer, uploads, _ = built_renderer
+    assert [kind for kind, _ in uploads] == ["alloc"]  # allocated once when built
+    new_state = np.ones((4, 5, 6))
+
+    renderer.set_ca_state(new_state)
+
+    kind, data = uploads[-1]
+    assert kind == "update"
+    assert data.dtype == np.float32 and data.flags.c_contiguous
+    np.testing.assert_array_equal(data, new_state)
+
+
+def test_a_state_of_a_new_size_reallocates_the_buffer(built_renderer):
+    import numpy as np
+
+    renderer, uploads, _ = built_renderer
+
+    renderer.set_ca_state(np.ones((2, 4, 5, 6)))
+
+    kind, data = uploads[-1]
+    assert kind == "alloc" and data.shape == (2, 4, 5, 6)
+
+
+@pytest.mark.parametrize(
+    "axis, grid, cells", [(0, (1, 5, 6), 30), (1, (4, 1, 6), 24), (2, (4, 5, 1), 20)]
+)
+def test_cross_section_shows_one_layer_along_each_axis(built_renderer, axis, grid, cells):
+    import numpy as np
+
+    renderer, uploads, module = built_renderer
+    renderer.cs_axis = axis
+    renderer.layer = 2
+
+    renderer._toggle_cross_section()
+
+    sel = [slice(None)] * 3
+    sel[axis] = 2
+    np.testing.assert_array_equal(uploads[-1][1], renderer.ca_state[tuple(sel)])
+    assert module.glUniform3f.call_args.args[1:] == grid
+    assert renderer.num_cells == cells
+
+
+def test_switching_the_cut_axis_updates_the_grid_size(built_renderer):
+    renderer, _, module = built_renderer
+    renderer._toggle_cross_section()
+
+    renderer.cs_axis = 2
+    renderer._update_cs()
+
+    assert module.glUniform3f.call_args.args[1:] == (4, 5, 1)
+
+
+def test_stepping_in_cross_section_mode_uploads_the_layer_not_the_grid(built_renderer):
+    import numpy as np
+
+    renderer, uploads, _ = built_renderer
+    renderer.layer = 1
+    renderer._toggle_cross_section()
+    new_state = np.random.default_rng(0).random((4, 5, 6))
+
+    renderer.set_ca_state(new_state)
+
+    np.testing.assert_array_equal(uploads[-1][1], new_state[1].astype(np.float32))
+    assert renderer.num_cells == 30
+
+
+def test_leaving_cross_section_mode_shows_the_whole_grid(built_renderer):
+    renderer, uploads, module = built_renderer
+    renderer._toggle_cross_section()
+
+    renderer._toggle_cross_section()
+
+    assert uploads[-1][1].shape == (4, 5, 6)
+    assert module.glUniform3f.call_args.args[1:] == (4, 5, 6)
+    assert renderer.num_cells == 120
+
+
+def test_cross_section_layer_is_clamped_to_the_cut_axis(built_renderer):
+    renderer, _, _ = built_renderer
+    renderer.cs_axis = 0  # length 4, while the last axis has length 6
+    renderer.layer = 5
+
+    renderer._toggle_cross_section()
+
+    assert renderer.layer == 3
+
+
 def test_no_fake_backed_rendering_module_is_left_behind():
     """Runs after the faked tests in this file; they must have restored sys.modules."""
     import cellular_automata.rendering as rendering

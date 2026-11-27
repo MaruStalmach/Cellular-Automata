@@ -23,8 +23,8 @@ class Diffusion(Rule):
         a: float,
         p: float,
         target_key: str = "substrate",
-        biofilm_key: str = None,
-        biofilm_disruption: float = 0.8
+        biofilm_key: str | None = None,
+        biofilm_disruption: float = 0.8,
     ):
         super().__init__(geometry, time_step)
         require_3d(type(self).__name__, geometry)
@@ -38,34 +38,32 @@ class Diffusion(Rule):
         self.p = [a * p3, p, p, p3, p, p]
         if self.biofilm_key is not None:
             # calculate new a for when diffusion is in biofilm
-            ap = self._calc_a_prim(a,p,biofilm_disruption)
+            ap = self._calc_a_prim(a, p, biofilm_disruption)
             p3 = (1 - 4 * p) / (ap + 1)
             self.p_bio = [ap * p3, p, p, p3, p, p]
-        self.rolls = np.zeros(shape=geometry.size + (6,))
-        self.layers = np.zeros(shape=geometry.size + (6,))
-        self.shift_buffer = np.zeros(shape=geometry.size)
+        # preallocated per-slot buffers, reused every call; values are 0..6, so uint8
+        self.rolls = np.zeros(shape=geometry.size + (6,), dtype=np.uint8)
+        self.layers = np.zeros(shape=geometry.size + (6,), dtype=np.uint8)
+        self.shift_buffer = np.zeros(shape=geometry.size, dtype=np.uint8)
+        self._slot_index = np.arange(6, dtype=np.uint8)
         self.lost_particles: int = 0
 
         self.RESTORE_THRESHOLD = 100
-        
-        
 
-    
-    
     @staticmethod
-    def _calc_a_prim(x,p,d):
-        a=12*p
-        b=-12*p+6
-        e=-1/2/p+2
-        f=(1-2*p)/12/p
-        g=f+e/(a*x+b)
-        xp=e/a/(d*g-f)-b/a
+    def _calc_a_prim(x, p, d):
+        a = 12 * p
+        b = -12 * p + 6
+        e = -1 / 2 / p + 2
+        f = (1 - 2 * p) / 12 / p
+        g = f + e / (a * x + b)
+        xp = e / a / (d * g - f) - b / a
         return xp
 
     def apply_state(self, state, ctx: StepContext | None = None) -> State:
 
         source = state[self.target_key]
-        
+
         if self.biofilm_key is not None:
             biofilm_source = state[self.biofilm_key]
 
@@ -80,27 +78,29 @@ class Diffusion(Rule):
         # l5      - -x
         self.rolls.fill(0)
         if self.biofilm_key is not None:
-            particle_mask = source==1
-            bio_mask = biofilm_source==1
-            #broadcast to 4d shape
-            bio_mask = bio_mask[...,None]
-            particle_in_bio = particle_mask&bio_mask
-            particle_out_bio = particle_mask&(~bio_mask)
-            pib_amt=particle_in_bio.sum()
-            pob_amt=particle_out_bio.sum()
+            particle_mask = source == 1
+            bio_mask = biofilm_source == 1
+            # broadcast to 4d shape
+            bio_mask = bio_mask[..., None]
+            particle_in_bio = particle_mask & bio_mask
+            particle_out_bio = particle_mask & (~bio_mask)
+            pib_amt = particle_in_bio.sum()
+            pob_amt = particle_out_bio.sum()
             self.rolls[particle_out_bio] = self.rng.choice(
-            [0, 1, 2, 3, 4, 5], size=(pob_amt,), p=self.p
+                [0, 1, 2, 3, 4, 5], size=(pob_amt,), p=self.p
             ).astype(np.uint8)
             self.rolls[particle_in_bio] = self.rng.choice(
-                        [0, 1, 2, 3, 4, 5], size=(pib_amt,), p=self.p_bio
-                        ).astype(np.uint8)
+                [0, 1, 2, 3, 4, 5], size=(pib_amt,), p=self.p_bio
+            ).astype(np.uint8)
         else:
-            roll_amt = source[source==1].sum()
-            self.rolls[source==1] = self.rng.choice(
+            roll_amt = source[source == 1].sum()
+            self.rolls[source == 1] = self.rng.choice(
                 [0, 1, 2, 3, 4, 5], size=(roll_amt,), p=self.p
             ).astype(np.uint8)
-        
-        self.rolls = (self.rolls + np.arange(6, dtype=self.rolls.dtype)) % 6
+
+        # in place: a new array here would defeat the preallocated buffer
+        np.add(self.rolls, self._slot_index, out=self.rolls)
+        np.remainder(self.rolls, 6, out=self.rolls)
         # set empty cells as invalid value
         np.copyto(self.rolls, 6, where=(source == 0))
 
@@ -109,7 +109,7 @@ class Diffusion(Rule):
             if ax not in state.geometry.periodic_dims:
                 forward_layer = -1 * ax + 2  # moving towards +ax
                 backward_layer = (forward_layer + 3) % 6  # moving towards -ax
-                sel = [slice(None)] * 4
+                sel: list[slice | int] = [slice(None)] * 4
                 sel[ax] = -1
                 self.rolls[tuple(sel)][self.rolls[tuple(sel)] == forward_layer] = backward_layer
                 sel[ax] = 0
@@ -134,18 +134,15 @@ class Diffusion(Rule):
         # l4      - -y
         # l5      - -x
 
-        def shift_roll(
-            layer: np.ndarray, axis: int, shift: int, periodic=False
-        ) -> None:
+        def shift_roll(layer: np.ndarray, axis: int, shift: int, periodic=False) -> None:
             buffer = self.shift_buffer
             buffer[...] = layer
             layer.fill(0)
 
-            source_slices = [slice(None)] * layer.ndim
-            target_slices = [slice(None)] * layer.ndim
-            if periodic:
-                edge_target = [slice(None)] * layer.ndim
-                edge_source = [slice(None)] * layer.ndim
+            source_slices: list[slice | int] = [slice(None)] * layer.ndim
+            target_slices: list[slice | int] = [slice(None)] * layer.ndim
+            edge_target: list[slice | int] = [slice(None)] * layer.ndim
+            edge_source: list[slice | int] = [slice(None)] * layer.ndim
             if shift > 0:
                 source_slices[axis] = slice(None, -shift)
                 target_slices[axis] = slice(shift, None)
@@ -172,9 +169,8 @@ class Diffusion(Rule):
                 shift_roll(self.layers[..., i], ax, dir)
                 shift_roll(self.layers[..., i + 3], ax, -dir)
 
-        self.lost_particles += self.layers[self.layers > 1].sum() - np.prod(
-            self.layers[self.layers > 1].shape
-        )
+        collided = self.layers[self.layers > 1]
+        self.lost_particles += int(collided.sum(dtype=np.int64)) - collided.size
         # naive collision resolution -> delete colliding particles
         # (the boundary model is an open question: D4 in docs/code-quality-plan.md)
         self.layers[self.layers > 1] = 1

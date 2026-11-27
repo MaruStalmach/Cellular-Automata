@@ -1,5 +1,3 @@
-from operator import itemgetter
-
 import numpy as np
 
 from cellular_automata.registry import register_rule
@@ -14,9 +12,9 @@ class BacteriaGrowth(Rule):
         time_step: float,
         bacteria_keys,
         substrate_key,
-        Yca = 6.94e-6,
-        base_prob = 0.02,
-        time_scale = 4320000,
+        Yca=6.94e-6,
+        base_prob=0.02,
+        time_scale=4320000,
     ):
         super().__init__(geometry, time_step)
         self.b_keys = bacteria_keys
@@ -24,30 +22,9 @@ class BacteriaGrowth(Rule):
 
         self.Yca = Yca
         self.base_prob = base_prob
-        self.time_scale = (
-            time_scale  # ratio between larger time step and smaller time step
-        )
+        self.time_scale = time_scale  # ratio between larger time step and smaller time step
 
         self.required_keys.extend([*bacteria_keys, substrate_key])
-
-    def _neighbour_candidates(self, coords: tuple[int, ...]) -> list[tuple[int, ...]]:
-        candidates: list[tuple[int, ...]] = []
-        for offset in self.geometry._offsets:
-            target = []
-            valid = True
-            for axis, (coord, delta) in enumerate(zip(coords, offset, strict=True)):
-                value = coord + int(delta)
-                if axis in self.geometry.periodic_dims:
-                    value %= self.geometry.size[axis]
-                elif value < 0 or value >= self.geometry.size[axis]:
-                    valid = False
-                    break
-                target.append(value)
-
-            if valid:
-                candidates.append(tuple(target))
-
-        return candidates
 
     def apply_state(self, state, ctx: StepContext | None = None):
         substrate_grid = state[self.sub_key].copy()
@@ -67,37 +44,33 @@ class BacteriaGrowth(Rule):
             self.time_scale * self.Yca * self.base_prob * (substrate_count), 0.0, 1.0
         )
 
-        # the code below prevents two diffrent bacteria from growing into the same empty cell
-        proposals: list[tuple[float, str, tuple[int, ...], tuple[int, ...]]] = []
-        for key, grid in bacteria_grids.items():
+        # each dividing cell picks an empty neighbour uniformly; a cell picked by several
+        # parents (of any species) goes to one of them, chosen uniformly
+        keys, parents, targets = [], [], []
+        for key_index, grid in enumerate(bacteria_grids.values()):
             key_mask = self._cell_mask(grid)
             dividing_cells = key_mask & (self.rng.random(state.shape) < growth_prob)
+            key_parents = np.argwhere(dividing_cells)
 
-            for parent_coords in map(tuple, np.argwhere(dividing_cells)):
-                empty_targets = [
-                    target
-                    for target in self._neighbour_candidates(parent_coords)
-                    if not occupied_mask[target]
-                ]
-                if not empty_targets:
-                    continue
+            neighbours, valid = self._neighbour_coords(key_parents)
+            valid &= ~occupied_mask[tuple(np.moveaxis(neighbours, -1, 0))]
+            column, has_target = self._pick_uniform(valid)
+            chosen = neighbours[np.arange(len(key_parents)), column][has_target]
 
-                target = empty_targets[int(self.rng.integers(len(empty_targets)))]
-                proposals.append(
-                    (float(self.rng.random()), key, parent_coords, target)
-                )
+            keys.append(np.full(len(chosen), key_index))
+            parents.append(key_parents[has_target])
+            targets.append(chosen)
 
-        proposals.sort(key=itemgetter(0), reverse=True)
-        claimed_targets: set[tuple[int, ...]] = set()
+        keys_all = np.concatenate(keys)
+        parents_all = np.concatenate(parents)
+        targets_all = np.concatenate(targets)
+        winners = self._first_claims(np.ravel_multi_index(tuple(targets_all.T), state.shape))
 
-        for _, key, parent_coords, target_coords in proposals:
-            # dont grow if spot taken
-            if target_coords in claimed_targets or occupied_mask[target_coords]:
-                continue
-
-            bacteria_grids[key][target_coords] = state[key][parent_coords]
-            occupied_mask[target_coords] = True
-            claimed_targets.add(target_coords)
+        for key_index, key in enumerate(bacteria_grids):
+            won = winners[keys_all[winners] == key_index]
+            parent_idx = tuple(parents_all[won].T)
+            target_idx = tuple(targets_all[won].T)
+            bacteria_grids[key][target_idx] = state[key][parent_idx]
 
         for key, grid in bacteria_grids.items():
             state[key] = grid

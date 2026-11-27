@@ -17,8 +17,13 @@ SIZE = (4, 4, 4)
 def _rule(size=SIZE, neighbourhood=None, **kwargs):
     axes = "xyz"[: len(size)]
     geometry = Geometry(size, axes=axes, periodicity=axes[:2], neighbourhood=neighbourhood)
-    args = {"time_step": 1800, "bacteria_keys": ["bacteria"], "biofilm_key": "biofilm",
-            "effectiveness": [0.0], "base_prob": 1.041e-6}
+    args = {
+        "time_step": 1800,
+        "bacteria_keys": ["bacteria"],
+        "biofilm_key": "biofilm",
+        "effectiveness": [0.0],
+        "base_prob": 1.041e-6,
+    }
     args.update(kwargs)
     return AntibioticEffect(geometry, **args)
 

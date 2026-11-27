@@ -1,5 +1,6 @@
 import inspect
 import json
+import logging
 import warnings
 from collections.abc import Callable
 from functools import partial
@@ -26,6 +27,8 @@ from cellular_automata.State import State
 
 if TYPE_CHECKING:
     from cellular_automata.rendering.Renderer import CARenderer
+
+logger = logging.getLogger(__name__)
 
 RENDER_PACKAGES = {"glfw", "OpenGL", "OpenGL_accelerate", "glm"}
 RENDER_INSTALL_HINT = (
@@ -131,19 +134,17 @@ def build_simulation(data: dict) -> CellularAutomaton:
 
     state_keys = data["state_keys"]
 
-    cell_keys = []
-    key_dtypes = {}
-    key_layers = []
-    random_func = []
-    random_args = []
+    cell_keys: list[str] = []
+    key_dtypes: dict[str, np.dtype | type] = {}
+    key_layers: list[int] = []
+    random_func: list[Callable | None] = []
+    random_args: list[dict | None] = []
 
     for sk in state_keys:
         cell_keys.append(sk["name"])
         key_layers.append(sk.get("layers", 1))
         random_args.append(sk.get("random_args", None))
-        key_dtypes[sk["name"]] = parse_dtype(
-            sk.get("dtype", sim_data.get("dtype", "np.uint8"))
-        )
+        key_dtypes[sk["name"]] = parse_dtype(sk.get("dtype", sim_data.get("dtype", "np.uint8")))
         func_name = sk.get("random_func", None)
         is_random = sk.get("random", False)
         if not isinstance(is_random, bool):
@@ -152,7 +153,7 @@ def build_simulation(data: dict) -> CellularAutomaton:
             )
         if is_random != (func_name is not None):
             raise ValueError(
-                f"state key '{sk['name']}': \"random\": true and \"random_func\" go "
+                f'state key \'{sk["name"]}\': "random": true and "random_func" go '
                 "together; set both to fill the key at random, or neither to start at 0"
             )
         if func_name is None:
@@ -187,9 +188,7 @@ def build_simulation(data: dict) -> CellularAutomaton:
 
         tracker = TRACKERS.get(tracker_name)(**tracker_args)
     else:
-        print(
-            "no 'tracker' block found in config JSON -> sim.tracker will be None and no history will be recorded"
-        )
+        logger.info("no 'tracker' block in the config, so no history will be recorded")
 
     ### create rules list
     rules_data = data["rules"]
@@ -237,7 +236,9 @@ def build_renderer(
     renderer_data = data["renderer"]
     # TODO:multiple key rendering, will have to adjust renderer code also
     key = renderer_data.get("key", ca_sim.state.keys[0])
-    window_size = renderer_data.get("window_size", ())
+    window_size = tuple(renderer_data.get("window_size", ()))
+    if len(window_size) not in (0, 2):
+        raise ValueError(f"renderer window_size must be [width, height], got {list(window_size)}")
     callback_data = renderer_data.get("callback", None)
 
     if callback_data is None:
@@ -251,6 +252,9 @@ def build_renderer(
     else:
         keys_amt = 1
 
-    return renderer(
-        callback(False), *window_size, update_callback=callback, keys_to_render=keys_amt
-    )
+    if window_size:
+        width, height = window_size
+        return renderer(
+            callback(False), width, height, update_callback=callback, keys_to_render=keys_amt
+        )
+    return renderer(callback(False), update_callback=callback, keys_to_render=keys_amt)

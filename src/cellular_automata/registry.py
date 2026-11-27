@@ -21,10 +21,9 @@ T = TypeVar("T")
 
 def _same_definition(a: object, b: object) -> bool:
     """True if `a` and `b` come from the same source definition, e.g. after a reload."""
-    return (
-        getattr(a, "__module__", None) == getattr(b, "__module__", None)
-        and getattr(a, "__qualname__", None) == getattr(b, "__qualname__", None)
-    )
+    return getattr(a, "__module__", None) == getattr(b, "__module__", None) and getattr(
+        a, "__qualname__", None
+    ) == getattr(b, "__qualname__", None)
 
 
 class Registry(Generic[T]):
@@ -40,7 +39,7 @@ class Registry(Generic[T]):
         Re-registering the same definition (a reloaded module) replaces the
         old entry; a different object under a taken name is an error.
         """
-        name = name or obj.__name__
+        name = name or obj.__name__  # type: ignore[attr-defined]  # classes and functions
         existing = self._items.get(name)
         if existing is not None and not _same_definition(existing, obj):
             raise ValueError(f"{self.kind} '{name}' is already registered")

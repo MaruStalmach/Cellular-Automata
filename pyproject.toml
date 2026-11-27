@@ -32,6 +32,7 @@ research = [
 
 [dependency-groups]
 dev = [
+    "mypy>=1.13",
     "pytest>=8.0",
     "ruff>=0.15.21",
 ]
@@ -45,6 +46,16 @@ cellular_automata = ["rendering/shaders/*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src/cellular_automata"]
+warn_unused_ignores = true
+
+# no type information published for these
+[[tool.mypy.overrides]]
+module = ["glfw", "glfw.*", "OpenGL", "OpenGL.*", "scipy", "scipy.*", "glm"]
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100

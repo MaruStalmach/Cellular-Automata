@@ -48,8 +48,6 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    # `ruff format --check` is not enforced yet: adopting it reformats ~30 files,
-    # which is best done in its own PR (docs/code-quality-plan.md, HYG-2)
     steps:
       - uses: actions/checkout@v4
 
@@ -57,3 +55,10 @@ jobs:
 
       - name: Ruff check
         run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      # with the render extra, so the renderer is checked against PyGLM's types as it is locally
+      - name: Type check
+        run: uv run --extra render mypy

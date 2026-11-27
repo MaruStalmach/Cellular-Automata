@@ -21,6 +21,13 @@ class Callback:
         self.key = key_to_display
         self.sim = sim_obj_reference
         self.stride = step_stride
+        keys = [key_to_display] if isinstance(key_to_display, str) else list(key_to_display)
+        unknown = [key for key in keys if key not in self.sim.state.keys]
+        if unknown:
+            raise ValueError(
+                f"{type(self).__name__}: no state key {', '.join(map(repr, unknown))} "
+                f"to render. Known keys: {list(self.sim.state.keys)}"
+            )
 
     def __call__(self, step: bool = True):
 
@@ -28,11 +35,7 @@ class Callback:
             for _ in range(self.stride):
                 self.sim.step()
 
-        try:
-            return self.sim.state[self.key]
-        except KeyError:
-            print(f"RENDERER ERROR: NO SUCH KEY TO RENDER AS {self.key}")
-            return 0
+        return self.sim.state[self.key]
 
 
 @register_callback
@@ -60,10 +63,7 @@ class ReduceCallback(Callback):
             for _ in range(self.stride):
                 self.sim.step()
 
-        try:
-            return self.op.reduce(self.sim.state[self.key], axis=-1)
-        except KeyError:
-            return 0
+        return self.op.reduce(self.sim.state[self.key], axis=-1)
 
 
 @register_callback
@@ -85,10 +85,6 @@ class MultiKeyCallback(Callback):
                 self.sim.step()
 
         for cb in self.callbacks:
-            try:
-                arr_list.append(cb(step=False))
-            except Exception:
-                print("ERROR IN MULTICALLBACK")
-                arr_list.append(0)
+            arr_list.append(cb(step=False))
         # stack on axis 0 so it gives the arrays in order when flattened
         return np.stack(arr_list, axis=0)

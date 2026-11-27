@@ -50,3 +50,26 @@ def test_neighbourhood_matrix_2d_non_periodic():
     assert neighbor_counts[1] == 5
     # center cell (1,1) -> flat index 4
     assert neighbor_counts[4] == 8
+
+
+def test_neighbours_of_skips_cells_past_a_closed_edge():
+    geometry = Geometry((3, 3, 3), axes="xyz", periodicity="")
+
+    assert len(geometry.neighbours_of((0, 0, 0))) == 7
+    assert len(geometry.neighbours_of((1, 1, 1))) == 26
+
+
+def test_neighbours_of_wraps_on_periodic_axes():
+    geometry = Geometry((4, 4), axes="xy", periodicity="x")
+
+    neighbours = set(geometry.neighbours_of((0, 0)))
+
+    assert neighbours == {(3, 0), (1, 0), (3, 1), (0, 1), (1, 1)}
+
+
+def test_neighbours_of_follows_offset_order():
+    geometry = Geometry((5, 5, 5), axes="xyz", periodicity="xyz")
+
+    neighbours = geometry.neighbours_of((2, 2, 2))
+
+    assert neighbours == [tuple(2 + int(d) for d in offset) for offset in geometry._offsets]

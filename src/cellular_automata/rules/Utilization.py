@@ -1,5 +1,3 @@
-from operator import itemgetter
-
 import numpy as np
 
 from cellular_automata.registry import register_rule
@@ -8,6 +6,9 @@ from cellular_automata.Rule import Rule, StepContext
 
 @register_rule
 class Utilization(Rule):
+    # consuming cells handled per batch, to bound memory on large grids
+    CHUNK = 65536
+
     def __init__(
         self,
         geometry,
@@ -30,65 +31,6 @@ class Utilization(Rule):
 
         self.mask = np.zeros(shape=geometry.size, dtype=bool)
 
-    def _neighbour_candidates(self, coords: tuple[int, ...]) -> list[tuple[int, ...]]:
-        candidates: list[tuple[int, ...]] = []
-        for offset in self.geometry._offsets:
-            target = []
-            valid = True
-            for axis, (coord, delta) in enumerate(zip(coords, offset, strict=True)):
-                value = coord + int(delta)
-                if axis in self.geometry.periodic_dims:
-                    value %= self.geometry.size[axis]
-                elif value < 0 or value >= self.geometry.size[axis]:
-                    valid = False
-                    break
-                target.append(value)
-
-            if valid:
-                candidates.append(tuple(target))
-
-        return candidates
-
-    def _substrate_candidates_for_cell(
-        self,
-        substrate_grid: np.ndarray,
-        coords: tuple[int, ...],
-    ) -> list[tuple[tuple[int, ...], int]]:
-        candidates: list[tuple[tuple[int, ...], int]] = []
-        for offset in self.geometry._offsets:
-            neighbour = []
-            valid = True
-            for axis, (coord, delta) in enumerate(zip(coords, offset, strict=True)):
-                value = coord + int(delta)
-                if axis in self.geometry.periodic_dims:
-                    value %= self.geometry.size[axis]
-                elif value < 0 or value >= self.geometry.size[axis]:
-                    valid = False
-                    break
-                neighbour.append(value)
-
-            if not valid:
-                continue
-
-            neighbour_coords = tuple(neighbour)
-            if substrate_grid.ndim == self.geometry.ndim + 1:
-                active_layers = np.flatnonzero(substrate_grid[neighbour_coords] > 0)
-                for layer in active_layers:
-                    candidates.append((neighbour_coords, int(layer)))
-            elif substrate_grid[neighbour_coords] > 0:
-                candidates.append((neighbour_coords, 0))
-
-        return candidates
-
-    def _consume_substrate_particle(
-        self, substrate_grid: np.ndarray, coords: tuple[int, ...]
-    ) -> None:
-        if substrate_grid.ndim == self.geometry.ndim + 1:
-            substrate_grid[coords] = 0
-            return
-
-        substrate_grid[coords[:-1]] = 0
-
     def apply_state(self, state, ctx: StepContext | None = None):
         # get data from simulation
         substrate_grid = state[self.sub_key].copy()
@@ -105,8 +47,7 @@ class Utilization(Rule):
         # equations based on 'QUANTITATIVE CELLULAR AUTOMATON MODEL FOR BIOFILMS' by pizarro
         # reusing the same array for calculations
         utilization_prob = self.sub_const * (
-            (self.Sb * substrate_count / 27)
-            / (self.Ks + (self.Sb * substrate_count / 27))
+            (self.Sb * substrate_count / 27) / (self.Ks + (self.Sb * substrate_count / 27))
         )
         # p=r *dt=q*(S/(10+S))*40*dt
         # S=15*neighbors/max
@@ -120,31 +61,32 @@ class Utilization(Rule):
         consumption_draw = self.rng.random(state.shape)
         consumed_cells = self.mask & (consumption_draw < utilization_prob)
 
-        # a substrate particle should be claimed by one bacteria only (no double spending)
-        # this lets every bacteria cell claim an uneaten particle and remove it from the 'plate',
-        # so other bacteria dont eat the particle again
-        substrate_claims: list[tuple[float, tuple[int, ...], tuple[int, ...]]] = []
-        for coords in map(tuple, np.argwhere(consumed_cells)):
-            candidates = self._substrate_candidates_for_cell(substrate_grid, coords)
-            if not candidates:
-                continue
+        # each consuming cell picks one substrate particle next to it, uniformly over the
+        # particles (a neighbour with 3 particles is 3 times as likely); a particle picked
+        # by several cells is eaten once, and the others go without this time
+        layered = substrate_grid.ndim == self.geometry.ndim + 1
+        has_particle = substrate_grid > 0
+        if not layered:
+            has_particle = has_particle[..., None]
+        layers = has_particle.shape[-1]
 
-            target_cell, target_layer = candidates[
-                int(self.rng.integers(len(candidates)))
-            ]
-            substrate_claims.append(
-                (float(self.rng.random()), coords, target_cell + (target_layer,))
-            )
+        consumers = np.argwhere(consumed_cells)
+        eaten = []
+        for start in range(0, len(consumers), self.CHUNK):
+            chunk = consumers[start : start + self.CHUNK]
+            neighbours, valid = self._neighbour_coords(chunk)
+            slots = has_particle[tuple(np.moveaxis(neighbours, -1, 0))] & valid[..., None]
+            column, has_target = self._pick_uniform(slots.reshape(len(chunk), -1))
+            offset_index, layer = np.divmod(column[has_target], layers)
+            cells = neighbours[np.flatnonzero(has_target), offset_index]
+            eaten.append(np.column_stack([cells, layer]))
 
-        substrate_claims.sort(key=itemgetter(0), reverse=True)
-        claimed_substrate_targets: set[tuple[int, ...]] = set()
-
-        for _, _, substrate_coords in substrate_claims:
-            if substrate_coords in claimed_substrate_targets:
-                continue
-
-            self._consume_substrate_particle(substrate_grid, substrate_coords)
-            claimed_substrate_targets.add(substrate_coords)
+        if eaten:
+            eaten_slots = np.concatenate(eaten)
+            if layered:
+                substrate_grid[tuple(eaten_slots.T)] = 0
+            else:
+                substrate_grid[tuple(eaten_slots[:, :-1].T)] = 0
 
         state[self.sub_key] = substrate_grid
 

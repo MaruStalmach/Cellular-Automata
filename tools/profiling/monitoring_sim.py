@@ -32,9 +32,7 @@ def monitor_application(pid, interval=5, duration=10):
                 mem = mem / 1024
                 unit += 1
 
-            logger.info(
-                f"PID {pid} - CPU: {cpu_percent}% - Memory: {mem:.2f} {MEM_UNITS[unit]}"
-            )
+            logger.info(f"PID {pid} - CPU: {cpu_percent}% - Memory: {mem:.2f} {MEM_UNITS[unit]}")
 
             time.sleep(interval)
         except psutil.NoSuchProcess:
@@ -64,9 +62,16 @@ if __name__ == "__main__":
     for size in sizes:
         # enough steps to outlast the monitoring window; the process is killed after it
         args = [
-            sys.executable, "examples/sim_no_render.py",
-            "-x", str(size[0]), "-y", str(size[1]), "-z", str(size[2]),
-            "-s", "1000000",
+            sys.executable,
+            "examples/sim_no_render.py",
+            "-x",
+            str(size[0]),
+            "-y",
+            str(size[1]),
+            "-z",
+            str(size[2]),
+            "-s",
+            "1000000",
         ]
         print("\nLAUNCHING NEW PROCESS")
         print("grid size =", size)

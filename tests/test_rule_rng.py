@@ -66,33 +66,67 @@ def test_seeded_config_gives_identical_tracked_runs(tmp_path: Path):
     """Two runs of a tiny multi-rule config with the same seed record the same history."""
     species = ["A", "B"]
     config = {
-        "sim": {"size": list(SIZE), "periodicity": "xy", "max_steps": 3, "render": False,
-                "seed": 21},
+        "sim": {
+            "size": list(SIZE),
+            "periodicity": "xy",
+            "max_steps": 3,
+            "render": False,
+            "seed": 21,
+        },
         "state_keys": [
-            {"name": "substrate", "layers": 6, "random": True,
-             "random_func": "np.random.choice", "random_args": {"a": [0, 1], "p": [0.7, 0.3]}},
-            {"name": "biofilm", "random": True, "random_func": "np.random.choice",
-             "random_args": {"a": [0, 1], "p": [0.5, 0.5]}},
+            {
+                "name": "substrate",
+                "layers": 6,
+                "random": True,
+                "random_func": "np.random.choice",
+                "random_args": {"a": [0, 1], "p": [0.7, 0.3]},
+            },
+            {
+                "name": "biofilm",
+                "random": True,
+                "random_func": "np.random.choice",
+                "random_args": {"a": [0, 1], "p": [0.5, 0.5]},
+            },
             *[
-                {"name": sp, "random": True, "random_func": "random_seeds",
-                 "random_args": {"n": 6, "value": 1}}
+                {
+                    "name": sp,
+                    "random": True,
+                    "random_func": "random_seeds",
+                    "random_args": {"n": 6, "value": 1},
+                }
                 for sp in species
             ],
         ],
         "rules": [
-            {"name": "Diffusion", "args": {"time_step": 1, "a": 7.4, "p": 0.07,
-                                           "biofilm_key": "biofilm"}},
-            {"name": "Utilization", "args": {"time_step": 1, "bacteria_keys": species,
-                                             "substrate_key": "substrate"}},
-            {"name": "BacteriaGrowth", "args": {"time_step": 1, "bacteria_keys": species,
-                                                "substrate_key": "substrate"}},
-            {"name": "SpeciesInteraction", "args": {
-                "time_step": 1, "interactions": {"A": {"B": -0.5}, "B": {"A": 0.5}}}},
-            {"name": "BioreactorBiofilmDetachment", "args": {
-                "time_step": 1, "biofilm_key": "biofilm", "detachment_rate": 0.3,
-                "scaling": 1.0}},
-            {"name": "BacteriaDecay", "args": {"time_step": 1, "target_keys": species,
-                                               "decay_probability": 0.1}},
+            {
+                "name": "Diffusion",
+                "args": {"time_step": 1, "a": 7.4, "p": 0.07, "biofilm_key": "biofilm"},
+            },
+            {
+                "name": "Utilization",
+                "args": {"time_step": 1, "bacteria_keys": species, "substrate_key": "substrate"},
+            },
+            {
+                "name": "BacteriaGrowth",
+                "args": {"time_step": 1, "bacteria_keys": species, "substrate_key": "substrate"},
+            },
+            {
+                "name": "SpeciesInteraction",
+                "args": {"time_step": 1, "interactions": {"A": {"B": -0.5}, "B": {"A": 0.5}}},
+            },
+            {
+                "name": "BioreactorBiofilmDetachment",
+                "args": {
+                    "time_step": 1,
+                    "biofilm_key": "biofilm",
+                    "detachment_rate": 0.3,
+                    "scaling": 1.0,
+                },
+            },
+            {
+                "name": "BacteriaDecay",
+                "args": {"time_step": 1, "target_keys": species, "decay_probability": 0.1},
+            },
         ],
         "tracker": {"name": "StateTracker", "args": {}},
     }
