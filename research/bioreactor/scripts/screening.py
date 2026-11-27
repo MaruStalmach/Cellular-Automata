@@ -27,6 +27,9 @@ IDX_TO_NAME = {
     11: 'Other_bacteria',
 }
 BACTERIA_KEYS = list(IDX_TO_NAME.values())
+# column in filtered_families_fixed.csv for each simulated species
+DATA_COLUMNS = {key: key for key in BACTERIA_KEYS} | {'Other_bacteria': 'Rest'}
+SECONDS_PER_HOUR = 3600
 BASE_CONFIG = 'screen'
 
 BASE_INTERACTIONS = {
@@ -59,22 +62,47 @@ def get_real_data(bio_number=BIO_NUMBER) -> pd.DataFrame:
     return df_out
 
 
-def calc_rmse(relative_sim, relative_data):
-    time_idx = np.asarray(relative_data['time'].values * 2, dtype=int)
-    sim_data_at_experiment_timesteps = relative_sim[:, time_idx]
-    mse_total = 0.0
-    for i in range(len(relative_data)):
-        species_errors = []
-        for j in range(len(BACTERIA_KEYS)):
-            species_name = BACTERIA_KEYS[j]
-            if species_name == 'Other_bacteria':
-                species_name = "Rest"
-            species_errors.append(
-                (relative_data.iloc[i][species_name] - sim_data_at_experiment_timesteps[j, i]) ** 2
-            )
-        tmp = np.mean(species_errors)
-        mse_total += tmp
-    return float(np.sqrt(mse_total / len(relative_data)))
+def frames_for_times(
+    hours, step_seconds: float, recorded_steps: list[int] | None, n_frames: int
+) -> np.ndarray:
+    """Tracker frame index for each measurement time (in hours).
+
+    `step_seconds` is the simulation's step length (`ca_sim.max_dt`), and
+    `recorded_steps` the step number of each frame (`tracker.steps`; None means one
+    frame per step). Raises ValueError if a time isn't a whole number of steps, or
+    falls on a step that wasn't recorded or after the run ended.
+    """
+    steps_exact = np.asarray(hours, dtype=float) * SECONDS_PER_HOUR / step_seconds
+    steps = np.rint(steps_exact).astype(int)
+    if not np.allclose(steps_exact, steps):
+        raise ValueError(
+            f'measurement times are not whole steps of {step_seconds} s: {sorted(set(hours))}'
+        )
+
+    recorded = list(range(n_frames)) if recorded_steps is None else list(recorded_steps)
+    frame_of_step = {step: frame for frame, step in enumerate(recorded)}
+    missing = sorted({int(step) for step in steps if step not in frame_of_step})
+    if missing:
+        raise ValueError(
+            f'no recorded frame for steps {missing} (the run recorded steps '
+            f'{recorded[0]}..{recorded[-1]}); run longer or record those steps'
+        )
+    return np.array([frame_of_step[step] for step in steps])
+
+
+def calc_rmse(relative_sim, relative_data, step_seconds: float, recorded_steps=None):
+    """RMSE between simulated and measured relative abundances at the measurement times.
+
+    `relative_sim` has one row per species in BACTERIA_KEYS and one column per tracker
+    frame; see frames_for_times for `step_seconds` and `recorded_steps`.
+    """
+    frames = frames_for_times(
+        relative_data['time'].values, step_seconds, recorded_steps, relative_sim.shape[1]
+    )
+    sim_at_measurements = relative_sim[:, frames]
+    measured = relative_data[[DATA_COLUMNS[key] for key in BACTERIA_KEYS]].to_numpy().T
+    per_measurement_mse = np.mean((measured - sim_at_measurements) ** 2, axis=0)
+    return float(np.sqrt(per_measurement_mse.mean()))
 
 
 def key_abundance_over_time(arr: np.ndarray, layers: int | None = None) -> np.ndarray:
@@ -179,7 +207,7 @@ def run_screening_trial(run_no: int, df_real_data: pd.DataFrame, base_matrix: di
     ca_sim, _ = parse_json(config_path)
 
     relative_sim = get_relative_sim_data(ca_sim)
-    rmse = calc_rmse(relative_sim, df_real_data)
+    rmse = calc_rmse(relative_sim, df_real_data, ca_sim.max_dt, ca_sim.tracker.steps)
 
     return {
         'run_no': run_no,

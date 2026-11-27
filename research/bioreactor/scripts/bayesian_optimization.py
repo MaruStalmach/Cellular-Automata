@@ -123,7 +123,7 @@ def run_trial(run_no: int, values: np.ndarray, base_interactions: dict, real_dat
     config_path = save_screening_config(interactions, run_no, config_name=BASE_CONFIG, seed=RANDOM_SEED)
     ca_sim, _ = parse_json(config_path)
     relative_sim = get_relative_sim_data(ca_sim)
-    rmse = calc_rmse(relative_sim, real_data)
+    rmse = calc_rmse(relative_sim, real_data, ca_sim.max_dt, ca_sim.tracker.steps)
     save_result(run_no, values, rmse, str(config_path.relative_to(CONFIGS_DIR)))
     print(f'run {run_no}: RMSE={rmse:.6f}')
     return rmse
