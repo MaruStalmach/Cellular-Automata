@@ -1,4 +1,3 @@
-import numpy as np
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.registry import register_rule
@@ -15,18 +14,12 @@ class BacteriaDecay(Rule):
         self.target_keys = target_keys
         self.required_keys.extend(target_keys)
         self.decay_probability = decay_probability
-        self.buff = np.zeros(geometry.size, dtype=np.float32)
 
     def apply_state(self, state: State, ctx: StepContext | None = None):
 
         for key in self.target_keys:
             grid = state[key].copy()
-
-            self.buff = self.rng.random(size=grid.shape)
-
-            self.buff = grid.astype(np.bool) & (self.buff < self.decay_probability)
-
-            grid[self.buff == 1] = 0
-
+            decays = grid.astype(bool) & (self.rng.random(size=grid.shape) < self.decay_probability)
+            grid[decays] = 0
             state[key] = grid
         return state

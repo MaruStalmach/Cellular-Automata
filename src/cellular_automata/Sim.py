@@ -158,7 +158,9 @@ class CellularAutomaton:
 
         self.step_no += 1
         if self.tracker:
-            self.tracker.record_step(self.state, self.step_no)
+            self.tracker.record_step(
+                self.state, self.step_no, final=self.step_no >= self.max_steps
+            )
 
         if self.step_no >= self.max_steps:
             self.save_tracker()
@@ -174,5 +176,7 @@ class CellularAutomaton:
             return
         if self._saved_at_step == self.step_no:
             return
+        # an interrupted run may stop between recorded steps
+        self.tracker.record_step(self.state, self.step_no, final=True)
         self.tracker.save(self.output_filename)
         self._saved_at_step = self.step_no
