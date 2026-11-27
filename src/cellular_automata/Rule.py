@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import numpy as np
@@ -20,7 +21,9 @@ def require_3d(rule_name: str, geometry: Geometry) -> None:
         raise ValueError(f"{rule_name} only works on 3D grids, got {geometry.ndim}D")
 
 
-class Rule:
+class Rule(ABC):
+    """Base class for rules. Subclasses must implement `apply_state`."""
+
     def __init__(self, geometry: Geometry, time_step: float):
         self.geometry = geometry
         self.dt = time_step
@@ -85,10 +88,10 @@ class Rule:
             )
         return count
 
+    @abstractmethod
     def apply_state(self, state: State, ctx: StepContext | None = None) -> State:
         """Apply the rule to the whole state and return it. Every rule must implement this.
 
         `ctx` describes the current step; CellularAutomaton always passes it, and rules
         that don't need it may be called without it (e.g. in tests).
         """
-        raise NotImplementedError()

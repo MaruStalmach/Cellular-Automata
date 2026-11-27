@@ -1,13 +1,32 @@
 """Tests for the shared helpers on the Rule base class."""
 
 import numpy as np
+import pytest
 
 from cellular_automata.Geometry import Geometry
 from cellular_automata.Rule import Rule
 
 
+class _NoOpRule(Rule):
+    def apply_state(self, state, ctx=None):
+        return state
+
+
 def _rule(size=(3, 3, 3), periodicity="") -> Rule:
-    return Rule(Geometry(size, axes="xyz", periodicity=periodicity), time_step=1)
+    return _NoOpRule(Geometry(size, axes="xyz", periodicity=periodicity), time_step=1)
+
+
+def test_a_rule_without_apply_state_cannot_be_built():
+    class Incomplete(Rule):
+        pass
+
+    with pytest.raises(TypeError, match="apply_state"):
+        Incomplete(Geometry((3, 3, 3), axes="xyz", periodicity=""), time_step=1)
+
+
+def test_the_base_rule_cannot_be_built():
+    with pytest.raises(TypeError, match="abstract"):
+        Rule(Geometry((3, 3, 3), axes="xyz", periodicity=""), time_step=1)
 
 
 def test_neighborhood_count_does_not_overflow_with_dense_layers():
