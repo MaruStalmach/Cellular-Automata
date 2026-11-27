@@ -1,14 +1,11 @@
 import json
-from pathlib import Path
 from time import time
 
 import numpy as np
 import pandas as pd
+from bioreactor_common import CONFIGS_DIR, STUDY_DIR, load_interactions
 
 from cellular_automata.config.Parser import parse_json
-
-STUDY_DIR = Path(__file__).resolve().parents[1]
-CONFIGS_DIR = STUDY_DIR / 'configs'
 
 SAMPLE_RUNS = 12
 BIO_NUMBER = 4
@@ -30,22 +27,8 @@ BACTERIA_KEYS = list(IDX_TO_NAME.values())
 # column in filtered_families_fixed.csv for each simulated species
 DATA_COLUMNS = {key: key for key in BACTERIA_KEYS} | {'Other_bacteria': 'Rest'}
 SECONDS_PER_HOUR = 3600
+# the screening starts from the interactions in configs/<BASE_CONFIG>.json
 BASE_CONFIG = 'screen'
-
-BASE_INTERACTIONS = {
-    'Bacteroidaceae': {'Bacteroidaceae': 0.0, 'Lachnospiraceae': 0.0, 'Enterobacteriaceae': -0.2, 'Synergistaceae': 0.0, 'Prevotellaceae': -0.9, 'Ruminococcaceae': 0.0, 'Muribaculaceae': -0.9, 'Oscillospiraceae': 0.0, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.5, 'Other_bacteria': -0.3},
-    'Lachnospiraceae': {'Bacteroidaceae': 0.0, 'Lachnospiraceae': 0.0, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.5, 'Ruminococcaceae': 0.5, 'Muribaculaceae': 0.5, 'Oscillospiraceae': 0.5, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.5, 'Other_bacteria': -0.3},
-    'Enterobacteriaceae': {'Bacteroidaceae': -0.2, 'Lachnospiraceae': -0.5, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': -0.5, 'Muribaculaceae': 0.0, 'Oscillospiraceae': -0.5, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.0, 'Other_bacteria': -0.3},
-    'Synergistaceae': {'Bacteroidaceae': 0.0, 'Lachnospiraceae': 0.0, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': 0.0, 'Muribaculaceae': 0.0, 'Oscillospiraceae': 0.0, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.0, 'Other_bacteria': -0.3},
-    'Prevotellaceae': {'Bacteroidaceae': -0.9, 'Lachnospiraceae': 0.2, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': 0.0, 'Muribaculaceae': 0.0, 'Oscillospiraceae': 0.0, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.0, 'Other_bacteria': -0.3},
-    'Ruminococcaceae': {'Bacteroidaceae': 0.0, 'Lachnospiraceae': 0.5, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': 0.0, 'Muribaculaceae': 0.0, 'Oscillospiraceae': 0.0, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.0, 'Other_bacteria': -0.3},
-    'Muribaculaceae': {'Bacteroidaceae': -0.2, 'Lachnospiraceae': 0.0, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': 0.0, 'Muribaculaceae': 0.0, 'Oscillospiraceae': 0.0, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.5, 'Other_bacteria': -0.3},
-    'Oscillospiraceae': {'Bacteroidaceae': 0.0, 'Lachnospiraceae': 0.4, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': 0.0, 'Muribaculaceae': 0.0, 'Oscillospiraceae': 0.0, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.0, 'Other_bacteria': -0.3},
-    'Sutterellaceae': {'Bacteroidaceae': 0.0, 'Lachnospiraceae': 0.0, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': 0.0, 'Muribaculaceae': 0.0, 'Oscillospiraceae': 0.0, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.0, 'Other_bacteria': -0.3},
-    'Tannerellaceae': {'Bacteroidaceae': 0.0, 'Lachnospiraceae': 0.0, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': 0.0, 'Muribaculaceae': 0.0, 'Oscillospiraceae': 0.0, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.0, 'Other_bacteria': -0.3},
-    'Bifidobacteriaceae': {'Bacteroidaceae': 0.0, 'Lachnospiraceae': 0.2, 'Enterobacteriaceae': 0.0, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': 0.3, 'Muribaculaceae': 0.4, 'Oscillospiraceae': 0.5, 'Sutterellaceae': 0.0, 'Tannerellaceae': -0.5, 'Bifidobacteriaceae': 0.0, 'Other_bacteria': -0.3},
-    'Other_bacteria': {'Bacteroidaceae': 0.0, 'Lachnospiraceae': 0.0, 'Enterobacteriaceae': 0.2, 'Synergistaceae': 0.0, 'Prevotellaceae': 0.0, 'Ruminococcaceae': 0.0, 'Muribaculaceae': 0.0, 'Oscillospiraceae': 0.0, 'Sutterellaceae': 0.0, 'Tannerellaceae': 0.0, 'Bifidobacteriaceae': 0.0, 'Other_bacteria': -0.3},
-}
 
 
 def get_real_data(bio_number=BIO_NUMBER) -> pd.DataFrame:
@@ -200,7 +183,7 @@ def save_screening_config(interactions, run_no: int, config_name: str = 'screen'
 
 def run_screening_trial(run_no: int, df_real_data: pd.DataFrame, base_matrix: dict | None = None):
     if base_matrix is None:
-        base_matrix = BASE_INTERACTIONS
+        base_matrix = load_interactions(BASE_CONFIG)
 
     random_matrix, selected_pairs = build_sparse_interactions(base_matrix, active_pairs=18, value_scale=0.8)
     config_path = save_screening_config(random_matrix, run_no)
@@ -221,9 +204,10 @@ def run_screening_trial(run_no: int, df_real_data: pd.DataFrame, base_matrix: di
 
 if __name__ == '__main__':
     df_real_data = get_real_data()
+    base_interactions = load_interactions(BASE_CONFIG)
     results = []
     for run_no in range(SAMPLE_RUNS):
-        result = run_screening_trial(run_no, df_real_data, BASE_INTERACTIONS)
+        result = run_screening_trial(run_no, df_real_data, base_interactions)
         results.append(result)
         print(f'run {run_no}: RMSE={result["rmse"]:.6f}')
 

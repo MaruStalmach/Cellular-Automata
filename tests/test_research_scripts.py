@@ -135,3 +135,39 @@ def test_calc_rmse_rejects_times_between_steps(monkeypatch, tmp_path):
 
     with pytest.raises(ValueError, match="not whole steps"):
         screening.calc_rmse(_random_sim(screening, n_frames=5), data, step_seconds=1800)
+
+
+# --- shared helpers (RES-2) ----------------------------------------------------------
+
+
+def _common(monkeypatch):
+    monkeypatch.syspath_prepend(str(SCRIPTS_DIR))
+    sys.modules.pop("bioreactor_common", None)
+    return importlib.import_module("bioreactor_common")
+
+
+def test_load_interactions_reads_the_species_interaction_rule(monkeypatch):
+    common = _common(monkeypatch)
+    config = json.loads((REPO_ROOT / "research/bioreactor/configs/screen.json").read_text())
+    (expected,) = [r["args"]["interactions"] for r in config["rules"] if r["name"] == "SpeciesInteraction"]
+
+    assert common.load_interactions("screen") == expected
+
+
+def test_load_interactions_without_the_rule_raises(monkeypatch, tmp_path):
+    common = _common(monkeypatch)
+    (tmp_path / "plain.json").write_text(json.dumps({"rules": [{"name": "Diffusion", "args": {}}]}))
+
+    with pytest.raises(ValueError, match="SpeciesInteraction rule was not found"):
+        common.load_interactions("plain", configs_dir=tmp_path)
+
+
+def test_scripts_share_one_study_dir(monkeypatch, tmp_path):
+    common = _common(monkeypatch)
+    screening = _screening(monkeypatch, tmp_path)
+    sys.modules.pop("analyze_screening", None)
+    analyze = importlib.import_module("analyze_screening")
+
+    assert common.STUDY_DIR == REPO_ROOT / "research" / "bioreactor"
+    assert analyze.RESULTS_DIR == common.STUDY_DIR / "results"
+    assert screening.CONFIGS_DIR == common.CONFIGS_DIR
