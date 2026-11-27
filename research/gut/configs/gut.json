@@ -139,6 +139,9 @@
           "BFCOR",
           "BFCTP",
           "other"
+        ],
+        "walls": [
+          "y-"
         ]
       }
     },
@@ -160,6 +163,12 @@
       }
     }
   ],
+  "tracker": {
+    "name": "StateTracker",
+    "args": {
+      "record_every": 5
+    }
+  },
   "abundances": {
     "before": {
       "BBBBB": 0.725667,
@@ -182,13 +191,10 @@
       "other": 0.068667
     }
   },
-  "mc_search": {
-    "n_iterations": 20,
-    "density": 0.7,
-    "interaction_bounds": [
-      -1.0,
-      1.0
-    ],
-    "checkpoint_every_s": 60
+  "initial_state": {
+    "mean_thickness": 10,
+    "thickness_spread": 5,
+    "patch_size": 15,
+    "lumen_density": 0.05
   }
 }
