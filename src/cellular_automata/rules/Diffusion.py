@@ -41,9 +41,11 @@ class Diffusion(Rule):
             ap = self._calc_a_prim(a,p,biofilm_disruption)
             p3 = (1 - 4 * p) / (ap + 1)
             self.p_bio = [ap * p3, p, p, p3, p, p]
-        self.rolls = np.zeros(shape=geometry.size + (6,))
-        self.layers = np.zeros(shape=geometry.size + (6,))
-        self.shift_buffer = np.zeros(shape=geometry.size)
+        # preallocated per-slot buffers, reused every call; values are 0..6, so uint8
+        self.rolls = np.zeros(shape=geometry.size + (6,), dtype=np.uint8)
+        self.layers = np.zeros(shape=geometry.size + (6,), dtype=np.uint8)
+        self.shift_buffer = np.zeros(shape=geometry.size, dtype=np.uint8)
+        self._slot_index = np.arange(6, dtype=np.uint8)
         self.lost_particles: int = 0
 
         self.RESTORE_THRESHOLD = 100
@@ -100,7 +102,9 @@ class Diffusion(Rule):
                 [0, 1, 2, 3, 4, 5], size=(roll_amt,), p=self.p
             ).astype(np.uint8)
         
-        self.rolls = (self.rolls + np.arange(6, dtype=self.rolls.dtype)) % 6
+        # in place operation equivalent to self.rolls = (self.rolls + np.arange(6, dtype=self.rolls.dtype)) % 6
+        np.add(self.rolls, self._slot_index, out=self.rolls)
+        np.remainder(self.rolls, 6, out=self.rolls)
         # set empty cells as invalid value
         np.copyto(self.rolls, 6, where=(source == 0))
 
@@ -172,9 +176,8 @@ class Diffusion(Rule):
                 shift_roll(self.layers[..., i], ax, dir)
                 shift_roll(self.layers[..., i + 3], ax, -dir)
 
-        self.lost_particles += self.layers[self.layers > 1].sum() - np.prod(
-            self.layers[self.layers > 1].shape
-        )
+        collided = self.layers[self.layers > 1]
+        self.lost_particles += int(collided.sum(dtype=np.int64)) - collided.size
         # naive collision resolution -> delete colliding particles
         # (the boundary model is an open question: D4 in docs/code-quality-plan.md)
         self.layers[self.layers > 1] = 1
